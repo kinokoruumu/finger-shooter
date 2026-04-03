@@ -121,7 +121,7 @@ export const App = () => {
 		gameState.phase === "playing" || gameState.phase === "stage-transition";
 
 	return (
-		<div className="relative h-screen w-screen overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950">
+		<div className="relative h-screen w-screen overflow-hidden bg-gradient-to-b from-amber-50 to-stone-100">
 			{/* Layer 0: カメラ映像（トグル可能） */}
 			<CameraView videoRef={videoRef} isVisible={showCamera} />
 

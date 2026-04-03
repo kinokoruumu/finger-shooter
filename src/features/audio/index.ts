@@ -10,6 +10,10 @@ let audioCtx: AudioContext | null = null;
 const buffers = new Map<SoundName, AudioBuffer>();
 let loaded = false;
 
+/** 同時再生数を追跡して音量を自動調整 */
+let activeSources = 0;
+const MAX_CONCURRENT = 5;
+
 const getContext = (): AudioContext => {
 	if (!audioCtx) {
 		audioCtx = new AudioContext();
@@ -36,24 +40,35 @@ export const preloadSounds = async (): Promise<void> => {
 	loaded = true;
 };
 
-/** サウンド再生（重複再生OK、遅延なし） */
+/** サウンド再生（重複時は音量を自動で下げる） */
 export const playSound = (name: SoundName, volume = 1.0): void => {
 	const ctx = getContext();
 	const buffer = buffers.get(name);
 	if (!buffer) return;
 
-	// AudioContext が suspended なら resume（ユーザー操作後に必要）
 	if (ctx.state === "suspended") {
 		ctx.resume();
 	}
+
+	// 同時再生が多いときは音量を下げる
+	const adjustedVolume =
+		activeSources >= MAX_CONCURRENT
+			? volume * 0.3
+			: volume / (1 + activeSources * 0.4);
 
 	const source = ctx.createBufferSource();
 	source.buffer = buffer;
 
 	const gain = ctx.createGain();
-	gain.gain.value = volume;
+	gain.gain.value = adjustedVolume;
 
 	source.connect(gain);
 	gain.connect(ctx.destination);
+
+	activeSources++;
+	source.onended = () => {
+		activeSources = Math.max(0, activeSources - 1);
+	};
+
 	source.start(0);
 };

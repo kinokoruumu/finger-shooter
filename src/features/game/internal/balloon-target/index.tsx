@@ -159,7 +159,7 @@ export const BalloonTarget = ({ data, onDead }: Props) => {
 					}}
 				>
 					{/* 風船本体（楕円球） */}
-					<mesh scale={[1.1, 1.4, 1.1]}>
+					<mesh scale={[2.0, 2.5, 2.0]}>
 						<sphereGeometry args={[0.7, 16, 16]} />
 						<meshStandardMaterial
 							color={data.color}
@@ -168,18 +168,18 @@ export const BalloonTarget = ({ data, onDead }: Props) => {
 						/>
 					</mesh>
 					{/* ハイライト */}
-					<mesh position={[-0.15, 0.2, 0.5]} scale={[0.2, 0.3, 0.1]}>
+					<mesh position={[-0.25, 0.4, 0.9]} scale={[0.35, 0.5, 0.15]}>
 						<sphereGeometry args={[1, 8, 8]} />
 						<meshBasicMaterial color="#ffffff" transparent opacity={0.4} />
 					</mesh>
 					{/* 結び目 */}
-					<mesh position={[0, -1.0, 0]}>
-						<coneGeometry args={[0.08, 0.15, 8]} />
+					<mesh position={[0, -1.8, 0]}>
+						<coneGeometry args={[0.1, 0.2, 8]} />
 						<meshStandardMaterial color={data.color} />
 					</mesh>
 					{/* 紐 */}
-					<mesh position={[0, -1.5, 0]}>
-						<cylinderGeometry args={[0.01, 0.01, 0.8, 4]} />
+					<mesh position={[0, -2.4, 0]}>
+						<cylinderGeometry args={[0.015, 0.015, 1.0, 4]} />
 						<meshBasicMaterial color="#888888" />
 					</mesh>
 				</group>
