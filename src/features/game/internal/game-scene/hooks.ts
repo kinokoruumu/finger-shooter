@@ -176,32 +176,45 @@ export const useGameScene = (
 		[screenToWorld, gridToNormalized],
 	);
 
-	useFrame((state) => {
-		if (phase !== "playing") return;
+	// グループごとのスポーンを事前計算（ソート済み）
+	const groupedSpawns = useRef<Map<number, SpawnEntry[]>>(new Map());
+	const maxGroupRef = useRef(-1);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: currentStageの変化で再計算
+	useEffect(() => {
 		const stage = STAGES[currentStage];
 		if (!stage) return;
+		const map = new Map<number, SpawnEntry[]>();
+		for (const s of stage.spawns) {
+			const arr = map.get(s.group) ?? [];
+			arr.push(s);
+			map.set(s.group, arr);
+		}
+		// 各グループ内をtime順にソート
+		for (const arr of map.values()) {
+			arr.sort((a, b) => a.time - b.time);
+		}
+		groupedSpawns.current = map;
+		maxGroupRef.current = Math.max(...stage.spawns.map((s) => s.group));
+	}, [currentStage]);
+
+	useFrame((state) => {
+		if (phase !== "playing") return;
+		if (maxGroupRef.current < 0) return;
 
 		const now = state.clock.elapsedTime * 1000;
 
-		// 現在のグループのスポーンを取得
-		const groupSpawns = stage.spawns.filter(
-			(s) => s.group === currentGroup.current,
-		);
-
 		// 全グループ完了チェック
-		const maxGroup = Math.max(...stage.spawns.map((s) => s.group));
-		if (currentGroup.current > maxGroup) {
-			const hasRemaining =
-				groundTargets.length > 0 ||
-				balloonTargets.length > 0 ||
-				trainTargets.length > 0;
+		if (currentGroup.current > maxGroupRef.current) {
+			// 的と列車が残っていなければ次ステージ（風船は無視）
+			const hasRemaining = groundTargets.length > 0 || trainTargets.length > 0;
 			if (!hasRemaining) {
 				nextStage();
-				return;
 			}
-			return; // 全グループ済み、残りターゲット消滅待ち
+			return;
 		}
+
+		const groupSpawns = groupedSpawns.current.get(currentGroup.current) ?? [];
 
 		// グループ開始タイムスタンプの初期化
 		if (!groupInitialized.current) {
@@ -220,12 +233,10 @@ export const useGameScene = (
 			groupSpawnIndex.current++;
 		}
 
-		// 現在のグループのスポーンが全完了 AND 画面上に的が残っていない → 次グループへ
+		// グループのスポーン全完了 AND 的・列車が残っていない → 次グループ
+		// （風船はグループ遷移を阻害しない）
 		if (groupSpawnIndex.current >= groupSpawns.length) {
-			const hasRemaining =
-				groundTargets.length > 0 ||
-				balloonTargets.length > 0 ||
-				trainTargets.length > 0;
+			const hasRemaining = groundTargets.length > 0 || trainTargets.length > 0;
 			if (!hasRemaining) {
 				currentGroup.current++;
 				groupSpawnIndex.current = 0;

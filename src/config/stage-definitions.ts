@@ -104,30 +104,30 @@ const toSpawns = (entries: TargetEntry[], group: number): SpawnEntry[] =>
 		visibleDuration: e.dur,
 	}));
 
-/** 横一列に同時出現 */
+/** 横一列に同時出現（8個→6s） */
 const horizontalLine = (
 	time: number,
 	gy: number,
 	type: SpawnEntry["type"] = "ground",
-	dur = 3.0,
+	dur = 6.0,
 ): TargetEntry[] =>
 	Array.from({ length: 8 }, (_, i) => t(time, type, i, gy, dur));
 
-/** 縦一列に同時出現 */
+/** 縦一列に同時出現（4個→4s） */
 const verticalLine = (
 	time: number,
 	gx: number,
 	type: SpawnEntry["type"] = "ground",
-	dur = 3.0,
+	dur = 4.0,
 ): TargetEntry[] =>
 	Array.from({ length: 4 }, (_, i) => t(time, type, gx, i, dur));
 
-/** 外周を時計回りに順番出現 */
+/** 外周を時計回りに順番出現（20個→各3.5s） */
 const borderClockwise = (
 	startTime: number,
 	interval: number,
 	type: SpawnEntry["type"] = "ground",
-	dur = 2.5,
+	dur = 3.5,
 ): TargetEntry[] => {
 	const coords: [number, number][] = [];
 	// 上辺: 左→右
@@ -144,12 +144,12 @@ const borderClockwise = (
 	);
 };
 
-/** 対角線（左上→右下） */
+/** 対角線（左上→右下、7個→5s） */
 const diagonal = (
 	startTime: number,
 	interval: number,
 	type: SpawnEntry["type"] = "ground",
-	dur = 3.0,
+	dur = 5.0,
 ): TargetEntry[] => {
 	const entries: TargetEntry[] = [];
 	for (let i = 0; i < 4; i++) {
@@ -163,11 +163,11 @@ const diagonal = (
 	return entries;
 };
 
-/** V字パターン */
+/** V字パターン（8個→5.5s） */
 const vShape = (
 	time: number,
 	type: SpawnEntry["type"] = "ground",
-	dur = 3.0,
+	dur = 5.5,
 ): TargetEntry[] => [
 	t(time, type, 0, 0, dur),
 	t(time, type, 7, 0, dur),
@@ -179,11 +179,11 @@ const vShape = (
 	t(time + 600, type, 4, 3, dur),
 ];
 
-/** クロス（十字）パターン */
+/** クロス（十字）パターン（11個→6s） */
 const crossPattern = (
 	time: number,
 	type: SpawnEntry["type"] = "ground",
-	dur = 3.0,
+	dur = 6.0,
 ): TargetEntry[] => [
 	// 横線 (gy=2)
 	...Array.from({ length: 8 }, (_, i) => t(time, type, i, 2, dur)),
