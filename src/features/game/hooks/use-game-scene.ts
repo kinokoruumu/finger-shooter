@@ -334,9 +334,8 @@ export const useGameScene = (
 					}
 				}
 
-				// 電車ターゲット判定（z=-22）
+				// 電車ターゲット判定
 				if (!hit) {
-					const hitWorldTrain = screenToWorld(event.x, event.y, -22);
 					for (const child of sceneRef.current.children) {
 						if (child.userData.type === "train-target") {
 							const { slots, handleSlotHit } = child.userData;
@@ -346,10 +345,13 @@ export const useGameScene = (
 								const slot = slots[i];
 								if (!slot.alive) continue;
 
+								// 的の実際のz位置でscreenToWorldを計算
+								const slotZ = child.position.z + 3.5;
+								const hitWorldTrain = screenToWorld(event.x, event.y, slotZ);
 								const slotWorld: [number, number, number] = [
 									child.position.x + slot.offsetX,
 									child.position.y + slot.offsetY,
-									child.position.z + 3.5,
+									slotZ,
 								];
 
 								if (checkHit3D(hitWorldTrain, slotWorld, 2.5)) {
