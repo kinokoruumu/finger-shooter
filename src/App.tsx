@@ -141,23 +141,28 @@ export const App = () => {
 			{/* キャリブレーション画面 */}
 			{gameState.phase === "calibrating" && (
 				<div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
-					<div className="flex w-80 flex-col items-center gap-4 rounded-2xl bg-black/70 px-8 py-8 backdrop-blur-sm">
+					<div className="flex w-[340px] flex-col items-center gap-5 rounded-2xl bg-amber-50/95 px-8 py-8 shadow-xl shadow-black/10 backdrop-blur-md">
 						<p
-							className="text-center font-bold text-lg text-white"
+							className="text-center font-black text-lg text-stone-800"
 							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
 						>
-							センタリング
+							照準を調整します
 						</p>
-						<p className="text-center text-sm text-blue-200">
-							✋ パーを1.5秒キープしてください
+						<p
+							className="text-center text-sm text-stone-500 leading-relaxed"
+							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
+						>
+							手のひらをカメラに向けて
+							<br />
+							1.5秒キープしてください
 						</p>
-						<div className="h-3 w-full overflow-hidden rounded-full bg-white/10">
+						<div className="h-3 w-full overflow-hidden rounded-full bg-stone-200">
 							<div
 								className={cn(
 									"h-full rounded-full transition-all duration-100",
 									gameState.gestureDebug?.calibration === "progress"
-										? "bg-blue-400"
-										: "bg-white/5",
+										? "bg-orange-400"
+										: "bg-stone-300",
 								)}
 								style={{
 									width: `${(gameState.gestureDebug?.calibrationProgress ?? 0) * 100}%`,
