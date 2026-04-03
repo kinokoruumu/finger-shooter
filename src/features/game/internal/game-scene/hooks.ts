@@ -91,7 +91,7 @@ export const useGameScene = (
 				case "balloon": {
 					const [worldX] = screenToWorld(entry.nx, 0.5, -18);
 					const [, bottomY] = screenToWorld(0.5, 1.1, -18);
-					const speed = 5.0 + Math.random() * 3.0;
+					const speed = 4.0 + Math.random() * 2.0;
 					setBalloonTargets((prev) => [
 						...prev,
 						{
