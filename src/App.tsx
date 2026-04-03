@@ -157,34 +157,40 @@ export const App = () => {
 			{/* キャリブレーション画面 */}
 			{gameState.phase === "calibrating" && (
 				<div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
-					<div className="flex w-[340px] flex-col items-center gap-5 rounded-2xl border border-stone-400/40 bg-amber-50/90 px-8 py-8 shadow-2xl shadow-black/25 backdrop-blur-xl">
+					<div className="flex w-[90vw] max-w-md flex-col items-center gap-5 rounded-2xl border border-stone-700/60 bg-stone-900/80 px-8 py-8 shadow-2xl shadow-black/40 backdrop-blur-xl">
 						<p
-							className="text-center font-black text-lg text-stone-800"
+							className="text-center font-black text-[clamp(1.2rem,3vw,1.5rem)] text-white"
 							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
 						>
 							照準を調整します
 						</p>
 						<p
-							className="text-center text-sm text-stone-500 leading-relaxed"
+							className="text-center text-[clamp(0.9rem,2.5vw,1.1rem)] text-stone-300 leading-relaxed"
 							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
 						>
 							手のひらをカメラに向けて
 							<br />
 							1.5秒キープしてください
 						</p>
-						<div className="h-3 w-full overflow-hidden rounded-full bg-stone-200">
+						<div className="h-4 w-full overflow-hidden rounded-full bg-stone-700">
 							<div
 								className={cn(
 									"h-full rounded-full transition-all duration-100",
 									gameState.gestureDebug?.calibration === "progress"
-										? "bg-orange-400"
-										: "bg-stone-300",
+										? "bg-orange-500"
+										: "bg-stone-600",
 								)}
 								style={{
 									width: `${(gameState.gestureDebug?.calibrationProgress ?? 0) * 100}%`,
 								}}
 							/>
 						</div>
+						<p
+							className="text-center text-stone-500 text-[clamp(0.7rem,2vw,0.85rem)]"
+							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
+						>
+							プレイ中もいつでも同じ操作で調整できます
+						</p>
 					</div>
 				</div>
 			)}
@@ -209,10 +215,10 @@ export const App = () => {
 					<button
 						type="button"
 						className={cn(
-							"pointer-events-auto rounded-lg px-3 py-1.5 font-mono text-xs transition-colors",
+							"pointer-events-auto rounded-lg border px-3 py-1.5 font-mono text-xs transition-colors",
 							showCamera
-								? "bg-white/20 text-white hover:bg-white/30"
-								: "bg-white/10 text-white/50 hover:bg-white/20",
+								? "border-green-500/50 bg-green-900/60 text-green-300 hover:bg-green-800/60"
+								: "border-stone-500/50 bg-stone-900/60 text-stone-300 hover:bg-stone-800/60",
 						)}
 						onClick={() => setShowCamera((v) => !v)}
 					>
