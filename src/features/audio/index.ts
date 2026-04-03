@@ -1,12 +1,23 @@
 /** Web Audio API ベースの低遅延オーディオマネージャー */
 
-type SoundName = "balloon-pop" | "target-hit" | "penalty-hit" | "gold-hit";
+type SoundName =
+	| "balloon-pop"
+	| "target-hit"
+	| "penalty-hit"
+	| "gold-hit"
+	| "target-appear";
 
 const SOUND_PATHS: Record<SoundName, string> = {
 	"balloon-pop": "/sounds/balloon-pop.mp3",
 	"target-hit": "/sounds/target-hit.mp3",
 	"penalty-hit": "/sounds/penalty-hit.mp3",
 	"gold-hit": "/sounds/gold-hit.mp3",
+	"target-appear": "/sounds/target-appear.mp3",
+};
+
+/** 各サウンドの再生開始オフセット（秒） */
+const soundOffsets: Partial<Record<SoundName, number>> = {
+	"target-appear": 0,
 };
 
 let audioCtx: AudioContext | null = null;
@@ -44,7 +55,11 @@ export const preloadSounds = async (): Promise<void> => {
 };
 
 /** サウンド再生（重複時は音量を自動で下げる） */
-export const playSound = (name: SoundName, volume = 1.0): void => {
+export const playSound = (
+	name: SoundName,
+	volume = 1.0,
+	offsetOverride?: number,
+): void => {
 	const ctx = getContext();
 	const buffer = buffers.get(name);
 	if (!buffer) return;
@@ -53,7 +68,6 @@ export const playSound = (name: SoundName, volume = 1.0): void => {
 		ctx.resume();
 	}
 
-	// 同時再生が多いときは音量を下げる
 	const adjustedVolume =
 		activeSources >= MAX_CONCURRENT
 			? volume * 0.3
@@ -73,5 +87,21 @@ export const playSound = (name: SoundName, volume = 1.0): void => {
 		activeSources = Math.max(0, activeSources - 1);
 	};
 
-	source.start(0);
+	const offset = offsetOverride ?? soundOffsets[name] ?? 0;
+	source.start(0, offset);
+};
+
+/** サウンドのオフセットを動的に設定 */
+export const setSoundOffset = (name: SoundName, offset: number): void => {
+	soundOffsets[name] = offset;
+};
+
+/** 現在のオフセットを取得 */
+export const getSoundOffset = (name: SoundName): number => {
+	return soundOffsets[name] ?? 0;
+};
+
+/** サウンドの長さ（秒）を取得 */
+export const getSoundDuration = (name: SoundName): number => {
+	return buffers.get(name)?.duration ?? 0;
 };

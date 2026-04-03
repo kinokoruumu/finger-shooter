@@ -1,7 +1,8 @@
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
+import { playSound } from "@/features/audio";
 
 type TargetState = "appearing" | "visible" | "leaving" | "destroyed";
 
@@ -222,6 +223,11 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 	const [state, setState] = useState<TargetState>("appearing");
 	const [showParticles, setShowParticles] = useState(false);
 	const elapsed = useRef(0);
+
+	// 出現時に音を鳴らす
+	useEffect(() => {
+		playSound("target-appear", 0.5);
+	}, []);
 	const positionRef = useRef<[number, number, number]>([
 		data.x,
 		data.y,

@@ -1,6 +1,12 @@
 import { Canvas } from "@react-three/fiber";
-import { useCallback, useState } from "react";
-import { preloadSounds } from "@/features/audio";
+import { useCallback, useEffect, useState } from "react";
+import {
+	getSoundDuration,
+	getSoundOffset,
+	playSound,
+	preloadSounds,
+	setSoundOffset,
+} from "@/features/audio";
 import type { GroundTargetData } from "@/features/game/components/ground-target";
 import { GroundTarget } from "@/features/game/components/ground-target";
 import { StageTransition } from "@/features/game/components/stage-transition";
@@ -23,6 +29,18 @@ export const UICatalog = () => {
 
 	// 的アニメーションデモ
 	const [demoTargets, setDemoTargets] = useState<GroundTargetData[]>([]);
+	const [appearOffset, setAppearOffset] = useState(0);
+	const [appearDuration, setAppearDuration] = useState(0);
+
+	// 音のメタデータを取得
+	useEffect(() => {
+		const init = async () => {
+			await preloadSounds();
+			setAppearOffset(getSoundOffset("target-appear"));
+			setAppearDuration(getSoundDuration("target-appear"));
+		};
+		init();
+	}, []);
 	const [demoType, setDemoType] = useState<"normal" | "gold" | "penalty">(
 		"normal",
 	);
@@ -110,6 +128,52 @@ export const UICatalog = () => {
 							クリア
 						</button>
 					</div>
+
+					{/* 出現音オフセット調整 */}
+					<div className="mb-4 rounded-xl border border-stone-600 bg-stone-900/80 p-4 backdrop-blur-sm">
+						<p className="mb-2 font-bold text-sm text-white" style={rf}>
+							出現音 (target-appear) オフセット調整
+						</p>
+						<div className="flex items-center gap-3">
+							<input
+								type="range"
+								min="0"
+								max={Math.max(appearDuration, 1)}
+								step="0.01"
+								value={appearOffset}
+								onChange={(e) => {
+									const v = Number.parseFloat(e.target.value);
+									setAppearOffset(v);
+									setSoundOffset("target-appear", v);
+								}}
+								className="flex-1"
+							/>
+							<input
+								type="number"
+								min="0"
+								max={Math.max(appearDuration, 1)}
+								step="0.01"
+								value={appearOffset}
+								onChange={(e) => {
+									const v = Number.parseFloat(e.target.value);
+									setAppearOffset(v);
+									setSoundOffset("target-appear", v);
+								}}
+								className="w-20 rounded-md border border-stone-600 bg-stone-800 px-2 py-1 font-mono text-sm text-white"
+							/>
+							<span className="font-mono text-stone-400 text-xs">
+								/ {appearDuration.toFixed(2)}s
+							</span>
+							<button
+								type="button"
+								className="rounded-md bg-stone-700 px-3 py-1 text-sm text-white hover:bg-stone-600"
+								onClick={() => playSound("target-appear", 0.7)}
+							>
+								試聴
+							</button>
+						</div>
+					</div>
+
 					<div className="relative h-[500px] overflow-hidden rounded-2xl border border-stone-600">
 						<BgImage />
 						<div className="absolute inset-0">
