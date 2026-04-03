@@ -14,7 +14,7 @@ export const ResultScreen = ({ stageScores, onRetry }: Props) => {
 	return (
 		<div className="absolute inset-0 z-30 flex items-center justify-center">
 			<motion.div
-				className="flex w-[400px] flex-col items-center rounded-3xl bg-amber-50/95 px-10 py-10 shadow-xl shadow-black/10 backdrop-blur-md"
+				className="flex w-[400px] flex-col items-center rounded-3xl border border-stone-400/40 bg-amber-50/90 px-10 py-10 shadow-2xl shadow-black/25 backdrop-blur-xl"
 				initial={{ opacity: 0, scale: 0.9, y: 20 }}
 				animate={{ opacity: 1, scale: 1, y: 0 }}
 				transition={{ duration: 0.5, ease: "easeOut" }}

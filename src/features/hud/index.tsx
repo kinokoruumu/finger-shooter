@@ -20,7 +20,12 @@ export const HUD = ({ score, isVisible }: Props) => {
 					className="text-center"
 					style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
 				>
-					<span className="font-black text-5xl text-white tabular-nums drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+					<span
+						className="font-black text-5xl text-white tabular-nums"
+						style={{
+							textShadow: "0 2px 8px rgba(0,0,0,0.7), 0 0 2px rgba(0,0,0,0.9)",
+						}}
+					>
 						{score}
 					</span>
 				</div>

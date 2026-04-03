@@ -63,7 +63,7 @@ export const TitleScreen = ({ onStart, debugMode }: Props) => {
 
 				{/* 操作説明カード */}
 				<motion.div
-					className="w-[340px] rounded-2xl bg-amber-50/95 px-7 py-6 shadow-xl shadow-black/10 backdrop-blur-md"
+					className="w-[340px] rounded-2xl border border-stone-400/40 bg-amber-50/90 px-7 py-6 shadow-2xl shadow-black/25 backdrop-blur-xl"
 					initial={{ opacity: 0, y: 15 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.15, duration: 0.45 }}

@@ -37,8 +37,10 @@ export const ScorePopupDisplay = () => {
 					className={cn(
 						"absolute animate-score-popup font-bold",
 						popup.points >= 3
-							? "text-2xl text-yellow-300 drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]"
-							: "text-xl text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]",
+							? "text-2xl text-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+							: popup.points < 0
+								? "text-xl text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+								: "text-xl text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]",
 					)}
 					style={{
 						left: `${popup.x * 100}%`,

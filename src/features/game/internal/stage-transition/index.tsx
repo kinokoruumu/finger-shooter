@@ -56,7 +56,7 @@ export const StageTransition = ({
 							animate={{ opacity: 1, scale: 1, y: 0 }}
 							exit={{ opacity: 0, y: -20 }}
 							transition={{ duration: 0.4, ease: "easeOut" }}
-							className="flex w-1/2 min-w-80 max-w-lg flex-col items-center gap-5 rounded-2xl bg-amber-50/95 px-8 py-8 shadow-xl shadow-black/10 backdrop-blur-md"
+							className="flex w-1/2 min-w-80 max-w-lg flex-col items-center gap-5 rounded-2xl border border-stone-400/40 bg-amber-50/90 px-8 py-8 shadow-2xl shadow-black/25 backdrop-blur-xl"
 						>
 							{prevStage && (
 								<h2 className="font-black text-2xl text-stone-800" style={rf}>
@@ -120,7 +120,7 @@ export const StageTransition = ({
 							animate={{ opacity: 1, scale: 1, y: 0 }}
 							exit={{ opacity: 0, scale: 1.1, y: -30 }}
 							transition={{ duration: 0.5, ease: "easeOut" }}
-							className="rounded-2xl bg-amber-50/90 px-12 py-8 shadow-xl shadow-black/10 backdrop-blur-md"
+							className="rounded-2xl border border-stone-400/40 bg-amber-50/90 px-12 py-8 shadow-2xl shadow-black/25 backdrop-blur-xl"
 						>
 							<motion.h2
 								className="font-black text-stone-800"

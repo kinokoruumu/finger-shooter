@@ -144,7 +144,7 @@ export const App = () => {
 			{/* キャリブレーション画面 */}
 			{gameState.phase === "calibrating" && (
 				<div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
-					<div className="flex w-[340px] flex-col items-center gap-5 rounded-2xl bg-amber-50/95 px-8 py-8 shadow-xl shadow-black/10 backdrop-blur-md">
+					<div className="flex w-[340px] flex-col items-center gap-5 rounded-2xl border border-stone-400/40 bg-amber-50/90 px-8 py-8 shadow-2xl shadow-black/25 backdrop-blur-xl">
 						<p
 							className="text-center font-black text-lg text-stone-800"
 							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
