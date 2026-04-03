@@ -265,6 +265,7 @@ export const useGameScene = (
 							if (posRef?.current) {
 								if (checkHit3D(hitWorldGround, posRef.current, 3.0)) {
 									child.userData.handleHit?.();
+									playSound("target-hit", 0.6);
 									setGroundTargets((prev) =>
 										prev.filter((t) => t.id !== child.userData.id),
 									);
@@ -308,6 +309,7 @@ export const useGameScene = (
 
 								if (checkHit3D(hitWorldTrain, slotWorld, 2.5)) {
 									handleSlotHit(i);
+									playSound("target-hit", 0.6);
 									addScoreWithPopup(1, "+1", event.x, event.y);
 									const remaining = slots.filter(
 										(s: { alive: boolean }, idx: number) =>
