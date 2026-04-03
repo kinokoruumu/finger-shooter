@@ -76,7 +76,6 @@ export const useGameScene = (
 	}, [phase, currentStage]);
 
 	// グリッド座標(gx: 0-7, gy: 0-3)→正規化座標に変換
-	// nx: 0.2〜0.8, ny: 0.2〜0.75 に収める（端すぎない範囲）
 	const gridToNormalized = useCallback(
 		(gx: number, gy: number): [number, number] => {
 			const nx = 0.2 + (gx / 7) * 0.6;
@@ -85,6 +84,20 @@ export const useGameScene = (
 		},
 		[],
 	);
+
+	// 画面幅に応じた的のスケールを計算
+	const targetScale = useRef(1.8);
+	useEffect(() => {
+		const [leftX] = screenToWorld(0.2, 0.5, -15);
+		const [rightX] = screenToWorld(0.8, 0.5, -15);
+		const gridWidth = rightX - leftX;
+		// 8列の間隔 = gridWidth / 7。的の直径がこの間隔の80%以下になるようscale調整
+		const cellWidth = gridWidth / 7;
+		const maxDiameter = cellWidth * 0.8;
+		// 的の基本直径 = radius 1.0 * 2 = 2.0 (scale=1で直径2)
+		const scale = Math.min(1.8, maxDiameter / 2.0);
+		targetScale.current = Math.max(0.8, scale);
+	}, [screenToWorld]);
 
 	const spawnFromEntry = useCallback(
 		(entry: SpawnEntry) => {
@@ -142,6 +155,7 @@ export const useGameScene = (
 								visibleDuration: entry.visibleDuration ?? 2.5,
 								gx: entry.gx,
 								gy: entry.gy,
+								scale: targetScale.current,
 							},
 						];
 					});

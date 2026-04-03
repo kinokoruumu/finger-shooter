@@ -19,7 +19,7 @@ afterEach(() => {
 const createLandmarks = (
 	overrides: Record<number, Partial<NormalizedLandmark>> = {},
 ): NormalizedLandmark[] => {
-	const defaults: NormalizedLandmark = { x: 0.5, y: 0.5, z: 0 };
+	const defaults: NormalizedLandmark = { x: 0.5, y: 0.5, z: 0, visibility: 1 };
 	return Array.from({ length: 21 }, (_, i) => ({
 		...defaults,
 		...overrides[i],

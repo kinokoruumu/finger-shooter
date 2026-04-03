@@ -17,6 +17,8 @@ export type GroundTargetData = {
 	/** グリッド座標（被り判定用） */
 	gx?: number;
 	gy?: number;
+	/** 的のスケール（画面幅に応じて動的） */
+	scale: number;
 };
 
 type Props = {
@@ -306,7 +308,9 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 						handleHit,
 					}}
 				>
-					<TargetVisual isGold={data.isGold} isPenalty={data.isPenalty} />
+					<group scale={data.scale / 1.8}>
+						<TargetVisual isGold={data.isGold} isPenalty={data.isPenalty} />
+					</group>
 				</group>
 			)}
 			{showParticles && (
