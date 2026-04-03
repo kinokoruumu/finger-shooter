@@ -76,10 +76,11 @@ export const useGameScene = (
 	}, [phase, currentStage]);
 
 	// グリッド座標(gx: 0-7, gy: 0-3)→正規化座標に変換
+	// nx: 0.2〜0.8, ny: 0.2〜0.75 に収める（端すぎない範囲）
 	const gridToNormalized = useCallback(
 		(gx: number, gy: number): [number, number] => {
-			const nx = 0.1 + (gx / 7) * 0.8;
-			const ny = 0.15 + (gy / 3) * 0.7;
+			const nx = 0.2 + (gx / 7) * 0.6;
+			const ny = 0.2 + (gy / 3) * 0.55;
 			return [nx, ny];
 		},
 		[],
