@@ -8,6 +8,11 @@
 			"Bash(bunx biome *)",
 			"Bash(bunx tsc *)"
 		],
-		"deny": ["Bash(bun run dev)", "Bash(rm -rf *)", "Bash(gh pr edit *)"]
+		"deny": [
+			"Bash(bun run dev)",
+			"Bash(rm -rf *)",
+			"Bash(gh pr edit *)",
+			"Read(./.playwright-mcp/**)"
+		]
 	}
 }
