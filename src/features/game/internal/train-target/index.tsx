@@ -34,7 +34,7 @@ const SmallTarget = ({ alive }: { alive: boolean }) => {
 	];
 
 	return (
-		<group scale={0.6}>
+		<group scale={1.2}>
 			<mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.06]}>
 				<cylinderGeometry args={[0.6, 0.6, 0.12, 32]} />
 				<meshStandardMaterial color="#3a3a3a" />
@@ -88,9 +88,9 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 	const groupRef = useRef<THREE.Group>(null);
 	const [alive, setAlive] = useState(true);
 	const [slots, setSlots] = useState<SlotState[]>([
-		{ offsetX: -1.95, offsetY: 0.39, alive: true },
-		{ offsetX: 0, offsetY: 0.39, alive: true },
-		{ offsetX: 1.95, offsetY: 0.39, alive: true },
+		{ offsetX: -2.0, offsetY: 0, alive: true },
+		{ offsetX: 0, offsetY: 0, alive: true },
+		{ offsetX: 2.0, offsetY: 0, alive: true },
 	]);
 
 	useFrame((_, delta) => {

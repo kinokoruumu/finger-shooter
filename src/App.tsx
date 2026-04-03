@@ -8,6 +8,7 @@ import { HandTracking } from "@/features/hand-tracking";
 import { resetGestureState } from "@/features/hand-tracking/gesture-detector";
 import { DebugOverlay } from "@/features/hand-tracking/internal/debug-overlay";
 import { HUD } from "@/features/hud";
+import { AimCursor } from "@/features/hud/internal/aim-cursor";
 import { LoadingScreen } from "@/features/hud/internal/loading-screen";
 import { TrackingStatus } from "@/features/hud/internal/tracking-status";
 import { cn } from "@/lib/utils";
@@ -135,7 +136,10 @@ export const App = () => {
 			{gameState.phase === "title" && !isLoading && (
 				<div className="absolute inset-0 z-30 flex flex-col items-center justify-center">
 					<div className="rounded-2xl bg-black/60 px-12 py-10 text-center backdrop-blur-sm">
-						<h1 className="mb-2 font-bold text-5xl text-white">
+						<h1
+							className="mb-2 font-black text-5xl text-white"
+							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
+						>
 							Finger Shooter
 						</h1>
 						<p className="mb-2 text-white/60">
@@ -165,10 +169,18 @@ export const App = () => {
 			{gameState.phase === "result" && (
 				<div className="absolute inset-0 z-30 flex flex-col items-center justify-center">
 					<div className="rounded-2xl bg-black/70 px-12 py-10 text-center backdrop-blur-sm">
-						<h2 className="mb-2 font-bold text-3xl text-white">TIME UP!</h2>
+						<h2
+							className="mb-2 font-black text-3xl text-white"
+							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
+						>
+							TIME UP!
+						</h2>
 						<p className="mb-1 text-white/60">SCORE</p>
-						<p className="mb-8 font-bold text-6xl text-white">
-							{gameState.score.toLocaleString()}
+						<p
+							className="mb-8 font-black text-6xl text-white"
+							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
+						>
+							{gameState.score}
 						</p>
 						<button
 							type="button"
@@ -186,6 +198,9 @@ export const App = () => {
 					</div>
 				</div>
 			)}
+
+			{/* プレイ中以外のエイムカーソル（ダイアログの上に表示） */}
+			{gameState.phase !== "playing" && <AimCursor />}
 
 			{/* ハンドトラッキング */}
 			<HandTracking

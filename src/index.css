@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+@import url("https://fonts.googleapis.com/css2?family=Rounded+Mplus+1c:wght@700;800;900&display=swap");
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -127,4 +129,26 @@
 	html {
 		@apply font-sans;
 	}
+}
+
+@keyframes score-popup {
+	0% {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(0.5);
+	}
+	20% {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1.2);
+	}
+	40% {
+		transform: translate(-50%, -50%) scale(1);
+	}
+	100% {
+		opacity: 0;
+		transform: translate(-50%, -120%) scale(1);
+	}
+}
+
+.animate-score-popup {
+	animation: score-popup 1.2s ease-out forwards;
 }

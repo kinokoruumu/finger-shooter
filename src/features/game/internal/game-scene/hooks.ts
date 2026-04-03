@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type * as THREE from "three";
 import { GAME_CONFIG } from "@/config/game-config";
 import {
-	addScore,
+	addScoreWithPopup,
 	consumeFireEvents,
 	setPhase,
 	setTimeRemaining,
@@ -87,15 +87,16 @@ export const useGameScene = (isPlaying: boolean) => {
 
 			// 既存の地上ターゲットと重ならないかチェック
 			const tooClose = groundTargets.some((t) => Math.abs(t.x - x) < 3);
+			lastGroundSpawn.current = now;
 			if (!tooClose) {
-				lastGroundSpawn.current = now;
 				const [, bottomY] = screenToWorld(0.5, 0.95, -15);
 				const [, topY] = screenToWorld(0.5, 0.3, -15);
 				const peakY = topY - Math.random() * 2;
 
+				const isGold = Math.random() < 0.2;
 				setGroundTargets((prev) => [
 					...prev,
-					{ id: genId(), x, groundY: bottomY - 2, peakY },
+					{ id: genId(), x, groundY: bottomY - 2, peakY, isGold },
 				]);
 			}
 		}
@@ -125,8 +126,8 @@ export const useGameScene = (isPlaying: boolean) => {
 
 			// 既存の風船と重ならないかチェック
 			const tooClose = balloonTargets.some((t) => Math.abs(t.x - x) < 2);
+			lastBalloonSpawn.current = now;
 			if (!tooClose) {
-				lastBalloonSpawn.current = now;
 				const [, bottomY] = screenToWorld(0.5, 1.1, -12);
 				const speed =
 					GAME_CONFIG.target.balloonSpeedMin +
@@ -175,7 +176,10 @@ export const useGameScene = (isPlaying: boolean) => {
 						if (posRef?.current) {
 							if (checkHit3D(hitWorldBalloon, posRef.current, 1.5)) {
 								child.userData.handleHit?.();
-								addScore(150);
+								setBalloonTargets((prev) =>
+									prev.filter((t) => t.id !== child.userData.id),
+								);
+								addScoreWithPopup(1, "+1", event.x, event.y);
 								hit = true;
 								break;
 							}
@@ -192,7 +196,16 @@ export const useGameScene = (isPlaying: boolean) => {
 							if (posRef?.current) {
 								if (checkHit3D(hitWorldGround, posRef.current, 2.0)) {
 									child.userData.handleHit?.();
-									addScore(100);
+									setGroundTargets((prev) =>
+										prev.filter((t) => t.id !== child.userData.id),
+									);
+									const isGold = child.userData.isGold;
+									addScoreWithPopup(
+										isGold ? 3 : 1,
+										isGold ? "+3" : "+1",
+										event.x,
+										event.y,
+									);
 									hit = true;
 									break;
 								}
@@ -221,7 +234,15 @@ export const useGameScene = (isPlaying: boolean) => {
 
 								if (checkHit3D(hitWorldTrain, slotWorld, 1.2)) {
 									handleSlotHit(i);
-									addScore(100);
+									addScoreWithPopup(1, "+1", event.x, event.y);
+									// 全滅チェック（この1つで最後か）
+									const remaining = slots.filter(
+										(s: { alive: boolean }, idx: number) =>
+											idx === i ? false : s.alive,
+									);
+									if (remaining.length === 0) {
+										addScoreWithPopup(3, "+3 BONUS!", event.x, event.y - 0.05);
+									}
 									hit = true;
 									break;
 								}

@@ -108,8 +108,42 @@ export const setPhase = (phase: GameUIState["phase"]) => {
 	updateSnapshot({ phase });
 };
 
+export type ScorePopup = {
+	id: number;
+	points: number;
+	label: string;
+	x: number;
+	y: number;
+};
+
+let nextPopupId = 0;
+let scorePopups: ScorePopup[] = [];
+
 export const addScore = (points: number) => {
 	updateSnapshot({ score: gameUISnapshot.score + points });
+};
+
+export const addScoreWithPopup = (
+	points: number,
+	label: string,
+	screenX: number,
+	screenY: number,
+) => {
+	updateSnapshot({ score: gameUISnapshot.score + points });
+	scorePopups.push({
+		id: ++nextPopupId,
+		points,
+		label,
+		x: screenX,
+		y: screenY,
+	});
+	notifyListeners();
+};
+
+export const consumeScorePopups = (): ScorePopup[] => {
+	const popups = [...scorePopups];
+	scorePopups = [];
+	return popups;
 };
 
 export const setTimeRemaining = (time: number) => {

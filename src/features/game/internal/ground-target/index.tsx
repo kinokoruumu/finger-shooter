@@ -9,6 +9,7 @@ export type GroundTargetData = {
 	x: number;
 	groundY: number;
 	peakY: number;
+	isGold: boolean;
 };
 
 type Props = {
@@ -17,21 +18,29 @@ type Props = {
 };
 
 /** 弓道の的: 同心円の短いシリンダー */
-const ArcheryTarget = () => {
-	const rings: { radius: number; color: string; z: number }[] = [
-		{ radius: 1.0, color: "#222222", z: 0 },
-		{ radius: 0.78, color: "#ffffff", z: 0.01 },
-		{ radius: 0.57, color: "#222222", z: 0.02 },
-		{ radius: 0.36, color: "#ffffff", z: 0.03 },
-		{ radius: 0.2, color: "#dd2222", z: 0.04 },
-	];
+const ArcheryTarget = ({ isGold }: { isGold: boolean }) => {
+	const rings: { radius: number; color: string; z: number }[] = isGold
+		? [
+				{ radius: 1.0, color: "#b8860b", z: 0 },
+				{ radius: 0.78, color: "#ffd700", z: 0.01 },
+				{ radius: 0.57, color: "#b8860b", z: 0.02 },
+				{ radius: 0.36, color: "#ffd700", z: 0.03 },
+				{ radius: 0.2, color: "#ff4444", z: 0.04 },
+			]
+		: [
+				{ radius: 1.0, color: "#222222", z: 0 },
+				{ radius: 0.78, color: "#ffffff", z: 0.01 },
+				{ radius: 0.57, color: "#222222", z: 0.02 },
+				{ radius: 0.36, color: "#ffffff", z: 0.03 },
+				{ radius: 0.2, color: "#dd2222", z: 0.04 },
+			];
 
 	return (
 		<group scale={1.8}>
 			{/* 的本体（厚み） */}
 			<mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.1]}>
 				<cylinderGeometry args={[1.0, 1.0, 0.2, 32]} />
-				<meshStandardMaterial color="#3a3a3a" />
+				<meshStandardMaterial color={isGold ? "#8b6914" : "#3a3a3a"} />
 			</mesh>
 			{/* 同心円リング（前面） */}
 			{rings.map((ring) => (
@@ -170,11 +179,12 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 					userData={{
 						type: "ground-target",
 						id: data.id,
+						isGold: data.isGold,
 						positionRef,
 						handleHit,
 					}}
 				>
-					<ArcheryTarget />
+					<ArcheryTarget isGold={data.isGold} />
 				</group>
 			)}
 			{showParticles && <DestroyParticles position={positionRef.current} />}
