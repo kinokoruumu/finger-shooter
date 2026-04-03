@@ -166,6 +166,7 @@ export const useGameScene = (
 								slotsOscillate: entry.slotsOscillate ?? false,
 								direction: dir,
 								lane: 0,
+								speed: entry.trainSpeed ?? 1.0,
 							},
 						];
 					});

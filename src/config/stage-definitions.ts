@@ -17,6 +17,8 @@ export type SpawnEntry = {
 	direction?: number;
 	/** 列車: レーン 0=上, 1=中, 2=下 */
 	trainLane?: number;
+	/** 列車: 速度倍率（デフォルト1.0） */
+	trainSpeed?: number;
 };
 
 export type StageDefinition = {
@@ -57,13 +59,14 @@ const stage1Spawns: SpawnEntry[] = (() => {
 		});
 	}
 
-	// 25s: 列車1台（終盤、右から）
+	// 25s: 列車1台（終盤、右から、ゆっくり）
 	spawns.push({
 		time: 25000,
 		type: "train",
 		nx: 0,
 		direction: 1,
 		trainLane: 1,
+		trainSpeed: 1.5,
 	});
 
 	return spawns.sort((a, b) => a.time - b.time);
@@ -145,7 +148,7 @@ const stage2Spawns: SpawnEntry[] = (() => {
 		});
 	}
 
-	// 28s: 列車（左から、中レーン）
+	// 28s: 列車（左から、中レーン、やや速い）
 	spawns.push({
 		time: 28000,
 		type: "train",
@@ -153,6 +156,7 @@ const stage2Spawns: SpawnEntry[] = (() => {
 		slotsOscillate: true,
 		direction: -1,
 		trainLane: 1,
+		trainSpeed: 2.0,
 	});
 
 	return spawns.sort((a, b) => a.time - b.time);
@@ -185,7 +189,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		spawns.push({ time, type, nx: 0, gx, gy, visibleDuration: dur });
 	};
 
-	const train = (time: number, lane: number, dir = 1) => {
+	const train = (time: number, lane: number, dir = 1, speed = 2.5) => {
 		spawns.push({
 			time,
 			type: "train",
@@ -193,6 +197,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 			slotsOscillate: true,
 			direction: dir,
 			trainLane: lane,
+			trainSpeed: speed,
 		});
 	};
 

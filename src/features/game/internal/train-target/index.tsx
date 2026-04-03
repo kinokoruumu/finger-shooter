@@ -17,6 +17,7 @@ export type TrainTargetData = {
 	slotsOscillate: boolean;
 	direction: number;
 	lane: number;
+	speed: number;
 };
 
 type Props = {
@@ -127,7 +128,7 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 		if (!groupRef.current || !alive) return;
 
 		groupRef.current.position.x -=
-			GAME_CONFIG.target.trainSpeed * delta * 2 * dir;
+			GAME_CONFIG.target.trainSpeed * delta * 2 * dir * data.speed;
 
 		if (data.slotsOscillate) {
 			oscillateTime.current += delta * 2.5;
