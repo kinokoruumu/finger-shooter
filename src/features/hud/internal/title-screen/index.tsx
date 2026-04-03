@@ -115,7 +115,7 @@ export const TitleScreen = ({ onStart, debugMode }: Props) => {
 						style={rf}
 						onClick={() => onStart()}
 					>
-						START
+						スタート
 					</button>
 					<p className="text-stone-400 text-xs" style={rf}>
 						ボタンにねらいを合わせてピンチでもOK

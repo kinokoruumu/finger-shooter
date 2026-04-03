@@ -346,44 +346,46 @@ const stage3Spawns: SpawnEntry[] = (() => {
 
 	// G6: 外周 + 風船4
 	balloons(6, 4, 800);
-	spawns.push(...toSpawns(borderClockwise(0, 150, "ground", 3.0), 6));
+	spawns.push(...toSpawns(borderClockwise(0, 200), 6));
 
-	// G7: クロス（中央金）
+	// G7: クロス（中央金、角にペナルティ）
 	spawns.push(
 		...toSpawns(
-			crossPattern(0, "ground", 4.5).map((e) =>
-				e.gx === 4 && e.gy === 2 ? { ...e, type: "ground-gold" as const } : e,
-			),
+			crossPattern(0).map((e) => {
+				if (e.gx === 4 && e.gy === 2)
+					return { ...e, type: "ground-gold" as const };
+				return e;
+			}),
 			7,
 		),
 	);
+	spawns.push(...toSpawns([t(0, "ground-penalty", 0, 0, 6.0)], 7));
 
-	// G8: 風船ラッシュ
-	balloons(8, 5, 500);
-
-	// G9: 四隅 + 金中央
+	// G8: 風船3 + 四隅に金、中央にペナルティ
+	balloons(8, 3, 600);
 	spawns.push(
 		...toSpawns(
 			[
-				t(0, "ground", 0, 0, 3.5),
-				t(0, "ground", 7, 0, 3.5),
-				t(0, "ground", 0, 3, 3.5),
-				t(0, "ground", 7, 3, 3.5),
-				t(0, "ground-gold", 4, 2, 3.5),
+				t(0, "ground-gold", 1, 0, 5.0),
+				t(0, "ground-gold", 6, 0, 5.0),
+				t(0, "ground", 1, 3, 5.0),
+				t(0, "ground", 6, 3, 5.0),
+				t(0, "ground-penalty", 3, 1, 5.0),
+				t(0, "ground-gold", 4, 2, 5.0),
 			],
-			9,
+			8,
 		),
 	);
 
-	// G10: フィナーレ — 横一列2段
-	spawns.push(...toSpawns(horizontalLine(0, 0, "ground", 3.5), 10));
-	spawns.push(...toSpawns(horizontalLine(500, 3, "ground", 3.5), 10));
+	// G9: フィナーレ — 横一列2段（dur延長）
+	spawns.push(...toSpawns(horizontalLine(0, 0, "ground", 5.0), 9));
+	spawns.push(...toSpawns(horizontalLine(500, 3, "ground", 5.0), 9));
 
 	return spawns;
 })();
 
 export const STAGES: StageDefinition[] = [
-	{ name: "ラウンド1", duration: 30000, maxScore: 36, spawns: stage1Spawns },
+	{ name: "ラウンド1", duration: 30000, maxScore: 42, spawns: stage1Spawns },
 	{ name: "ラウンド2", duration: 30000, maxScore: 100, spawns: stage2Spawns },
 	{
 		name: "ファイナルラウンド",
