@@ -38,6 +38,8 @@ export const useGameScene = (
 	const groupInitialized = useRef(false);
 	/** スポーン完了後、state反映を待つためのフレームカウンタ */
 	const waitFrames = useRef(0);
+	/** リセット済みフラグ（同じphase+stageで二重リセット防止） */
+	const resetKey = useRef("");
 	const sceneRef = useRef<THREE.Group>(null);
 
 	useEffect(() => {
@@ -54,10 +56,12 @@ export const useGameScene = (
 		[],
 	);
 
-	// ステージ遷移後のリセット（全ステージ共通）
+	// ステージ遷移後のリセット（同じphase+stageの組み合わせでは1回のみ）
 	// biome-ignore lint/correctness/useExhaustiveDependencies: currentStageの変化でもリセット必要
 	useEffect(() => {
-		if (phase === "playing") {
+		const key = `${phase}-${currentStage}`;
+		if (phase === "playing" && resetKey.current !== key) {
+			resetKey.current = key;
 			setGroundTargets([]);
 			setTrainTargets([]);
 			setBalloonTargets([]);
@@ -234,6 +238,9 @@ export const useGameScene = (
 
 		// スポーンしたフレームではstate反映を待つ（2フレーム）
 		if (spawnedThisFrame) {
+			console.log(
+				`[G${currentGroup.current}] spawned ${groupSpawnIndex.current}/${groupSpawns.length}`,
+			);
 			waitFrames.current = 2;
 		} else if (waitFrames.current > 0) {
 			waitFrames.current--;
@@ -241,6 +248,9 @@ export const useGameScene = (
 			// グループのスポーン全完了 AND 的・列車が残っていない → 次グループ
 			const hasRemaining = groundTargets.length > 0 || trainTargets.length > 0;
 			if (!hasRemaining) {
+				console.log(
+					`[G${currentGroup.current}] complete → G${currentGroup.current + 1} (ground=${groundTargets.length} train=${trainTargets.length})`,
+				);
 				currentGroup.current++;
 				groupSpawnIndex.current = 0;
 				groupInitialized.current = false;
