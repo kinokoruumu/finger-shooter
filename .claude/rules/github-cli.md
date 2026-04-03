@@ -1,6 +1,5 @@
 ---
 description: GitHub CLI の使い方に関するルール
-globs: ""
 ---
 
 # GitHub CLI
