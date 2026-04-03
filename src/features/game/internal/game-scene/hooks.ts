@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type * as THREE from "three";
 import type { SpawnEntry } from "@/config/stage-definitions";
 import { STAGES } from "@/config/stage-definitions";
+import { playSound } from "@/features/audio";
 import {
 	addScoreWithPopup,
 	consumeFireEvents,
@@ -242,6 +243,7 @@ export const useGameScene = (
 						if (posRef?.current) {
 							if (checkHit3D(hitWorldBalloon, posRef.current, 1.5)) {
 								child.userData.handleHit?.();
+								playSound("balloon-pop", 0.6);
 								setBalloonTargets((prev) =>
 									prev.filter((t) => t.id !== child.userData.id),
 								);

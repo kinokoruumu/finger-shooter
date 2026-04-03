@@ -1,5 +1,6 @@
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { preloadSounds } from "@/features/audio";
 import { CameraView } from "@/features/camera";
 import { useCamera } from "@/features/camera/hooks";
 import { Game3D } from "@/features/game";
@@ -39,6 +40,7 @@ export const App = () => {
 
 	useEffect(() => {
 		startCamera();
+		preloadSounds();
 	}, [startCamera]);
 
 	const handleTrackingReady = useCallback(() => {
