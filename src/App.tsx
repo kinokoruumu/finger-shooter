@@ -4,17 +4,17 @@ import { preloadSounds } from "@/features/audio";
 import { CameraView } from "@/features/camera";
 import { useCamera } from "@/features/camera/hooks";
 import { Game3D } from "@/features/game";
+import { StageTransition } from "@/features/game/components/stage-transition";
 import { useGameState } from "@/features/game/hooks";
-import { StageTransition } from "@/features/game/internal/stage-transition";
 import { HandTracking } from "@/features/hand-tracking";
+import { DebugOverlay } from "@/features/hand-tracking/components/debug-overlay";
 import { resetGestureState } from "@/features/hand-tracking/gesture-detector";
-import { DebugOverlay } from "@/features/hand-tracking/internal/debug-overlay";
 import { HUD } from "@/features/hud";
-import { AimCursor } from "@/features/hud/internal/aim-cursor";
-import { LoadingScreen } from "@/features/hud/internal/loading-screen";
-import { ResultScreen } from "@/features/hud/internal/result-screen";
-import { TitleScreen } from "@/features/hud/internal/title-screen";
-import { TrackingStatus } from "@/features/hud/internal/tracking-status";
+import { AimCursor } from "@/features/hud/components/aim-cursor";
+import { LoadingScreen } from "@/features/hud/components/loading-screen";
+import { ResultScreen } from "@/features/hud/components/result-screen";
+import { TitleScreen } from "@/features/hud/components/title-screen";
+import { TrackingStatus } from "@/features/hud/components/tracking-status";
 import { cn } from "@/lib/utils";
 import {
 	consumeFireEvents,

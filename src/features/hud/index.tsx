@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ScorePopupDisplay } from "./internal/score-popup";
+import { ScorePopupDisplay } from "./components/score-popup";
 
 type Props = {
 	score: number;

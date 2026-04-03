@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { STAGES } from "@/config/stage-definitions";
-import { StageTransition } from "@/features/game/internal/stage-transition";
-import { ResultScreen } from "@/features/hud/internal/result-screen";
-import { TitleScreen } from "@/features/hud/internal/title-screen";
+import { StageTransition } from "@/features/game/components/stage-transition";
+import { ResultScreen } from "@/features/hud/components/result-screen";
+import { TitleScreen } from "@/features/hud/components/title-screen";
 import { cn } from "@/lib/utils";
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };

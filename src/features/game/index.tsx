@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import type { GamePhase } from "@/stores/game-store";
-import { GameScene } from "./internal/game-scene";
+import { GameScene } from "./components/game-scene";
 
 type Props = {
 	isPlaying: boolean;
