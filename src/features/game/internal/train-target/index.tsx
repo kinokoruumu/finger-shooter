@@ -67,7 +67,7 @@ const TrainBody = () => {
 				<meshStandardMaterial color="#4488cc" />
 			</mesh>
 			<mesh position={[0, 1.0, 0]}>
-				<boxGeometry args={[5.2, 0.2, 1.6]} />
+				<boxGeometry args={[5.2, 0.2, 1.5]} />
 				<meshStandardMaterial color="#3377aa" />
 			</mesh>
 			{WINDOW_XS.map((wx) => (
