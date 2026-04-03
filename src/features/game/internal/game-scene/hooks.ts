@@ -265,12 +265,14 @@ export const useGameScene = (
 							if (posRef?.current) {
 								if (checkHit3D(hitWorldGround, posRef.current, 3.0)) {
 									child.userData.handleHit?.();
-									playSound("target-hit", 0.6);
 									setGroundTargets((prev) =>
 										prev.filter((t) => t.id !== child.userData.id),
 									);
 									const isGold = child.userData.isGold;
 									const isPenalty = child.userData.isPenalty;
+									if (!isGold && !isPenalty) {
+										playSound("target-hit", 0.6);
+									}
 									if (isPenalty) {
 										addScoreWithPopup(-3, "-3", event.x, event.y);
 									} else {
