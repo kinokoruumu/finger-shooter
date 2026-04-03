@@ -15,7 +15,6 @@ import { TrackingStatus } from "@/features/hud/internal/tracking-status";
 import { cn } from "@/lib/utils";
 import {
 	consumeFireEvents,
-	nextStage,
 	resetGameUI,
 	resetSharedState,
 	setPhase,
@@ -48,22 +47,12 @@ export const App = () => {
 		resetGameUI();
 		resetSharedState();
 		resetGestureState();
-		stageTransitionIsStart.current = true;
 		setPhase("stage-transition");
 	}, []);
 
-	const stageTransitionIsStart = useRef(false);
-
 	const handleStageTransitionComplete = useCallback(() => {
 		consumeFireEvents(); // 遷移中のイベントを捨てる
-		if (stageTransitionIsStart.current) {
-			// ゲーム開始時: ステージ0でそのまま playing へ
-			stageTransitionIsStart.current = false;
-			setPhase("playing");
-		} else {
-			// ステージ間遷移: 次のステージへ（最終ステージ後は result へ）
-			nextStage();
-		}
+		setPhase("playing");
 	}, []);
 
 	// タイトル・リザルト画面でピンチを検知してゲーム開始/リスタート

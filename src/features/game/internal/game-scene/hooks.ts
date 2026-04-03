@@ -6,7 +6,7 @@ import { STAGES } from "@/config/stage-definitions";
 import {
 	addScoreWithPopup,
 	consumeFireEvents,
-	setPhase,
+	nextStage,
 } from "@/stores/game-store";
 import { checkHit3D, createScreenToWorld } from "../../utils";
 import type { BalloonTargetData } from "../balloon-target";
@@ -155,9 +155,9 @@ export const useGameScene = (
 		const stageElapsed =
 			state.clock.elapsedTime * 1000 - stageStartTime.current;
 
-		// ステージ終了チェック
+		// ステージ終了チェック → 次のステージへ（最終ステージ後はresultへ）
 		if (stageElapsed >= stage.duration) {
-			setPhase("stage-transition");
+			nextStage();
 			return;
 		}
 

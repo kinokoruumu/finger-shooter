@@ -120,7 +120,7 @@ export const nextStage = () => {
 	if (next >= STAGES.length) {
 		updateSnapshot({ phase: "result" });
 	} else {
-		updateSnapshot({ currentStage: next, phase: "playing" });
+		updateSnapshot({ currentStage: next, phase: "stage-transition" });
 	}
 };
 
