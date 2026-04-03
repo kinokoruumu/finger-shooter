@@ -82,8 +82,9 @@ export const App = () => {
 		)
 			return;
 
-		const delay = gameState.phase === "result" ? 1500 : 0;
-		let ready = delay === 0;
+		// タイトル/リザルトどちらもクールダウンを入れて誤爆防止
+		const delay = gameState.phase === "result" ? 1500 : 500;
+		let ready = false;
 
 		const timer = setTimeout(() => {
 			consumeFireEvents();

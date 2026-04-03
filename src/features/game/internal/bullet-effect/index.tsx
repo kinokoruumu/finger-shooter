@@ -55,7 +55,7 @@ const Bullet = ({
 	useFrame((_, delta) => {
 		if (!groupRef.current || !bulletRef.current) return;
 
-		progressRef.current += delta * 4;
+		progressRef.current += delta * 12;
 		const t = Math.min(progressRef.current, 1);
 
 		const x = bullet.startPos[0] + (bullet.endPos[0] - bullet.startPos[0]) * t;
