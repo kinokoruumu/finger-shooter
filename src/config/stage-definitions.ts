@@ -159,16 +159,13 @@ const stage2Spawns: SpawnEntry[] = (() => {
 })();
 
 /**
- * ラウンド3: 風船40(40pt) + 通常地上32(32pt) + 金10(30pt) + 列車3台(18pt) = MAX 120
- * ペナルティ6個(-3)は回避前提。高密度・高難度。
+ * ファイナルラウンド: 風船20(20pt) + 通常15(15pt) + 金5(15pt) + 列車2台(12pt) = MAX 62
+ * ペナルティ2個(-3)は回避前提。
  */
 const stage3Spawns: SpawnEntry[] = (() => {
 	const spawns: SpawnEntry[] = [];
-	const balloonXs = [
-		0.2, 0.4, 0.6, 0.8, 0.3, 0.5, 0.7, 0.25, 0.55, 0.75, 0.35, 0.65,
-	];
+	const balloonXs = [0.25, 0.45, 0.65, 0.75, 0.35, 0.55, 0.3, 0.6, 0.4, 0.7];
 
-	// 風船ヘルパー
 	let bIdx = 0;
 	const balloon = (time: number) => {
 		spawns.push({
@@ -178,18 +175,16 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		});
 	};
 
-	// 的ヘルパー
 	const target = (
 		time: number,
 		type: SpawnEntry["type"],
 		gx: number,
 		gy: number,
-		dur = 2.0,
+		dur = 3.0,
 	) => {
 		spawns.push({ time, type, nx: 0, gx, gy, visibleDuration: dur });
 	};
 
-	// 列車ヘルパー (lane: 0=上, 1=中, 2=下)
 	const train = (time: number, lane: number, dir = 1) => {
 		spawns.push({
 			time,
@@ -201,78 +196,46 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		});
 	};
 
-	// 0~5s: 風船8 + 通常4 + 列車1(右から)
-	for (let i = 0; i < 8; i++) balloon(300 + i * 600);
-	target(500, "ground", 2, 1);
-	target(1700, "ground", 7, 3);
-	target(2900, "ground", 4, 0);
-	target(4100, "ground", 1, 3);
-	train(3000, 0, 1);
+	// 0~7s: 風船5 + 通常3 + 列車1(右から)
+	for (let i = 0; i < 5; i++) balloon(500 + i * 1200);
+	target(1000, "ground", 3, 1);
+	target(2500, "ground", 6, 2);
+	target(4000, "ground", 1, 0);
+	train(3500, 0, 1);
 
-	// 5~10s: 風船8 + 通常4 + 金2 + ペナ1
-	for (let i = 0; i < 8; i++) balloon(5200 + i * 550);
-	target(5500, "ground", 3, 2);
-	target(6600, "ground", 7, 0);
-	target(6500, "ground-gold", 5, 1);
-	target(7700, "ground", 0, 3);
-	target(8500, "ground-gold", 6, 3);
-	target(7500, "ground-penalty", 7, 2);
+	// 7~14s: 風船5 + 通常4 + 金2 + ペナ1
+	for (let i = 0; i < 5; i++) balloon(7200 + i * 1100);
+	target(7500, "ground", 5, 2);
 	target(8800, "ground", 2, 0);
+	target(9500, "ground-gold", 4, 1);
+	target(10500, "ground", 7, 3);
+	target(11500, "ground", 1, 2);
+	target(12000, "ground-gold", 6, 0);
+	target(13000, "ground-penalty", 3, 3);
 
-	// 10~15s: 風船8 + 通常6 + 金2 + 列車1(左から) + ペナ2
-	for (let i = 0; i < 8; i++) balloon(10200 + i * 500);
-	target(10500, "ground", 1, 1);
-	target(11300, "ground", 6, 3);
-	target(11500, "ground-gold", 4, 0);
-	target(12100, "ground", 7, 2);
-	target(12900, "ground", 3, 3);
-	target(13700, "ground", 7, 1);
-	target(14000, "ground-gold", 5, 3);
-	target(12500, "ground-penalty", 0, 0);
-	target(14500, "ground-penalty", 7, 3);
-	train(12000, 2, -1);
+	// 14~21s: 風船5 + 通常4 + 金2 + 列車1(左から) + ペナ1
+	for (let i = 0; i < 5; i++) balloon(14200 + i * 1000);
+	target(14500, "ground", 5, 0);
+	target(15500, "ground", 2, 2);
+	target(16500, "ground-gold", 7, 1);
+	target(17500, "ground", 4, 3);
+	target(18500, "ground", 1, 1);
+	target(19500, "ground-gold", 6, 2);
+	target(20000, "ground-penalty", 3, 0);
+	train(16000, 2, -1);
 
-	// 15~20s: 風船8 + 通常8 + 金3 + ペナ2
-	for (let i = 0; i < 8; i++) balloon(15200 + i * 450);
-	target(15500, "ground", 2, 0);
-	target(15900, "ground", 7, 2);
-	target(16000, "ground-gold", 4, 3);
-	target(16300, "ground", 0, 1);
-	target(16700, "ground", 7, 3);
-	target(17100, "ground", 5, 0);
-	target(17000, "ground-penalty", 1, 3);
-	target(17500, "ground", 7, 1);
-	target(18000, "ground-gold", 3, 2);
-	target(18400, "ground", 6, 3);
-	target(19000, "ground-penalty", 2, 1);
-	target(19200, "ground", 7, 0);
-	target(19500, "ground-gold", 4, 3);
+	// 21~28s: 風船5 + 通常4 + 金1
+	for (let i = 0; i < 5; i++) balloon(21200 + i * 900);
+	target(21500, "ground", 2, 1);
+	target(22500, "ground", 5, 3);
+	target(23500, "ground", 7, 0);
+	target(24500, "ground", 3, 2);
+	target(25500, "ground-gold", 6, 1, 2.5);
 
-	// 20~25s: 風船8 + 通常10 + 金3 + 列車1(右から) + ペナ1
-	for (let i = 0; i < 8; i++) balloon(20200 + i * 400);
-	target(20500, "ground", 1, 0);
-	target(20800, "ground", 6, 2);
-	target(21000, "ground-gold", 3, 3);
-	target(21200, "ground", 7, 1);
-	target(21500, "ground", 0, 3);
-	target(21800, "ground", 5, 0);
-	target(22100, "ground", 7, 2);
-	target(22400, "ground", 2, 3);
-	target(23000, "ground-gold", 6, 1);
-	target(23300, "ground", 4, 3);
-	target(23600, "ground", 1, 2);
-	target(24000, "ground", 6, 0);
-	target(24500, "ground-gold", 7, 3);
-	target(23500, "ground-penalty", 5, 2);
-	train(22000, 1, 1);
-
-	// 25~30s: フィナーレラッシュ — 的のみ
-	target(25500, "ground", 0, 0, 1.5);
-	target(25800, "ground", 5, 2, 1.5);
-	target(26100, "ground", 6, 3, 1.5);
-	target(26400, "ground", 3, 1, 1.5);
-	target(26700, "ground", 7, 3, 1.5);
-	target(27000, "ground", 1, 2, 1.5);
+	// 26~28s: フィナーレ — 的3つ
+	target(26000, "ground", 1, 0, 2.5);
+	target(26800, "ground", 4, 2, 2.5);
+	target(27500, "ground", 7, 3, 2.5);
 
 	return spawns.sort((a, b) => a.time - b.time);
 })();
@@ -283,7 +246,7 @@ export const STAGES: StageDefinition[] = [
 	{
 		name: "ファイナルラウンド",
 		duration: 30000,
-		maxScore: 120,
+		maxScore: 62,
 		spawns: stage3Spawns,
 	},
 ];
