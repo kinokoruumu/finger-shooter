@@ -116,6 +116,7 @@ export const TitleScreen = ({ onStart, debugMode }: Props) => {
 					transition={{ delay: 0.7, duration: 0.35, ease: "backOut" }}
 				>
 					<button
+						id="main-action-btn"
 						type="button"
 						className="pointer-events-auto rounded-2xl bg-orange-500 px-12 py-4 font-black text-xl text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-105 hover:bg-orange-400 active:scale-95 active:bg-orange-600"
 						style={rf}

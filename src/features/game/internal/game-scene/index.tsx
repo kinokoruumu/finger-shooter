@@ -29,7 +29,7 @@ export const GameScene = ({ isPlaying, currentStage, phase }: Props) => {
 
 	return (
 		<group ref={sceneRef}>
-			<Crosshair screenToWorld={screenToWorld} />
+			<Crosshair screenToWorld={screenToWorld} phase={phase} />
 
 			{balloonTargets.map((t) => (
 				<BalloonTarget key={t.id} data={t} onDead={handleBalloonDead} />

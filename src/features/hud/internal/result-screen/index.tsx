@@ -93,6 +93,7 @@ export const ResultScreen = ({ stageScores, onRetry }: Props) => {
 					transition={{ delay: 0.9, duration: 0.3 }}
 				>
 					<button
+						id="main-action-btn"
 						type="button"
 						className="pointer-events-auto rounded-2xl bg-orange-500 px-10 py-3.5 font-black text-lg text-white shadow-lg shadow-orange-500/25 transition-all hover:scale-105 hover:bg-orange-400 active:scale-95 active:bg-orange-600"
 						style={rf}

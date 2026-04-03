@@ -10,15 +10,16 @@ type Props = {
 		ny: number,
 		z: number,
 	) => [number, number, number];
+	phase: string;
 };
 
-export const Crosshair = ({ screenToWorld }: Props) => {
+export const Crosshair = ({ screenToWorld, phase }: Props) => {
 	const groupRef = useRef<THREE.Group>(null);
 
 	useFrame(() => {
 		if (!groupRef.current) return;
 
-		if (sharedState.isGunPose && sharedState.aim) {
+		if (phase === "playing" && sharedState.isGunPose && sharedState.aim) {
 			const [wx, wy, wz] = screenToWorld(
 				sharedState.aim.x,
 				sharedState.aim.y,

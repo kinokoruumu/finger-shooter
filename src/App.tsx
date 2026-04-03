@@ -72,12 +72,11 @@ export const App = () => {
 		}
 	}, [gameState.phase, gameState.gestureDebug?.calibration]);
 
-	// タイトル・リザルト画面でピンチ検知（クールダウン付き）
+	// タイトル・リザルト画面でピンチ検知（ボタン上のみ、クールダウン付き）
 	useEffect(() => {
 		if (gameState.phase !== "result" && gameState.phase !== "title") return;
 		if (gameState.phase === "title" && isLoading) return;
 
-		// タイトル: 1秒、リザルト: 1.5秒のクールダウン
 		const delay = gameState.phase === "result" ? 1500 : 1000;
 		let ready = false;
 		const timer = setTimeout(() => {
@@ -85,11 +84,30 @@ export const App = () => {
 			ready = true;
 		}, delay);
 
+		const isAimOverButton = (aimX: number, aimY: number): boolean => {
+			const btn = document.getElementById("main-action-btn");
+			if (!btn) return false;
+			const rect = btn.getBoundingClientRect();
+			const screenX = aimX * window.innerWidth;
+			const screenY = aimY * window.innerHeight;
+			// ボタンより少し広めの判定
+			const pad = 30;
+			return (
+				screenX >= rect.left - pad &&
+				screenX <= rect.right + pad &&
+				screenY >= rect.top - pad &&
+				screenY <= rect.bottom + pad
+			);
+		};
+
 		const checkPinch = () => {
 			const events = consumeFireEvents();
 			if (ready && events.length > 0) {
-				startGame();
-				return;
+				const hit = events.some((e) => isAimOverButton(e.x, e.y));
+				if (hit) {
+					startGame();
+					return;
+				}
 			}
 			rafId = requestAnimationFrame(checkPinch);
 		};
