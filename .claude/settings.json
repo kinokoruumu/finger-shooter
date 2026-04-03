@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun run build)",
+      "Bash(bun run lint)",
+      "Bash(bun run lint:fix)",
+      "Bash(bun run format)",
+      "Bash(bunx biome *)",
+      "Bash(bunx tsc *)"
+    ],
+    "deny": [
+      "Bash(bun run dev)",
+      "Bash(rm -rf *)",
+      "Bash(gh pr edit *)"
+    ]
+  }
+}
