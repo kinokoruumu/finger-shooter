@@ -62,8 +62,8 @@ const stage1Spawns: SpawnEntry[] = (() => {
 })();
 
 /**
- * ラウンド2: 地上的60個(60pt) + 金8個(24pt) + 列車1台(6pt) = MAX 90
- * ペナルティ4個(-3)は回避前提。風船なし。全てグリッド座標指定。
+ * ラウンド2: 通常25(25pt) + 金5(15pt) + 列車1台(6pt) = MAX 46
+ * ペナルティ2個(-3)は回避前提。風船なし。全てグリッド座標指定。
  */
 const stage2Spawns: SpawnEntry[] = (() => {
 	const spawns: SpawnEntry[] = [];
@@ -79,90 +79,51 @@ const stage2Spawns: SpawnEntry[] = (() => {
 		type: SpawnEntry["type"],
 		gx: number,
 		gy: number,
-		dur = 2.5,
+		dur = 3.5,
 	): G => ({ time, type, gx, gy, dur });
 
 	const entries: G[] = [
-		// 0~5s: 通常6個 — 左右に散らす
-		g(500, "ground", 2, 2),
-		g(1300, "ground", 7, 1),
-		g(2100, "ground", 4, 3),
-		g(2900, "ground", 1, 0),
-		g(3700, "ground", 8, 4),
-		g(4500, "ground", 5, 1),
+		// 0~7s: ゆったり導入 — 通常4個
+		g(500, "ground", 3, 2),
+		g(2000, "ground", 7, 1),
+		g(3500, "ground", 1, 3),
+		g(5000, "ground", 8, 0),
 
-		// 5~10s: 通常6 + 金1 + ペナ1
-		g(5500, "ground", 3, 0),
-		g(6200, "ground", 6, 3),
-		g(6900, "ground", 1, 2),
-		g(7000, "ground-gold", 5, 2),
-		g(7600, "ground", 8, 1),
-		g(8300, "ground", 2, 4),
-		g(9000, "ground-penalty", 4, 1),
-		g(9500, "ground", 7, 3),
+		// 7~14s: 通常5 + 金1 + ペナ1
+		g(7000, "ground", 5, 4),
+		g(8200, "ground", 2, 1),
+		g(9000, "ground-gold", 6, 2),
+		g(9800, "ground", 0, 3),
+		g(10800, "ground", 9, 0),
+		g(11800, "ground-penalty", 4, 2),
+		g(12500, "ground", 7, 4),
 
-		// 10~15s: 通常8 + 金1 + ペナ1
-		g(10200, "ground", 0, 1),
-		g(10800, "ground", 9, 3),
-		g(11400, "ground", 3, 0),
-		g(12000, "ground-gold", 6, 2),
-		g(12600, "ground", 1, 4),
-		g(13200, "ground", 8, 0),
-		g(13800, "ground", 5, 3),
-		g(14000, "ground-penalty", 2, 2),
-		g(14400, "ground", 7, 1),
-		g(14800, "ground", 4, 4),
+		// 14~20s: 通常6 + 金2 — 少しペースアップ
+		g(14000, "ground", 1, 0),
+		g(15000, "ground", 8, 3),
+		g(15800, "ground-gold", 5, 1),
+		g(16600, "ground", 3, 4),
+		g(17400, "ground", 6, 0),
+		g(18200, "ground", 0, 2),
+		g(19000, "ground-gold", 9, 3),
+		g(19800, "ground", 2, 1),
 
-		// 15~20s: 通常10 + 金2 + ペナ1 — 密度アップ
-		g(15200, "ground", 1, 1),
-		g(15600, "ground", 6, 0),
-		g(16000, "ground", 3, 3),
-		g(16400, "ground", 8, 2),
-		g(16500, "ground-gold", 5, 1),
-		g(16800, "ground", 0, 4),
-		g(17200, "ground", 9, 0),
-		g(17600, "ground", 2, 2),
-		g(18000, "ground-penalty", 7, 3),
-		g(18400, "ground", 4, 1),
-		g(18800, "ground", 6, 4),
-		g(19000, "ground-gold", 1, 0),
-		g(19400, "ground", 8, 3),
+		// 20~25s: 通常6 + 金1 + ペナ1
+		g(20500, "ground", 4, 0),
+		g(21200, "ground", 7, 2),
+		g(21900, "ground", 1, 4),
+		g(22600, "ground-gold", 5, 3),
+		g(23300, "ground", 8, 1),
+		g(24000, "ground-penalty", 3, 0),
+		g(24500, "ground", 6, 4),
+		g(25000, "ground", 0, 1),
 
-		// 20~25s: 通常14 + 金2 — ラッシュ前
-		g(20200, "ground", 2, 0),
-		g(20500, "ground", 5, 2),
-		g(20800, "ground", 8, 4),
-		g(21100, "ground", 0, 1),
-		g(21400, "ground", 7, 0),
-		g(21700, "ground", 3, 3),
-		g(22000, "ground-gold", 6, 1),
-		g(22300, "ground", 1, 4),
-		g(22600, "ground", 9, 2),
-		g(22900, "ground", 4, 0),
-		g(23200, "ground", 7, 3),
-		g(23500, "ground", 2, 1),
-		g(23800, "ground", 5, 4),
-		g(24000, "ground-gold", 8, 0),
-		g(24300, "ground", 0, 2),
-		g(24600, "ground", 6, 3),
-
-		// 25~27s: ラッシュ — 短いdurで次々出現
-		g(25000, "ground", 1, 0, 1.5),
-		g(25130, "ground", 4, 2, 1.5),
-		g(25260, "ground", 7, 4, 1.5),
-		g(25390, "ground", 2, 1, 1.5),
-		g(25520, "ground", 9, 3, 1.5),
-		g(25650, "ground", 0, 2, 1.5),
-		g(25780, "ground", 5, 0, 1.5),
-		g(25910, "ground", 8, 1, 1.5),
-		g(26040, "ground", 3, 4, 1.5),
-		g(26170, "ground", 6, 0, 1.5),
-		g(26300, "ground", 1, 3, 1.5),
-		g(26430, "ground", 4, 1, 1.5),
-		g(26500, "ground-gold", 7, 2, 1.5),
-		g(26560, "ground", 9, 4, 1.5),
-		g(26690, "ground", 2, 0, 1.5),
-		g(26820, "ground-gold", 5, 3, 1.5),
+		// 25~27s: ラッシュ — dur短め
+		g(25500, "ground", 2, 3, 2.5),
+		g(25900, "ground", 7, 0, 2.5),
+		g(26300, "ground", 4, 4, 2.5),
+		g(26700, "ground-gold", 9, 2, 2.5),
+		g(27100, "ground", 1, 1, 2.5),
 	];
 
 	for (const e of entries) {
@@ -176,9 +137,9 @@ const stage2Spawns: SpawnEntry[] = (() => {
 		});
 	}
 
-	// 27.5s: 列車（左から）
+	// 28s: 列車（左から）
 	spawns.push({
-		time: 27500,
+		time: 28000,
 		type: "train",
 		nx: 0,
 		ny: 0.4,
@@ -310,7 +271,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 
 export const STAGES: StageDefinition[] = [
 	{ name: "ラウンド1", duration: 30000, maxScore: 36, spawns: stage1Spawns },
-	{ name: "ラウンド2", duration: 30000, maxScore: 90, spawns: stage2Spawns },
+	{ name: "ラウンド2", duration: 30000, maxScore: 46, spawns: stage2Spawns },
 	{
 		name: "ファイナルラウンド",
 		duration: 30000,

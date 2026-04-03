@@ -127,7 +127,7 @@ export const App = () => {
 			<HUD
 				score={gameState.score}
 				timeRemaining={0}
-				isVisible={isPlayingOrTransition}
+				isVisible={gameState.phase === "playing"}
 				gestureDebug={gameState.gestureDebug}
 			/>
 

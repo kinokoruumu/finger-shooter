@@ -58,32 +58,20 @@ const GoldTarget = () => {
 				<cylinderGeometry args={[1.0, 1.0, 0.2, 32]} />
 				<meshStandardMaterial color="#daa520" metalness={0.5} roughness={0.3} />
 			</mesh>
-			<mesh position={[0, 0, 0]}>
-				<circleGeometry args={[1.0, 32]} />
-				<meshStandardMaterial
-					color="#ffe566"
-					metalness={0.4}
-					roughness={0.25}
-				/>
-			</mesh>
 			<mesh position={[0, 0, 0.01]}>
-				<circleGeometry args={[0.7, 32]} />
-				<meshStandardMaterial
-					color="#ffcc00"
-					metalness={0.35}
-					roughness={0.3}
-				/>
+				<circleGeometry args={[1.0, 32]} />
+				<meshStandardMaterial color="#ffe566" />
 			</mesh>
-			<mesh position={[0, 0, 0.02]}>
+			<mesh position={[0, 0, 0.05]}>
+				<circleGeometry args={[0.7, 32]} />
+				<meshStandardMaterial color="#ffcc00" />
+			</mesh>
+			<mesh position={[0, 0, 0.09]}>
 				<circleGeometry args={[0.45, 32]} />
-				<meshStandardMaterial
-					color="#fff2a0"
-					metalness={0.3}
-					roughness={0.25}
-				/>
+				<meshStandardMaterial color="#fff2a0" />
 			</mesh>
 			<Text
-				position={[0, 0, 0.05]}
+				position={[0, 0, 0.13]}
 				fontSize={0.45}
 				color="#996600"
 				fontWeight={900}

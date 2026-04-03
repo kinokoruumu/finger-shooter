@@ -17,7 +17,7 @@ export const HUD = ({ score, isVisible, gestureDebug }: Props) => {
 	return (
 		<div
 			className={cn(
-				"pointer-events-none absolute inset-0 z-20 transition-opacity duration-300",
+				"pointer-events-none absolute inset-0 z-20 transition-opacity duration-500",
 				isVisible ? "opacity-100" : "opacity-0",
 			)}
 		>
