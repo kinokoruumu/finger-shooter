@@ -36,6 +36,8 @@ export const useGameScene = (
 	const groupStartTime = useRef(0);
 	const groupSpawnIndex = useRef(0);
 	const groupInitialized = useRef(false);
+	/** スポーン完了後、state反映を待つためのフレームカウンタ */
+	const waitFrames = useRef(0);
 	const sceneRef = useRef<THREE.Group>(null);
 
 	useEffect(() => {
@@ -65,6 +67,7 @@ export const useGameScene = (
 			groupStartTime.current = 0;
 			groupSpawnIndex.current = 0;
 			groupInitialized.current = false;
+			waitFrames.current = 0;
 		}
 	}, [phase, currentStage]);
 
@@ -219,17 +222,23 @@ export const useGameScene = (
 		const groupElapsed = now - groupStartTime.current;
 
 		// グループ内のスポーンを時間順に実行
+		let spawnedThisFrame = false;
 		while (
 			groupSpawnIndex.current < groupSpawns.length &&
 			groupSpawns[groupSpawnIndex.current].time <= groupElapsed
 		) {
 			spawnFromEntry(groupSpawns[groupSpawnIndex.current]);
 			groupSpawnIndex.current++;
+			spawnedThisFrame = true;
 		}
 
-		// グループのスポーン全完了 AND 的・列車が残っていない → 次グループ
-		// （風船はグループ遷移を阻害しない）
-		if (groupSpawnIndex.current >= groupSpawns.length) {
+		// スポーンしたフレームではstate反映を待つ（2フレーム）
+		if (spawnedThisFrame) {
+			waitFrames.current = 2;
+		} else if (waitFrames.current > 0) {
+			waitFrames.current--;
+		} else if (groupSpawnIndex.current >= groupSpawns.length) {
+			// グループのスポーン全完了 AND 的・列車が残っていない → 次グループ
 			const hasRemaining = groundTargets.length > 0 || trainTargets.length > 0;
 			if (!hasRemaining) {
 				currentGroup.current++;
