@@ -238,9 +238,6 @@ export const useGameScene = (
 
 		// スポーンしたフレームではstate反映を待つ（2フレーム）
 		if (spawnedThisFrame) {
-			console.log(
-				`[G${currentGroup.current}] spawned ${groupSpawnIndex.current}/${groupSpawns.length}`,
-			);
 			waitFrames.current = 2;
 		} else if (waitFrames.current > 0) {
 			waitFrames.current--;
@@ -248,9 +245,6 @@ export const useGameScene = (
 			// グループのスポーン全完了 AND 的・列車が残っていない → 次グループ
 			const hasRemaining = groundTargets.length > 0 || trainTargets.length > 0;
 			if (!hasRemaining) {
-				console.log(
-					`[G${currentGroup.current}] complete → G${currentGroup.current + 1} (ground=${groundTargets.length} train=${trainTargets.length})`,
-				);
 				currentGroup.current++;
 				groupSpawnIndex.current = 0;
 				groupInitialized.current = false;
