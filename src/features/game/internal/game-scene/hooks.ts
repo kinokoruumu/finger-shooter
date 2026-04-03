@@ -305,7 +305,7 @@ export const useGameScene = (
 									if (isGold) {
 										playSound("gold-hit", 0.7);
 									} else if (!isPenalty) {
-										playSound("target-hit", 0.85);
+										playSound("target-hit", 1.0);
 									}
 									if (isPenalty) {
 										playSound("penalty-hit", 0.7);
@@ -346,7 +346,7 @@ export const useGameScene = (
 
 								if (checkHit3D(hitWorldTrain, slotWorld, 2.5)) {
 									handleSlotHit(i);
-									playSound("target-hit", 0.85);
+									playSound("target-hit", 1.0);
 									addScoreWithPopup(1, "+1", event.x, event.y);
 									const remaining = slots.filter(
 										(s: { alive: boolean }, idx: number) =>
