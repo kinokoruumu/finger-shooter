@@ -52,21 +52,15 @@ export const useGameScene = (
 		[],
 	);
 
-	// ゲーム開始時のリセット
+	// ステージ遷移後のリセット（全ステージ共通）
+	// biome-ignore lint/correctness/useExhaustiveDependencies: currentStageの変化でもリセット必要
 	useEffect(() => {
-		if (phase === "playing" && currentStage === 0) {
+		if (phase === "playing") {
 			setGroundTargets([]);
 			setTrainTargets([]);
 			setBalloonTargets([]);
 			setBullets([]);
 			nextId = 0;
-		}
-	}, [phase, currentStage]);
-
-	// ステージ遷移後のリセット
-	// biome-ignore lint/correctness/useExhaustiveDependencies: currentStageの変化でもリセット必要
-	useEffect(() => {
-		if (phase === "playing") {
 			currentGroup.current = 0;
 			groupStartTime.current = 0;
 			groupSpawnIndex.current = 0;
