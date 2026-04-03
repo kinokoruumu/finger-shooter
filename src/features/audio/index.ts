@@ -1,10 +1,11 @@
 /** Web Audio API ベースの低遅延オーディオマネージャー */
 
-type SoundName = "balloon-pop" | "target-hit";
+type SoundName = "balloon-pop" | "target-hit" | "penalty-hit";
 
 const SOUND_PATHS: Record<SoundName, string> = {
 	"balloon-pop": "/sounds/balloon-pop.mp3",
 	"target-hit": "/sounds/target-hit.mp3",
+	"penalty-hit": "/sounds/penalty-hit.mp3",
 };
 
 let audioCtx: AudioContext | null = null;

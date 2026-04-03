@@ -306,6 +306,7 @@ export const useGameScene = (
 										playSound("target-hit", 0.6);
 									}
 									if (isPenalty) {
+										playSound("penalty-hit", 0.7);
 										addScoreWithPopup(-3, "-3", event.x, event.y);
 									} else {
 										addScoreWithPopup(
