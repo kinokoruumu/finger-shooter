@@ -168,7 +168,7 @@ export const useGameScene = (
 								slotsOscillate: entry.slotsOscillate ?? false,
 								direction: dir,
 								lane,
-								cars: entry.cars ?? 1,
+								cars: 3,
 							},
 						];
 					});

@@ -56,6 +56,37 @@ const SmallTarget = ({ alive }: { alive: boolean }) => {
 	);
 };
 
+/** 線路（列車の下に表示、十分な長さ） */
+const Rails = () => {
+	const railLength = 200;
+	const tieCount = 80;
+	const tieSpacing = railLength / tieCount;
+
+	return (
+		<group position={[0, -1.15 * 2.5, 0]}>
+			{/* レール2本 */}
+			<mesh position={[0, 0, 0.4]}>
+				<boxGeometry args={[railLength, 0.08, 0.08]} />
+				<meshStandardMaterial color="#666666" metalness={0.6} roughness={0.3} />
+			</mesh>
+			<mesh position={[0, 0, -0.4]}>
+				<boxGeometry args={[railLength, 0.08, 0.08]} />
+				<meshStandardMaterial color="#666666" metalness={0.6} roughness={0.3} />
+			</mesh>
+			{/* 枕木 */}
+			{Array.from({ length: tieCount }, (_, i) => {
+				const x = (i - tieCount / 2) * tieSpacing;
+				return (
+					<mesh key={`tie-${x}`} position={[x, -0.04, 0]}>
+						<boxGeometry args={[0.3, 0.06, 1.2]} />
+						<meshStandardMaterial color="#5c3a1e" />
+					</mesh>
+				);
+			})}
+		</group>
+	);
+};
+
 const TrainBody = () => {
 	return (
 		<group scale={2.5}>
@@ -179,6 +210,8 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			position={[data.startX, data.y, data.z]}
 			userData={{ type: "train-target", id: data.id, slots, handleSlotHit }}
 		>
+			{/* 線路 */}
+			<Rails />
 			{/* 連結車両 */}
 			{Array.from({ length: cars }, (_, c) => {
 				const pos = (c - (cars - 1) / 2) * CAR_WIDTH;

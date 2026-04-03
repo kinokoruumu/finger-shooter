@@ -17,8 +17,6 @@ export type SpawnEntry = {
 	direction?: number;
 	/** 列車: レーン 0=上, 1=中, 2=下 */
 	trainLane?: number;
-	/** 列車: 車両数（デフォルト1） */
-	cars?: number;
 };
 
 export type StageDefinition = {
@@ -187,7 +185,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		spawns.push({ time, type, nx: 0, gx, gy, visibleDuration: dur });
 	};
 
-	const train = (time: number, lane: number, dir = 1, cars = 1) => {
+	const train = (time: number, lane: number, dir = 1) => {
 		spawns.push({
 			time,
 			type: "train",
@@ -195,7 +193,6 @@ const stage3Spawns: SpawnEntry[] = (() => {
 			slotsOscillate: true,
 			direction: dir,
 			trainLane: lane,
-			cars,
 		});
 	};
 
