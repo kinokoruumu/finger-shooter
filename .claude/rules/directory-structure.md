@@ -1,5 +1,6 @@
 ---
 description: src/ 配下のディレクトリ構成ルール
+globs: "src/**/*.{ts,tsx}"
 ---
 
 # ディレクトリ構成

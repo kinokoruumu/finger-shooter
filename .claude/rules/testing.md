@@ -1,3 +1,8 @@
+---
+description: テストの分類・書き方・配置ルール
+globs: "src/**/*.test.{ts,tsx}"
+---
+
 # テスト
 
 ## 基本方針

@@ -32,10 +32,11 @@ export const useGameScene = (
 	const [balloonTargets, setBalloonTargets] = useState<BalloonTargetData[]>([]);
 	const [bullets, setBullets] = useState<BulletData[]>([]);
 
-	const stageStartTime = useRef(0);
-	const spawnIndex = useRef(0);
+	const currentGroup = useRef(0);
+	const groupStartTime = useRef(0);
+	const groupSpawnIndex = useRef(0);
+	const groupInitialized = useRef(false);
 	const sceneRef = useRef<THREE.Group>(null);
-	const stageInitialized = useRef(false);
 
 	useEffect(() => {
 		screenToWorldRef.current = createScreenToWorld(
@@ -59,9 +60,6 @@ export const useGameScene = (
 			setBalloonTargets([]);
 			setBullets([]);
 			nextId = 0;
-			stageStartTime.current = 0;
-			spawnIndex.current = 0;
-			stageInitialized.current = false;
 		}
 	}, [phase, currentStage]);
 
@@ -69,9 +67,10 @@ export const useGameScene = (
 	// biome-ignore lint/correctness/useExhaustiveDependencies: currentStageの変化でもリセット必要
 	useEffect(() => {
 		if (phase === "playing") {
-			stageStartTime.current = 0;
-			spawnIndex.current = 0;
-			stageInitialized.current = false;
+			currentGroup.current = 0;
+			groupStartTime.current = 0;
+			groupSpawnIndex.current = 0;
+			groupInitialized.current = false;
 		}
 	}, [phase, currentStage]);
 
@@ -178,25 +177,21 @@ export const useGameScene = (
 	);
 
 	useFrame((state) => {
-		// playing以外はスポーンしない（ただし既存ターゲットの更新はコンポーネント側で続行）
 		if (phase !== "playing") return;
 
 		const stage = STAGES[currentStage];
 		if (!stage) return;
 
-		// ステージ開始タイムスタンプの初期化
-		if (!stageInitialized.current) {
-			stageStartTime.current = state.clock.elapsedTime * 1000;
-			stageInitialized.current = true;
-		}
+		const now = state.clock.elapsedTime * 1000;
 
-		const stageElapsed =
-			state.clock.elapsedTime * 1000 - stageStartTime.current;
+		// 現在のグループのスポーンを取得
+		const groupSpawns = stage.spawns.filter(
+			(s) => s.group === currentGroup.current,
+		);
 
-		// ステージ終了チェック:
-		// 全スポーン完了 AND 画面上に的が残っていない場合に遷移
-		const allSpawned = spawnIndex.current >= stage.spawns.length;
-		if (allSpawned) {
+		// 全グループ完了チェック
+		const maxGroup = Math.max(...stage.spawns.map((s) => s.group));
+		if (currentGroup.current > maxGroup) {
 			const hasRemaining =
 				groundTargets.length > 0 ||
 				balloonTargets.length > 0 ||
@@ -205,15 +200,37 @@ export const useGameScene = (
 				nextStage();
 				return;
 			}
+			return; // 全グループ済み、残りターゲット消滅待ち
 		}
 
-		// タイムラインに沿ったスポーン
+		// グループ開始タイムスタンプの初期化
+		if (!groupInitialized.current) {
+			groupStartTime.current = now;
+			groupInitialized.current = true;
+		}
+
+		const groupElapsed = now - groupStartTime.current;
+
+		// グループ内のスポーンを時間順に実行
 		while (
-			spawnIndex.current < stage.spawns.length &&
-			stage.spawns[spawnIndex.current].time <= stageElapsed
+			groupSpawnIndex.current < groupSpawns.length &&
+			groupSpawns[groupSpawnIndex.current].time <= groupElapsed
 		) {
-			spawnFromEntry(stage.spawns[spawnIndex.current]);
-			spawnIndex.current++;
+			spawnFromEntry(groupSpawns[groupSpawnIndex.current]);
+			groupSpawnIndex.current++;
+		}
+
+		// 現在のグループのスポーンが全完了 AND 画面上に的が残っていない → 次グループへ
+		if (groupSpawnIndex.current >= groupSpawns.length) {
+			const hasRemaining =
+				groundTargets.length > 0 ||
+				balloonTargets.length > 0 ||
+				trainTargets.length > 0;
+			if (!hasRemaining) {
+				currentGroup.current++;
+				groupSpawnIndex.current = 0;
+				groupInitialized.current = false;
+			}
 		}
 
 		// 発射イベント処理
