@@ -199,29 +199,13 @@ const crossPattern = (
 const stage2Spawns: SpawnEntry[] = (() => {
 	const spawns: SpawnEntry[] = [];
 
-	// G0: 導入 — 散発4つ
-	spawns.push(
-		...toSpawns(
-			[
-				t(0, "ground", 2, 1),
-				t(800, "ground", 5, 2),
-				t(1600, "ground", 1, 0),
-				t(2400, "ground", 6, 3),
-			],
-			0,
-		),
-	);
+	// G0: 横一列（gy=1）
+	spawns.push(...toSpawns(horizontalLine(0, 1), 0));
 
-	// G1: 横一列（gy=1）
-	spawns.push(...toSpawns(horizontalLine(0, 1), 1));
+	// G1: V字
+	spawns.push(...toSpawns(vShape(0), 1));
 
-	// G2: 外周ぐるっと
-	spawns.push(...toSpawns(borderClockwise(0, 200), 2));
-
-	// G3: V字
-	spawns.push(...toSpawns(vShape(0), 3));
-
-	// G4: 縦2列 + 金
+	// G2: 縦2列 + 金
 	spawns.push(
 		...toSpawns(
 			[
@@ -229,14 +213,24 @@ const stage2Spawns: SpawnEntry[] = (() => {
 				...verticalLine(0, 5),
 				t(0, "ground-gold", 3, 1, 4.0),
 			],
+			2,
+		),
+	);
+
+	// G3: 対角線
+	spawns.push(...toSpawns(diagonal(0, 300), 3));
+
+	// G4: 横一列（中央だけ金）
+	spawns.push(
+		...toSpawns(
+			horizontalLine(0, 2).map((e) =>
+				e.gx === 3 || e.gx === 4 ? { ...e, type: "ground-gold" as const } : e,
+			),
 			4,
 		),
 	);
 
-	// G5: 対角線
-	spawns.push(...toSpawns(diagonal(0, 300), 5));
-
-	// G6: 十字（中央ペナルティ）
+	// G5: 十字（中央ペナルティ）
 	spawns.push(
 		...toSpawns(
 			crossPattern(0).map((e) =>
@@ -244,21 +238,14 @@ const stage2Spawns: SpawnEntry[] = (() => {
 					? { ...e, type: "ground-penalty" as const }
 					: e,
 			),
-			6,
+			5,
 		),
 	);
 
-	// G7: 横一列（中央だけ金）
-	spawns.push(
-		...toSpawns(
-			horizontalLine(0, 2).map((e) =>
-				e.gx === 3 || e.gx === 4 ? { ...e, type: "ground-gold" as const } : e,
-			),
-			7,
-		),
-	);
+	// G6: 外周ぐるっと（後半）
+	spawns.push(...toSpawns(borderClockwise(0, 200), 6));
 
-	// G8: ペナルティ混在ラッシュ
+	// G7: ペナルティ混在ラッシュ
 	spawns.push(
 		...toSpawns(
 			[
@@ -271,14 +258,14 @@ const stage2Spawns: SpawnEntry[] = (() => {
 				t(1000, "ground", 2, 2, 4.0),
 				t(1000, "ground", 5, 0, 4.0),
 			],
-			8,
+			7,
 		),
 	);
 
-	// G9: 列車（左から）
+	// G8: 列車（左から）
 	spawns.push({
 		time: 0,
-		group: 9,
+		group: 8,
 		type: "train",
 		nx: 0,
 		slotsOscillate: true,
