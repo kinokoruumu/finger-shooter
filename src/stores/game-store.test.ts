@@ -10,7 +10,6 @@ import {
 	setHandDetected,
 	setLoading,
 	setPhase,
-	setTimeRemaining,
 	sharedState,
 	subscribe,
 	updateAim,
@@ -21,7 +20,7 @@ beforeEach(() => {
 	resetGameUI();
 });
 
-describe("共有状態（MediaPipe↔Phaser）", () => {
+describe("共有状態（MediaPipe↔Game）", () => {
 	test("updateAimで照準座標が更新される", () => {
 		updateAim(0.5, 0.3);
 		expect(sharedState.aim).toEqual({ x: 0.5, y: 0.3 });
@@ -40,7 +39,6 @@ describe("共有状態（MediaPipe↔Phaser）", () => {
 		setHandDetected(true);
 		expect(listener).toHaveBeenCalledTimes(1);
 
-		// 同じ値では通知しない
 		setHandDetected(true);
 		expect(listener).toHaveBeenCalledTimes(1);
 
@@ -82,12 +80,10 @@ describe("発射イベント", () => {
 		pushFireEvent(0.5, 0.3);
 		expect(sharedState.fireEvents).toHaveLength(1);
 
-		// 100ms後（500ms未満）→ 無視される
 		vi.setSystemTime(now + 100);
 		pushFireEvent(0.6, 0.4);
 		expect(sharedState.fireEvents).toHaveLength(1);
 
-		// 500ms後 → 追加される
 		vi.setSystemTime(now + 500);
 		pushFireEvent(0.7, 0.5);
 		expect(sharedState.fireEvents).toHaveLength(2);
@@ -126,19 +122,13 @@ describe("UI状態（useSyncExternalStore向け）", () => {
 		expect(getGameUISnapshot().isLoading).toBe(false);
 	});
 
-	test("setTimeRemainingで残り時間が更新される", () => {
-		setTimeRemaining(30);
-		expect(getGameUISnapshot().timeRemaining).toBe(30);
-	});
-
-	test("resetGameUIでスコアと残り時間がリセットされる", () => {
+	test("resetGameUIでスコアとステージがリセットされる", () => {
 		addScore(500);
-		setTimeRemaining(10);
 		resetGameUI();
 
 		const snapshot = getGameUISnapshot();
 		expect(snapshot.score).toBe(0);
-		expect(snapshot.timeRemaining).toBe(60); // GAME_CONFIG.game.timeLimit
+		expect(snapshot.currentStage).toBe(0);
 	});
 
 	test("snapshotはイミュータブル（更新ごとに新しいオブジェクト）", () => {

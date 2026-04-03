@@ -3,7 +3,12 @@ import { useFrame } from "@react-three/fiber";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
 
-type TargetState = "rising" | "hovering" | "falling" | "destroyed";
+type TargetState =
+	| "appearing"
+	| "rising"
+	| "hovering"
+	| "falling"
+	| "destroyed";
 
 export type GroundTargetData = {
 	id: number;
@@ -11,6 +16,9 @@ export type GroundTargetData = {
 	groundY: number;
 	peakY: number;
 	isGold: boolean;
+	isPenalty: boolean;
+	/** ステージ2: 回転しながら出現 */
+	rotateIn?: boolean;
 };
 
 type Props = {
@@ -44,43 +52,42 @@ const NormalTarget = () => {
 	);
 };
 
-/** ゴールドの的: ツヤツヤ金色 + 中央に「+3」 */
+/** ゴールドの的: 明るい金色 + 中央に「+3」 */
 const GoldTarget = () => {
 	return (
 		<group scale={1.8}>
-			{/* 的本体（厚み） */}
 			<mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.1]}>
 				<cylinderGeometry args={[1.0, 1.0, 0.2, 32]} />
-				<meshStandardMaterial
-					color="#b8860b"
-					metalness={0.8}
-					roughness={0.15}
-				/>
+				<meshStandardMaterial color="#daa520" metalness={0.5} roughness={0.3} />
 			</mesh>
-			{/* 金色の面 */}
 			<mesh position={[0, 0, 0]}>
 				<circleGeometry args={[1.0, 32]} />
-				<meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
+				<meshStandardMaterial
+					color="#ffe566"
+					metalness={0.4}
+					roughness={0.25}
+				/>
 			</mesh>
-			{/* 内側のリング */}
 			<mesh position={[0, 0, 0.01]}>
 				<circleGeometry args={[0.7, 32]} />
 				<meshStandardMaterial
-					color="#daa520"
-					metalness={0.85}
-					roughness={0.12}
+					color="#ffcc00"
+					metalness={0.35}
+					roughness={0.3}
 				/>
 			</mesh>
-			{/* 中央のハイライト */}
 			<mesh position={[0, 0, 0.02]}>
 				<circleGeometry args={[0.45, 32]} />
-				<meshStandardMaterial color="#ffec80" metalness={0.7} roughness={0.1} />
+				<meshStandardMaterial
+					color="#fff2a0"
+					metalness={0.3}
+					roughness={0.25}
+				/>
 			</mesh>
-			{/* +3 テキスト */}
 			<Text
 				position={[0, 0, 0.05]}
 				fontSize={0.45}
-				color="#8b4513"
+				color="#996600"
 				fontWeight={900}
 				anchorX="center"
 				anchorY="middle"
@@ -91,14 +98,63 @@ const GoldTarget = () => {
 	);
 };
 
-/** 破壊パーティクル — 円盤の破片がバラバラに飛び散る */
+/** ペナルティの的: 黒/グレー + 中央に「-3」 */
+const PenaltyTarget = () => {
+	const rings: { radius: number; color: string; z: number }[] = [
+		{ radius: 1.0, color: "#1a1a1a", z: 0 },
+		{ radius: 0.78, color: "#444444", z: 0.01 },
+		{ radius: 0.57, color: "#1a1a1a", z: 0.02 },
+		{ radius: 0.36, color: "#333333", z: 0.03 },
+	];
+
+	return (
+		<group scale={1.8}>
+			<mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.1]}>
+				<cylinderGeometry args={[1.0, 1.0, 0.2, 32]} />
+				<meshStandardMaterial color="#111111" />
+			</mesh>
+			{rings.map((ring) => (
+				<mesh key={ring.color + ring.radius} position={[0, 0, ring.z]}>
+					<circleGeometry args={[ring.radius, 32]} />
+					<meshStandardMaterial color={ring.color} />
+				</mesh>
+			))}
+			<Text
+				position={[0, 0, 0.05]}
+				fontSize={0.4}
+				color="#ff4444"
+				fontWeight={900}
+				anchorX="center"
+				anchorY="middle"
+			>
+				-3
+			</Text>
+		</group>
+	);
+};
+
+const TargetVisual = ({
+	isGold,
+	isPenalty,
+}: {
+	isGold: boolean;
+	isPenalty: boolean;
+}) => {
+	if (isPenalty) return <PenaltyTarget />;
+	if (isGold) return <GoldTarget />;
+	return <NormalTarget />;
+};
+
+/** 破壊パーティクル */
 const DestroyParticles = ({
 	position,
 	isGold,
+	isPenalty,
 	onComplete,
 }: {
 	position: [number, number, number];
 	isGold: boolean;
+	isPenalty: boolean;
 	onComplete: () => void;
 }) => {
 	const groupRef = useRef<THREE.Group>(null);
@@ -106,9 +162,11 @@ const DestroyParticles = ({
 	const elapsed = useRef(0);
 
 	const pieces = useMemo(() => {
-		const colors = isGold
-			? ["#ffd700", "#daa520", "#b8860b", "#ffec80", "#c5a000"]
-			: ["#222222", "#ffffff", "#dd2222", "#444444", "#888888"];
+		const colors = isPenalty
+			? ["#1a1a1a", "#444444", "#333333", "#222222", "#555555"]
+			: isGold
+				? ["#ffe566", "#ffcc00", "#daa520", "#fff2a0", "#c5a000"]
+				: ["#222222", "#ffffff", "#dd2222", "#444444", "#888888"];
 
 		return Array.from({ length: 8 }, (_, i) => {
 			const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.3;
@@ -124,7 +182,7 @@ const DestroyParticles = ({
 				scaleY: 0.15 + Math.random() * 0.2,
 			};
 		});
-	}, [isGold]);
+	}, [isGold, isPenalty]);
 
 	useFrame((_, delta) => {
 		if (!groupRef.current) return;
@@ -165,7 +223,8 @@ const DestroyParticles = ({
 
 export const GroundTarget = ({ data, onDead }: Props) => {
 	const groupRef = useRef<THREE.Group>(null);
-	const [state, setState] = useState<TargetState>("rising");
+	const initialState: TargetState = data.rotateIn ? "appearing" : "rising";
+	const [state, setState] = useState<TargetState>(initialState);
 	const [showParticles, setShowParticles] = useState(false);
 	const elapsed = useRef(0);
 	const positionRef = useRef<[number, number, number]>([
@@ -174,6 +233,7 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 		-15,
 	]);
 
+	const appearDuration = 0.6;
 	const riseDuration = 0.6;
 	const hoverDuration = 2.5;
 	const fallDuration = 0.5;
@@ -184,6 +244,23 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 		elapsed.current += delta;
 
 		switch (state) {
+			case "appearing": {
+				// 側面(Y軸90度回転)→正面(0度)に回転しながらフェードイン
+				const t = Math.min(elapsed.current / appearDuration, 1);
+				const eased = 1 - (1 - t) ** 3;
+				groupRef.current.rotation.y = (Math.PI / 2) * (1 - eased);
+				// 同時にスケールでフェードイン
+				const s = 0.3 + 0.7 * eased;
+				groupRef.current.scale.setScalar(s);
+
+				if (t >= 1) {
+					groupRef.current.rotation.y = 0;
+					groupRef.current.scale.setScalar(1);
+					setState("rising");
+					elapsed.current = 0;
+				}
+				break;
+			}
 			case "rising": {
 				const t = Math.min(elapsed.current / riseDuration, 1);
 				const eased = 1 - (1 - t) ** 2;
@@ -241,17 +318,19 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 						type: "ground-target",
 						id: data.id,
 						isGold: data.isGold,
+						isPenalty: data.isPenalty,
 						positionRef,
 						handleHit,
 					}}
 				>
-					{data.isGold ? <GoldTarget /> : <NormalTarget />}
+					<TargetVisual isGold={data.isGold} isPenalty={data.isPenalty} />
 				</group>
 			)}
 			{showParticles && (
 				<DestroyParticles
 					position={positionRef.current}
 					isGold={data.isGold}
+					isPenalty={data.isPenalty}
 					onComplete={handleParticlesComplete}
 				/>
 			)}

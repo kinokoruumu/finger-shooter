@@ -4,6 +4,7 @@ import { CameraView } from "@/features/camera";
 import { useCamera } from "@/features/camera/hooks";
 import { Game3D } from "@/features/game";
 import { useGameState } from "@/features/game/hooks";
+import { StageTransition } from "@/features/game/internal/stage-transition";
 import { HandTracking } from "@/features/hand-tracking";
 import { resetGestureState } from "@/features/hand-tracking/gesture-detector";
 import { DebugOverlay } from "@/features/hand-tracking/internal/debug-overlay";
@@ -14,6 +15,7 @@ import { TrackingStatus } from "@/features/hud/internal/tracking-status";
 import { cn } from "@/lib/utils";
 import {
 	consumeFireEvents,
+	nextStage,
 	resetGameUI,
 	resetSharedState,
 	setPhase,
@@ -46,19 +48,37 @@ export const App = () => {
 		resetGameUI();
 		resetSharedState();
 		resetGestureState();
-		setPhase("playing");
+		stageTransitionIsStart.current = true;
+		setPhase("stage-transition");
 	}, []);
 
-	// タイトル・リザルト画面でピンチ（発射イベント）を検知してゲーム開始/リスタート
-	useEffect(() => {
-		if (gameState.phase === "playing" || isLoading) return;
+	const stageTransitionIsStart = useRef(false);
 
-		// リザルト画面では1.5秒のクールダウンを設けて誤爆防止
+	const handleStageTransitionComplete = useCallback(() => {
+		consumeFireEvents(); // 遷移中のイベントを捨てる
+		if (stageTransitionIsStart.current) {
+			// ゲーム開始時: ステージ0でそのまま playing へ
+			stageTransitionIsStart.current = false;
+			setPhase("playing");
+		} else {
+			// ステージ間遷移: 次のステージへ（最終ステージ後は result へ）
+			nextStage();
+		}
+	}, []);
+
+	// タイトル・リザルト画面でピンチを検知してゲーム開始/リスタート
+	useEffect(() => {
+		if (
+			gameState.phase === "playing" ||
+			gameState.phase === "stage-transition" ||
+			isLoading
+		)
+			return;
+
 		const delay = gameState.phase === "result" ? 1500 : 0;
 		let ready = delay === 0;
 
 		const timer = setTimeout(() => {
-			// クールダウン中に溜まったイベントを消費して捨てる
 			consumeFireEvents();
 			ready = true;
 		}, delay);
@@ -90,6 +110,9 @@ export const App = () => {
 		);
 	}
 
+	const isPlayingOrTransition =
+		gameState.phase === "playing" || gameState.phase === "stage-transition";
+
 	return (
 		<div className="relative h-screen w-screen overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950">
 			{/* Layer 0: カメラ映像（トグル可能） */}
@@ -99,15 +122,27 @@ export const App = () => {
 			{showCamera && <DebugOverlay landmarksRef={landmarksRef} />}
 
 			{/* Layer 1: Three.js 3Dシーン */}
-			<Game3D isPlaying={gameState.phase === "playing"} />
+			<Game3D
+				isPlaying={isPlayingOrTransition}
+				currentStage={gameState.currentStage}
+				phase={gameState.phase}
+			/>
 
 			{/* Layer 2: HUD */}
 			<HUD
 				score={gameState.score}
-				timeRemaining={gameState.timeRemaining}
-				isVisible={gameState.phase === "playing"}
+				timeRemaining={0}
+				isVisible={isPlayingOrTransition}
 				gestureDebug={gameState.gestureDebug}
 			/>
+
+			{/* ステージ遷移テキスト */}
+			{gameState.phase === "stage-transition" && (
+				<StageTransition
+					stageIndex={gameState.currentStage}
+					onComplete={handleStageTransitionComplete}
+				/>
+			)}
 
 			{/* 左下: トラッキングステータス + カメラボタン */}
 			{!isLoading && (
@@ -173,9 +208,9 @@ export const App = () => {
 							className="mb-2 font-black text-3xl text-white"
 							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
 						>
-							TIME UP!
+							GAME OVER
 						</h2>
-						<p className="mb-1 text-white/60">SCORE</p>
+						<p className="mb-1 text-white/60">TOTAL SCORE</p>
 						<p
 							className="mb-8 font-black text-6xl text-white"
 							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
@@ -199,7 +234,7 @@ export const App = () => {
 				</div>
 			)}
 
-			{/* プレイ中以外のエイムカーソル（ダイアログの上に表示） */}
+			{/* プレイ中以外のエイムカーソル */}
 			{gameState.phase !== "playing" && <AimCursor />}
 
 			{/* ハンドトラッキング */}

@@ -14,6 +14,7 @@ export type TrainTargetData = {
 	startX: number;
 	y: number;
 	z: number;
+	slotsOscillate: boolean;
 };
 
 type Props = {
@@ -87,6 +88,9 @@ const TrainBody = () => {
 export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 	const groupRef = useRef<THREE.Group>(null);
 	const [alive, setAlive] = useState(true);
+	const oscillateTime = useRef(Math.random() * Math.PI * 2);
+
+	// 窓位置に合わせた的（窓3つ＝的3つ）
 	const [slots, setSlots] = useState<SlotState[]>([
 		{ offsetX: -2.0, offsetY: 0, alive: true },
 		{ offsetX: 0, offsetY: 0, alive: true },
@@ -97,6 +101,18 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 		if (!groupRef.current || !alive) return;
 
 		groupRef.current.position.x -= GAME_CONFIG.target.trainSpeed * delta * 2;
+
+		// ステージ2以降: 的が上下に揺れる
+		if (data.slotsOscillate) {
+			oscillateTime.current += delta * 2.5;
+			const slotGroups = groupRef.current.children.filter(
+				(c) => c.userData.isSlot,
+			);
+			for (let i = 0; i < slotGroups.length; i++) {
+				const phase = oscillateTime.current + (i * Math.PI * 2) / 3;
+				slotGroups[i].position.y = slots[i].offsetY + Math.sin(phase) * 0.4;
+			}
+		}
 
 		if (groupRef.current.position.x < data.startX * -1 - 5) {
 			setAlive(false);
@@ -110,7 +126,6 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			next[index] = { ...next[index], alive: false };
 			onSlotHit();
 
-			// 全部倒したか
 			if (next.every((s) => !s.alive)) {
 				setAlive(false);
 				onDead(data.id);
@@ -128,8 +143,12 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			userData={{ type: "train-target", id: data.id, slots, handleSlotHit }}
 		>
 			<TrainBody />
-			{slots.map((slot) => (
-				<group key={slot.offsetX} position={[slot.offsetX, slot.offsetY, 1.05]}>
+			{slots.map((slot, i) => (
+				<group
+					key={slot.offsetX}
+					position={[slot.offsetX, slot.offsetY, 1.05]}
+					userData={{ isSlot: true, slotIndex: i }}
+				>
 					<SmallTarget alive={slot.alive} />
 				</group>
 			))}

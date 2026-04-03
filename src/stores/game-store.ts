@@ -1,7 +1,8 @@
 import { GAME_CONFIG } from "@/config/game-config";
+import { STAGES } from "@/config/stage-definitions";
 import type { FireEvent, SharedState } from "@/types/shared";
 
-/** MediaPipe↔Phaser 共有状態（ミュータブルオブジェクト） */
+/** MediaPipe↔Game 共有状態（ミュータブルオブジェクト） */
 export const sharedState: SharedState = {
 	aim: null,
 	isGunPose: false,
@@ -68,15 +69,17 @@ export const notifyListeners = () => {
 	}
 };
 
-// スコア等のUI状態 — snapshot はイミュータブルに差し替える
+// スコア等のUI状態
 import type { GestureDebugValues } from "@/features/hand-tracking/gesture-detector";
 
 export type GestureDebug = GestureDebugValues;
 
+export type GamePhase = "title" | "playing" | "stage-transition" | "result";
+
 export type GameUIState = {
 	score: number;
-	timeRemaining: number;
-	phase: "title" | "playing" | "result";
+	phase: GamePhase;
+	currentStage: number;
 	isLoading: boolean;
 	isHandDetected: boolean;
 	isGunPose: boolean;
@@ -85,8 +88,8 @@ export type GameUIState = {
 
 let gameUISnapshot: GameUIState = {
 	score: 0,
-	timeRemaining: GAME_CONFIG.game.timeLimit,
 	phase: "title",
+	currentStage: 0,
 	isLoading: true,
 	isHandDetected: false,
 	isGunPose: false,
@@ -104,9 +107,24 @@ export const setLoading = (value: boolean) => {
 	updateSnapshot({ isLoading: value });
 };
 
-export const setPhase = (phase: GameUIState["phase"]) => {
+export const setPhase = (phase: GamePhase) => {
 	updateSnapshot({ phase });
 };
+
+export const setCurrentStage = (stage: number) => {
+	updateSnapshot({ currentStage: stage });
+};
+
+export const nextStage = () => {
+	const next = gameUISnapshot.currentStage + 1;
+	if (next >= STAGES.length) {
+		updateSnapshot({ phase: "result" });
+	} else {
+		updateSnapshot({ currentStage: next, phase: "playing" });
+	}
+};
+
+// --- スコアポップアップ ---
 
 export type ScorePopup = {
 	id: number;
@@ -129,7 +147,7 @@ export const addScoreWithPopup = (
 	screenX: number,
 	screenY: number,
 ) => {
-	updateSnapshot({ score: gameUISnapshot.score + points });
+	updateSnapshot({ score: Math.max(0, gameUISnapshot.score + points) });
 	scorePopups.push({
 		id: ++nextPopupId,
 		points,
@@ -146,10 +164,6 @@ export const consumeScorePopups = (): ScorePopup[] => {
 	return popups;
 };
 
-export const setTimeRemaining = (time: number) => {
-	updateSnapshot({ timeRemaining: time });
-};
-
 export const updateTrackingStatus = (
 	isHandDetected: boolean,
 	isGunPose: boolean,
@@ -161,6 +175,6 @@ export const updateTrackingStatus = (
 export const resetGameUI = () => {
 	updateSnapshot({
 		score: 0,
-		timeRemaining: GAME_CONFIG.game.timeLimit,
+		currentStage: 0,
 	});
 };

@@ -1,3 +1,4 @@
+import type { GamePhase } from "@/stores/game-store";
 import { BalloonTarget } from "../balloon-target";
 import { BulletEffects } from "../bullet-effect";
 import { Crosshair } from "../crosshair";
@@ -7,9 +8,11 @@ import { useGameScene } from "./hooks";
 
 type Props = {
 	isPlaying: boolean;
+	currentStage: number;
+	phase: GamePhase;
 };
 
-export const GameScene = ({ isPlaying }: Props) => {
+export const GameScene = ({ isPlaying, currentStage, phase }: Props) => {
 	const {
 		sceneRef,
 		screenToWorld,
@@ -22,7 +25,7 @@ export const GameScene = ({ isPlaying }: Props) => {
 		handleBalloonDead,
 		handleBulletComplete,
 		handleSlotHit,
-	} = useGameScene(isPlaying);
+	} = useGameScene(isPlaying, currentStage, phase);
 
 	return (
 		<group ref={sceneRef}>

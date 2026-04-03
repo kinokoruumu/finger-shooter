@@ -1,12 +1,12 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type * as THREE from "three";
-import { GAME_CONFIG } from "@/config/game-config";
+import type { SpawnEntry } from "@/config/stage-definitions";
+import { STAGES } from "@/config/stage-definitions";
 import {
 	addScoreWithPopup,
 	consumeFireEvents,
 	setPhase,
-	setTimeRemaining,
 } from "@/stores/game-store";
 import { checkHit3D, createScreenToWorld } from "../../utils";
 import type { BalloonTargetData } from "../balloon-target";
@@ -18,7 +18,11 @@ import type { TrainTargetData } from "../train-target";
 let nextId = 0;
 const genId = () => ++nextId;
 
-export const useGameScene = (isPlaying: boolean) => {
+export const useGameScene = (
+	_isPlaying: boolean,
+	currentStage: number,
+	phase: string,
+) => {
 	const { camera } = useThree();
 	const screenToWorldRef = useRef<ReturnType<typeof createScreenToWorld>>(null);
 
@@ -27,11 +31,10 @@ export const useGameScene = (isPlaying: boolean) => {
 	const [balloonTargets, setBalloonTargets] = useState<BalloonTargetData[]>([]);
 	const [bullets, setBullets] = useState<BulletData[]>([]);
 
-	const lastGroundSpawn = useRef(0);
-	const lastTrainSpawn = useRef(0);
-	const lastBalloonSpawn = useRef(0);
-	const gameTimer = useRef<number>(GAME_CONFIG.game.timeLimit);
+	const stageStartTime = useRef(0);
+	const spawnIndex = useRef(0);
 	const sceneRef = useRef<THREE.Group>(null);
+	const stageInitialized = useRef(false);
 
 	useEffect(() => {
 		screenToWorldRef.current = createScreenToWorld(
@@ -47,106 +50,124 @@ export const useGameScene = (isPlaying: boolean) => {
 		[],
 	);
 
+	// ゲーム開始時のリセット
 	useEffect(() => {
-		if (isPlaying) {
-			gameTimer.current = GAME_CONFIG.game.timeLimit;
-			lastGroundSpawn.current = 0;
-			lastTrainSpawn.current = 0;
-			lastBalloonSpawn.current = 0;
+		if (phase === "playing" && currentStage === 0) {
 			setGroundTargets([]);
 			setTrainTargets([]);
 			setBalloonTargets([]);
 			setBullets([]);
 			nextId = 0;
+			stageStartTime.current = 0;
+			spawnIndex.current = 0;
+			stageInitialized.current = false;
 		}
-	}, [isPlaying]);
+	}, [phase, currentStage]);
 
-	useFrame((state, delta) => {
-		if (!isPlaying) return;
+	// ステージ遷移後のリセット
+	// biome-ignore lint/correctness/useExhaustiveDependencies: currentStageの変化でもリセット必要
+	useEffect(() => {
+		if (phase === "playing") {
+			stageStartTime.current = 0;
+			spawnIndex.current = 0;
+			stageInitialized.current = false;
+		}
+	}, [phase, currentStage]);
 
-		const now = state.clock.elapsedTime * 1000;
+	const spawnFromEntry = useCallback(
+		(entry: SpawnEntry) => {
+			switch (entry.type) {
+				case "balloon": {
+					const [worldX] = screenToWorld(entry.nx, 0.5, -12);
+					const [, bottomY] = screenToWorld(0.5, 1.1, -12);
+					const speed = 1.5 + Math.random() * 2.0;
+					setBalloonTargets((prev) => [
+						...prev,
+						{
+							id: genId(),
+							x: worldX,
+							startY: bottomY,
+							z: -12,
+							speed,
+							color: randomBalloonColor(),
+						},
+					]);
+					break;
+				}
+				case "ground":
+				case "ground-gold":
+				case "ground-penalty": {
+					const [worldX] = screenToWorld(entry.nx, 0.5, -15);
+					const [, bottomY] = screenToWorld(0.5, 0.95, -15);
+					const [, topY] = screenToWorld(0.5, 0.3, -15);
+					const peakY = topY - Math.random() * 2;
+					const isGold = entry.type === "ground-gold";
+					const isPenalty = entry.type === "ground-penalty";
+					const rotateIn = currentStage >= 1;
+					setGroundTargets((prev) => [
+						...prev,
+						{
+							id: genId(),
+							x: worldX,
+							groundY: bottomY - 2,
+							peakY,
+							isGold,
+							isPenalty,
+							rotateIn,
+						},
+					]);
+					break;
+				}
+				case "train": {
+					const [rightX] = screenToWorld(entry.nx, 0.5, -18);
+					const ny = entry.ny ?? 0.4;
+					const [, trainY] = screenToWorld(0.5, ny, -18);
+					setTrainTargets((prev) => [
+						...prev,
+						{
+							id: genId(),
+							startX: rightX,
+							y: trainY,
+							z: -18,
+							slotsOscillate: entry.slotsOscillate ?? false,
+						},
+					]);
+					break;
+				}
+			}
+		},
+		[screenToWorld, currentStage],
+	);
 
-		// タイマー
-		gameTimer.current -= delta;
-		if (gameTimer.current <= 0) {
-			gameTimer.current = 0;
-			setTimeRemaining(0);
-			setPhase("result");
+	useFrame((state) => {
+		// playing以外はスポーンしない（ただし既存ターゲットの更新はコンポーネント側で続行）
+		if (phase !== "playing") return;
+
+		const stage = STAGES[currentStage];
+		if (!stage) return;
+
+		// ステージ開始タイムスタンプの初期化
+		if (!stageInitialized.current) {
+			stageStartTime.current = state.clock.elapsedTime * 1000;
+			stageInitialized.current = true;
+		}
+
+		const stageElapsed =
+			state.clock.elapsedTime * 1000 - stageStartTime.current;
+
+		// ステージ終了チェック
+		if (stageElapsed >= stage.duration) {
+			setPhase("stage-transition");
 			return;
 		}
-		setTimeRemaining(Math.ceil(gameTimer.current));
 
-		// 地上ターゲット生成
-		if (
-			now - lastGroundSpawn.current >
-			GAME_CONFIG.target.groundSpawnInterval
+		// タイムラインに沿ったスポーン
+		while (
+			spawnIndex.current < stage.spawns.length &&
+			stage.spawns[spawnIndex.current].time <= stageElapsed
 		) {
-			const [leftX] = screenToWorld(0.1, 0.5, -15);
-			const [rightX] = screenToWorld(0.9, 0.5, -15);
-			const x = leftX + Math.random() * (rightX - leftX);
-
-			// 既存の地上ターゲットと重ならないかチェック
-			const tooClose = groundTargets.some((t) => Math.abs(t.x - x) < 3);
-			lastGroundSpawn.current = now;
-			if (!tooClose) {
-				const [, bottomY] = screenToWorld(0.5, 0.95, -15);
-				const [, topY] = screenToWorld(0.5, 0.3, -15);
-				const peakY = topY - Math.random() * 2;
-
-				const isGold = Math.random() < 0.2;
-				setGroundTargets((prev) => [
-					...prev,
-					{ id: genId(), x, groundY: bottomY - 2, peakY, isGold },
-				]);
-			}
-		}
-
-		// 電車生成
-		if (now - lastTrainSpawn.current > GAME_CONFIG.target.trainSpawnInterval) {
-			lastTrainSpawn.current = now;
-			const [rightX] = screenToWorld(1.2, 0.5, -18);
-			const [, topY] = screenToWorld(0.5, 0.2, -18);
-			const [, bottomY] = screenToWorld(0.5, 0.6, -18);
-			const y = topY + Math.random() * (bottomY - topY);
-
-			setTrainTargets((prev) => [
-				...prev,
-				{ id: genId(), startX: rightX, y, z: -18 },
-			]);
-		}
-
-		// 風船生成
-		if (
-			now - lastBalloonSpawn.current >
-			GAME_CONFIG.target.balloonSpawnInterval
-		) {
-			const [leftX] = screenToWorld(0.15, 0.5, -12);
-			const [rightX] = screenToWorld(0.85, 0.5, -12);
-			const x = leftX + Math.random() * (rightX - leftX);
-
-			// 既存の風船と重ならないかチェック
-			const tooClose = balloonTargets.some((t) => Math.abs(t.x - x) < 2);
-			lastBalloonSpawn.current = now;
-			if (!tooClose) {
-				const [, bottomY] = screenToWorld(0.5, 1.1, -12);
-				const speed =
-					GAME_CONFIG.target.balloonSpeedMin +
-					Math.random() *
-						(GAME_CONFIG.target.balloonSpeedMax -
-							GAME_CONFIG.target.balloonSpeedMin);
-
-				setBalloonTargets((prev) => [
-					...prev,
-					{
-						id: genId(),
-						x,
-						startY: bottomY,
-						z: -12,
-						speed,
-						color: randomBalloonColor(),
-					},
-				]);
-			}
+			spawnFromEntry(stage.spawns[spawnIndex.current]);
+			spawnIndex.current++;
 		}
 
 		// 発射イベント処理
@@ -168,7 +189,7 @@ export const useGameScene = (isPlaying: boolean) => {
 			let hit = false;
 
 			if (sceneRef.current) {
-				// 風船ヒット判定（z=-12、手前なので先に判定）
+				// 風船ヒット判定（z=-12）
 				const hitWorldBalloon = screenToWorld(event.x, event.y, -12);
 				for (const child of sceneRef.current.children) {
 					if (child.userData.type === "balloon-target" && child.visible) {
@@ -200,12 +221,17 @@ export const useGameScene = (isPlaying: boolean) => {
 										prev.filter((t) => t.id !== child.userData.id),
 									);
 									const isGold = child.userData.isGold;
-									addScoreWithPopup(
-										isGold ? 3 : 1,
-										isGold ? "+3" : "+1",
-										event.x,
-										event.y,
-									);
+									const isPenalty = child.userData.isPenalty;
+									if (isPenalty) {
+										addScoreWithPopup(-3, "-3", event.x, event.y);
+									} else {
+										addScoreWithPopup(
+											isGold ? 3 : 1,
+											isGold ? "+3" : "+1",
+											event.x,
+											event.y,
+										);
+									}
 									hit = true;
 									break;
 								}
@@ -235,7 +261,6 @@ export const useGameScene = (isPlaying: boolean) => {
 								if (checkHit3D(hitWorldTrain, slotWorld, 1.2)) {
 									handleSlotHit(i);
 									addScoreWithPopup(1, "+1", event.x, event.y);
-									// 全滅チェック（この1つで最後か）
 									const remaining = slots.filter(
 										(s: { alive: boolean }, idx: number) =>
 											idx === i ? false : s.alive,
