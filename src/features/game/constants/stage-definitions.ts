@@ -103,7 +103,7 @@ const stage1Spawns: SpawnEntry[] = (() => {
 		nx: 0,
 		direction: 1,
 		trainLane: 1,
-		trainSpeed: 1.5,
+		trainSpeed: 2.5,
 		goldSlots: 1,
 		penaltySlots: 0,
 	});
