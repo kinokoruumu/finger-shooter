@@ -151,8 +151,8 @@ export const useGameScene = (
 					const dir = entry.direction ?? 1;
 					const startNx = dir > 0 ? 1.5 : -0.5;
 					const [startX] = screenToWorld(startNx, 0.5, -22);
-					// 固定Y位置: 線路の上（RAILS_Y = -8 と同じ）
-					const trainY = -8;
+					// 固定Y位置
+					const trainY = -5;
 					setTrainTargets((prev) => {
 						// 既に列車がいたらスキップ
 						if (prev.length > 0) return prev;

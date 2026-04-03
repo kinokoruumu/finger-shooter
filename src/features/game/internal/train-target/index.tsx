@@ -136,7 +136,7 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			);
 			for (let i = 0; i < slotGroups.length; i++) {
 				const phase = oscillateTime.current + (i * Math.PI * 2) / 3;
-				slotGroups[i].position.y = slots[i].offsetY + Math.sin(phase) * 0.6;
+				slotGroups[i].position.y = slots[i].offsetY + Math.sin(phase) * 2.0;
 			}
 		}
 
