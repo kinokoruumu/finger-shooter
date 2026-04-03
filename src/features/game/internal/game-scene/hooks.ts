@@ -155,10 +155,18 @@ export const useGameScene = (
 		const stageElapsed =
 			state.clock.elapsedTime * 1000 - stageStartTime.current;
 
-		// ステージ終了チェック → 次のステージへ（最終ステージ後はresultへ）
-		if (stageElapsed >= stage.duration) {
-			nextStage();
-			return;
+		// ステージ終了チェック:
+		// 全スポーン完了 AND 画面上に的が残っていない場合に遷移
+		const allSpawned = spawnIndex.current >= stage.spawns.length;
+		if (allSpawned) {
+			const hasRemaining =
+				groundTargets.length > 0 ||
+				balloonTargets.length > 0 ||
+				trainTargets.length > 0;
+			if (!hasRemaining) {
+				nextStage();
+				return;
+			}
 		}
 
 		// タイムラインに沿ったスポーン
