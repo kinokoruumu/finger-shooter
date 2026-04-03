@@ -11,7 +11,7 @@ import {
 } from "@/stores/game-store";
 import { checkHit3D, createScreenToWorld } from "../../utils";
 import type { BalloonTargetData } from "../balloon-target";
-import { randomBalloonColor } from "../balloon-target";
+import { randomBalloonColor } from "../balloon-target/utils";
 import type { BulletData } from "../bullet-effect";
 import type { GroundTargetData } from "../ground-target";
 import type { TrainTargetData } from "../train-target";
@@ -57,7 +57,6 @@ export const useGameScene = (
 	);
 
 	// ステージ遷移後のリセット（同じphase+stageの組み合わせでは1回のみ）
-	// biome-ignore lint/correctness/useExhaustiveDependencies: currentStageの変化でもリセット必要
 	useEffect(() => {
 		const key = `${phase}-${currentStage}`;
 		if (phase === "playing" && resetKey.current !== key) {
@@ -181,7 +180,6 @@ export const useGameScene = (
 	const groupedSpawns = useRef<Map<number, SpawnEntry[]>>(new Map());
 	const maxGroupRef = useRef(-1);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: currentStageの変化で再計算
 	useEffect(() => {
 		const stage = STAGES[currentStage];
 		if (!stage) return;

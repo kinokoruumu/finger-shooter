@@ -16,18 +16,6 @@ type Props = {
 	onDead: (id: number) => void;
 };
 
-const BALLOON_COLORS = [
-	"#ff4466",
-	"#44aaff",
-	"#44dd66",
-	"#ffaa22",
-	"#dd44ff",
-	"#ff6644",
-];
-
-export const randomBalloonColor = () =>
-	BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)];
-
 /** 破裂パーティクル — 風船の破片（薄い曲面片）+ 紐が落下 */
 const PopParticles = ({
 	position,
