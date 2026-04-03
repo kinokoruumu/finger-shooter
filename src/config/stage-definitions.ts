@@ -122,12 +122,12 @@ const verticalLine = (
 ): TargetEntry[] =>
 	Array.from({ length: 4 }, (_, i) => t(time, type, gx, i, dur));
 
-/** 外周を時計回りに順番出現（20個→各3.5s） */
+/** 外周を時計回りに順番出現（20個→各5s） */
 const borderClockwise = (
 	startTime: number,
 	interval: number,
 	type: SpawnEntry["type"] = "ground",
-	dur = 3.5,
+	dur = 5.0,
 ): TargetEntry[] => {
 	const coords: [number, number][] = [];
 	// 上辺: 左→右
@@ -213,49 +213,47 @@ const stage2Spawns: SpawnEntry[] = (() => {
 	);
 
 	// G1: 横一列（gy=1）
-	spawns.push(...toSpawns(horizontalLine(0, 1, "ground", 4.5), 1));
+	spawns.push(...toSpawns(horizontalLine(0, 1), 1));
 
-	// G2: V字
-	spawns.push(...toSpawns(vShape(0, "ground", 4.5), 2));
+	// G2: 外周ぐるっと
+	spawns.push(...toSpawns(borderClockwise(0, 200), 2));
 
-	// G3: 対角線
-	spawns.push(...toSpawns(diagonal(0, 300, "ground", 4.0), 3));
+	// G3: V字
+	spawns.push(...toSpawns(vShape(0), 3));
 
-	// G4: 横一列（中央だけ金）
+	// G4: 縦2列 + 金
 	spawns.push(
 		...toSpawns(
-			horizontalLine(0, 2, "ground", 4.5).map((e) =>
-				e.gx === 3 || e.gx === 4 ? { ...e, type: "ground-gold" as const } : e,
-			),
+			[
+				...verticalLine(0, 2),
+				...verticalLine(0, 5),
+				t(0, "ground-gold", 3, 1, 4.0),
+			],
 			4,
 		),
 	);
 
-	// G5: 十字（中央ペナルティ）
+	// G5: 対角線
+	spawns.push(...toSpawns(diagonal(0, 300), 5));
+
+	// G6: 十字（中央ペナルティ）
 	spawns.push(
 		...toSpawns(
-			[
-				...crossPattern(0, "ground", 4.5).map((e) =>
-					e.gx === 4 && e.gy === 2
-						? { ...e, type: "ground-penalty" as const }
-						: e,
-				),
-			],
-			5,
+			crossPattern(0).map((e) =>
+				e.gx === 4 && e.gy === 2
+					? { ...e, type: "ground-penalty" as const }
+					: e,
+			),
+			6,
 		),
 	);
 
-	// G6: 外周ぐるっと
-	spawns.push(...toSpawns(borderClockwise(0, 150, "ground", 3.0), 6));
-
-	// G7: 縦2列 + 金
+	// G7: 横一列（中央だけ金）
 	spawns.push(
 		...toSpawns(
-			[
-				...verticalLine(0, 2, "ground", 4.0),
-				...verticalLine(0, 5, "ground", 4.0),
-				t(0, "ground-gold", 3, 1, 4.0),
-			],
+			horizontalLine(0, 2).map((e) =>
+				e.gx === 3 || e.gx === 4 ? { ...e, type: "ground-gold" as const } : e,
+			),
 			7,
 		),
 	);
@@ -264,14 +262,14 @@ const stage2Spawns: SpawnEntry[] = (() => {
 	spawns.push(
 		...toSpawns(
 			[
-				t(0, "ground", 1, 0, 3.5),
-				t(0, "ground", 3, 1, 3.5),
-				t(0, "ground-penalty", 5, 2, 3.5),
-				t(0, "ground", 7, 3, 3.5),
-				t(500, "ground", 0, 3, 3.5),
-				t(500, "ground", 6, 1, 3.5),
-				t(1000, "ground", 2, 2, 3.5),
-				t(1000, "ground", 5, 0, 3.5),
+				t(0, "ground", 1, 0, 4.0),
+				t(0, "ground", 3, 1, 4.0),
+				t(0, "ground-penalty", 5, 2, 4.0),
+				t(0, "ground", 7, 3, 4.0),
+				t(500, "ground", 0, 3, 4.0),
+				t(500, "ground", 6, 1, 4.0),
+				t(1000, "ground", 2, 2, 4.0),
+				t(1000, "ground", 5, 0, 4.0),
 			],
 			8,
 		),
