@@ -64,14 +64,14 @@ export const StageTransition = ({
 								</h2>
 							)}
 
-							<div className="flex w-full overflow-hidden rounded-xl bg-stone-100">
+							<div className="flex w-full overflow-hidden rounded-xl border border-stone-300 bg-white/80 shadow-inner">
 								{STAGES.map((s, i) => {
 									const score = stageScores[i];
 									const hasScore = score !== null;
 									return (
 										<div
 											key={s.name}
-											className="flex flex-1 flex-col items-center border-r border-stone-200 py-3 last:border-r-0"
+											className="flex flex-1 flex-col items-center border-r border-stone-300 py-3 last:border-r-0"
 										>
 											<span className="mb-1 text-stone-400 text-xs" style={rf}>
 												{s.name}
@@ -88,7 +88,7 @@ export const StageTransition = ({
 										</div>
 									);
 								})}
-								<div className="flex flex-1 flex-col items-center border-l border-stone-300 py-3">
+								<div className="flex flex-1 flex-col items-center border-l-2 border-stone-400 bg-stone-50 py-3">
 									<span className="mb-1 text-stone-400 text-xs" style={rf}>
 										合計
 									</span>

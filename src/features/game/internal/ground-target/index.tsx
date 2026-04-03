@@ -207,8 +207,8 @@ const DestroyParticles = ({
 	);
 };
 
-const APPEAR_DURATION = 0.6;
-const LEAVE_DURATION = 0.4;
+const APPEAR_DURATION = 0.35;
+const LEAVE_DURATION = 0.25;
 const Z_BACK = -20;
 
 export const GroundTarget = ({ data, onDead }: Props) => {

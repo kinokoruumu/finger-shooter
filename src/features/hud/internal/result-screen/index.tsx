@@ -32,7 +32,7 @@ export const ResultScreen = ({ stageScores, onRetry }: Props) => {
 
 				{/* ラウンド別スコア */}
 				<motion.div
-					className="mb-6 flex w-full overflow-hidden rounded-xl bg-stone-100"
+					className="mb-6 flex w-full overflow-hidden rounded-xl border border-stone-300 bg-white/80 shadow-inner"
 					initial={{ opacity: 0, y: 10 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.3, duration: 0.4 }}
@@ -40,7 +40,7 @@ export const ResultScreen = ({ stageScores, onRetry }: Props) => {
 					{STAGES.map((s, i) => (
 						<motion.div
 							key={s.name}
-							className="flex flex-1 flex-col items-center border-r border-stone-200 py-4 last:border-r-0"
+							className="flex flex-1 flex-col items-center border-r border-stone-300 py-4 last:border-r-0"
 							initial={{ opacity: 0, y: 15 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ delay: 0.4 + i * 0.1, duration: 0.3 }}

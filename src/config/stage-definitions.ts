@@ -17,6 +17,8 @@ export type SpawnEntry = {
 	direction?: number;
 	/** 列車: レーン 0=上, 1=中, 2=下 */
 	trainLane?: number;
+	/** 列車: 車両数（デフォルト1） */
+	cars?: number;
 };
 
 export type StageDefinition = {
@@ -180,12 +182,12 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		type: SpawnEntry["type"],
 		gx: number,
 		gy: number,
-		dur = 3.0,
+		dur = 3.5,
 	) => {
 		spawns.push({ time, type, nx: 0, gx, gy, visibleDuration: dur });
 	};
 
-	const train = (time: number, lane: number, dir = 1) => {
+	const train = (time: number, lane: number, dir = 1, cars = 1) => {
 		spawns.push({
 			time,
 			type: "train",
@@ -193,6 +195,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 			slotsOscillate: true,
 			direction: dir,
 			trainLane: lane,
+			cars,
 		});
 	};
 
@@ -230,12 +233,12 @@ const stage3Spawns: SpawnEntry[] = (() => {
 	target(22500, "ground", 5, 3);
 	target(23500, "ground", 7, 0);
 	target(24500, "ground", 3, 2);
-	target(25500, "ground-gold", 6, 1, 2.5);
+	target(25500, "ground-gold", 6, 1, 3.0);
 
 	// 26~28s: フィナーレ — 的3つ
-	target(26000, "ground", 1, 0, 2.5);
-	target(26800, "ground", 4, 2, 2.5);
-	target(27500, "ground", 7, 3, 2.5);
+	target(26000, "ground", 1, 0, 3.0);
+	target(26800, "ground", 4, 2, 3.0);
+	target(27500, "ground", 7, 3, 3.0);
 
 	return spawns.sort((a, b) => a.time - b.time);
 })();

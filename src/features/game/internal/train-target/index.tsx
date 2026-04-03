@@ -19,6 +19,8 @@ export type TrainTargetData = {
 	direction: number;
 	/** レーン 0=上, 1=中, 2=下 */
 	lane: number;
+	/** 車両数（1〜3） */
+	cars: number;
 };
 
 type Props = {
@@ -74,11 +76,22 @@ const TrainBody = () => {
 					<meshStandardMaterial color="#aaddff" />
 				</mesh>
 			))}
-			{/* 車輪 */}
+			{/* 車輪（手前） */}
 			{[-1.8, -0.8, 0.8, 1.8].map((wx) => (
 				<mesh
-					key={wx}
+					key={`f-${wx}`}
 					position={[wx, -1.1, 0.8]}
+					rotation={[Math.PI / 2, 0, 0]}
+				>
+					<cylinderGeometry args={[0.35, 0.35, 0.15, 16]} />
+					<meshStandardMaterial color="#333333" />
+				</mesh>
+			))}
+			{/* 車輪（奥） */}
+			{[-1.8, -0.8, 0.8, 1.8].map((wx) => (
+				<mesh
+					key={`b-${wx}`}
+					position={[wx, -1.1, -0.8]}
 					rotation={[Math.PI / 2, 0, 0]}
 				>
 					<cylinderGeometry args={[0.35, 0.35, 0.15, 16]} />
@@ -89,18 +102,30 @@ const TrainBody = () => {
 	);
 };
 
+// 車両幅(scale 2.5): 5 * 2.5 = 12.5、車両間隔
+const CAR_WIDTH = 13;
+const WINDOW_OFFSETS = [-1.5 * 2.5, 0, 1.5 * 2.5];
+const SLOT_Y = 0.3 * 2.5;
+
+const buildSlots = (cars: number): SlotState[] => {
+	const slots: SlotState[] = [];
+	for (let c = 0; c < cars; c++) {
+		const carOffset = (c - (cars - 1) / 2) * CAR_WIDTH;
+		for (const wx of WINDOW_OFFSETS) {
+			slots.push({ offsetX: carOffset + wx, offsetY: SLOT_Y, alive: true });
+		}
+	}
+	return slots;
+};
+
 export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 	const groupRef = useRef<THREE.Group>(null);
 	const [alive, setAlive] = useState(true);
 	const oscillateTime = useRef(Math.random() * Math.PI * 2);
 	const dir = data.direction;
+	const cars = data.cars;
 
-	// 窓位置に合わせた的（窓3つ＝的3つ）scale 2.5でのオフセット
-	const [slots, setSlots] = useState<SlotState[]>([
-		{ offsetX: -1.5 * 2.5, offsetY: 0.3 * 2.5, alive: true },
-		{ offsetX: 0, offsetY: 0.3 * 2.5, alive: true },
-		{ offsetX: 1.5 * 2.5, offsetY: 0.3 * 2.5, alive: true },
-	]);
+	const [slots, setSlots] = useState<SlotState[]>(() => buildSlots(cars));
 
 	useFrame((_, delta) => {
 		if (!groupRef.current || !alive) return;
@@ -121,8 +146,8 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			}
 		}
 
-		// 画面外に出たか
-		const exitThreshold = Math.abs(data.startX) + 10;
+		// 画面外に出たか（連結分を考慮）
+		const exitThreshold = Math.abs(data.startX) + cars * CAR_WIDTH;
 		if (
 			(dir > 0 && groupRef.current.position.x < -exitThreshold) ||
 			(dir < 0 && groupRef.current.position.x > exitThreshold)
@@ -154,10 +179,19 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			position={[data.startX, data.y, data.z]}
 			userData={{ type: "train-target", id: data.id, slots, handleSlotHit }}
 		>
-			<TrainBody />
+			{/* 連結車両 */}
+			{Array.from({ length: cars }, (_, c) => {
+				const pos = (c - (cars - 1) / 2) * CAR_WIDTH;
+				return (
+					<group key={`car-${pos}`} position={[pos, 0, 0]}>
+						<TrainBody />
+					</group>
+				);
+			})}
+			{/* 的（全車両分） */}
 			{slots.map((slot, i) => (
 				<group
-					key={slot.offsetX}
+					key={`slot-${slot.offsetX}`}
 					position={[slot.offsetX, slot.offsetY, 0.76 * 2.5 + 0.1]}
 					userData={{ isSlot: true, slotIndex: i }}
 				>
