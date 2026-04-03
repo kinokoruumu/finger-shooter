@@ -206,8 +206,10 @@ export const useGameScene = (
 
 		// 全グループ完了チェック
 		if (currentGroup.current > maxGroupRef.current) {
-			// 的と列車が残っていなければ次ステージ（風船は無視）
-			const hasRemaining = groundTargets.length > 0 || trainTargets.length > 0;
+			const hasRemaining =
+				groundTargets.length > 0 ||
+				trainTargets.length > 0 ||
+				balloonTargets.length > 0;
 			if (!hasRemaining) {
 				nextStage();
 			}
@@ -241,8 +243,13 @@ export const useGameScene = (
 		} else if (waitFrames.current > 0) {
 			waitFrames.current--;
 		} else if (groupSpawnIndex.current >= groupSpawns.length) {
-			// グループのスポーン全完了 AND 的・列車が残っていない → 次グループ
-			const hasRemaining = groundTargets.length > 0 || trainTargets.length > 0;
+			// グループのスポーン全完了 → 次グループへの条件判定
+			// グループに的・列車が含まれていれば、それらの消滅を待つ
+			// 風船のみのグループなら風船の消滅を待つ
+			const hasGroundOrTrain = groupSpawns.some((s) => s.type !== "balloon");
+			const hasRemaining = hasGroundOrTrain
+				? groundTargets.length > 0 || trainTargets.length > 0
+				: balloonTargets.length > 0;
 			if (!hasRemaining) {
 				currentGroup.current++;
 				groupSpawnIndex.current = 0;
