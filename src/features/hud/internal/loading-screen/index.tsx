@@ -12,7 +12,12 @@ export const LoadingScreen = ({ isVisible }: Props) => {
 				isVisible ? "opacity-100" : "pointer-events-none opacity-0",
 			)}
 		>
-			<h1 className="mb-8 font-bold text-4xl text-white">🔫 Finger Shooter</h1>
+			<h1
+				className="mb-8 font-bold text-4xl text-white"
+				style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
+			>
+				的あて
+			</h1>
 			<div className="flex flex-col items-center gap-4">
 				<div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />
 				<p className="text-white/70 text-sm">

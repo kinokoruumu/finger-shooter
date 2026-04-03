@@ -27,9 +27,7 @@ export const TitleScreen = ({ onStart, debugMode }: Props) => {
 								"0 3px 12px rgba(0,0,0,0.5), 0 0 40px rgba(234,88,12,0.2)",
 						}}
 					>
-						Finger
-						<br />
-						<span className="text-orange-400">Shooter</span>
+						的あて
 					</h1>
 				</motion.div>
 
