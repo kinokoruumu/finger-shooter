@@ -138,7 +138,7 @@ export const UICatalog = () => {
 							<input
 								type="range"
 								min="0"
-								max={Math.max(appearDuration, 1)}
+								max={appearDuration || 1}
 								step="0.01"
 								value={appearOffset}
 								onChange={(e) => {
@@ -151,7 +151,7 @@ export const UICatalog = () => {
 							<input
 								type="number"
 								min="0"
-								max={Math.max(appearDuration, 1)}
+								max={appearDuration || 1}
 								step="0.01"
 								value={appearOffset}
 								onChange={(e) => {
@@ -167,7 +167,7 @@ export const UICatalog = () => {
 							<button
 								type="button"
 								className="rounded-md bg-stone-700 px-3 py-1 text-sm text-white hover:bg-stone-600"
-								onClick={() => playSound("target-appear", 0.7)}
+								onClick={() => playSound("target-appear", 1.0, appearOffset)}
 							>
 								試聴
 							</button>
