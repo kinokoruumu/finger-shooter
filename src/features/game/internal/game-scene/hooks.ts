@@ -302,7 +302,9 @@ export const useGameScene = (
 									);
 									const isGold = child.userData.isGold;
 									const isPenalty = child.userData.isPenalty;
-									if (!isGold && !isPenalty) {
+									if (isGold) {
+										playSound("gold-hit", 0.7);
+									} else if (!isPenalty) {
 										playSound("target-hit", 0.6);
 									}
 									if (isPenalty) {
