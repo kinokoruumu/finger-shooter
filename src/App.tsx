@@ -201,7 +201,7 @@ export const App = () => {
 						>
 							GAME OVER
 						</h2>
-						{/* ステージ別スコア */}
+						{/* ラウンド別スコア */}
 						<div className="mb-4 flex justify-center gap-1">
 							{STAGES.map((s, i) => (
 								<div
@@ -214,7 +214,7 @@ export const App = () => {
 											fontFamily: '"Rounded Mplus 1c", sans-serif',
 										}}
 									>
-										S{i + 1}
+										{s.name}
 									</span>
 									<span
 										className="font-black text-xl text-white tabular-nums"

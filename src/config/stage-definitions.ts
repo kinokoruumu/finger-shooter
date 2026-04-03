@@ -22,7 +22,7 @@ export type StageDefinition = {
 export const STAGE_TRANSITION_DURATION = 3000;
 
 /**
- * ステージ1: 風船54個(54pt) + 列車1台(3+3=6pt) = MAX 60
+ * ラウンド1: 風船30個(30pt) + 列車1台(3+3=6pt) = MAX 36
  */
 const stage1Spawns: SpawnEntry[] = (() => {
 	const spawns: SpawnEntry[] = [];
@@ -30,19 +30,19 @@ const stage1Spawns: SpawnEntry[] = (() => {
 		0.3, 0.7, 0.5, 0.2, 0.8, 0.4, 0.6, 0.35, 0.65, 0.25, 0.75, 0.45,
 	];
 
-	// 0~12s: 前半24個 (0.5s間隔)
-	for (let i = 0; i < 24; i++) {
+	// 0~14s: 前半15個 (1s間隔、ゆったり)
+	for (let i = 0; i < 15; i++) {
 		spawns.push({
-			time: 500 + i * 500,
+			time: 500 + i * 1000,
 			type: "balloon",
 			nx: balloonXs[i % balloonXs.length],
 		});
 	}
 
-	// 13~24s: 後半30個 (0.4s間隔、ペースアップ)
-	for (let i = 0; i < 30; i++) {
+	// 15~24s: 後半15個 (0.65s間隔、ペースアップ)
+	for (let i = 0; i < 15; i++) {
 		spawns.push({
-			time: 13000 + i * 400,
+			time: 15500 + i * 650,
 			type: "balloon",
 			nx: balloonXs[(i + 5) % balloonXs.length],
 		});
@@ -55,7 +55,7 @@ const stage1Spawns: SpawnEntry[] = (() => {
 })();
 
 /**
- * ステージ2: 地上的60個(60pt) + 金8個(24pt) + 列車1台(6pt) = MAX 90
+ * ラウンド2: 地上的60個(60pt) + 金8個(24pt) + 列車1台(6pt) = MAX 90
  * ペナルティ4個(-3)は回避前提
  * 風船なし
  * 的は回転しながら出現(コンポーネント側で処理)
@@ -113,7 +113,7 @@ const stage2Spawns: SpawnEntry[] = (() => {
 })();
 
 /**
- * ステージ3: 風船40(40pt) + 通常地上32(32pt) + 金10(30pt) + 列車3台(18pt) = MAX 120
+ * ラウンド3: 風船40(40pt) + 通常地上32(32pt) + 金10(30pt) + 列車3台(18pt) = MAX 120
  * ペナルティ6個(-3)は回避前提
  * 高密度・高難度
  */
@@ -199,10 +199,10 @@ const stage3Spawns: SpawnEntry[] = (() => {
 })();
 
 export const STAGES: StageDefinition[] = [
-	{ name: "ステージ1", duration: 30000, maxScore: 60, spawns: stage1Spawns },
-	{ name: "ステージ2", duration: 30000, maxScore: 90, spawns: stage2Spawns },
+	{ name: "ラウンド1", duration: 30000, maxScore: 36, spawns: stage1Spawns },
+	{ name: "ラウンド2", duration: 30000, maxScore: 90, spawns: stage2Spawns },
 	{
-		name: "ファイナルステージ",
+		name: "ファイナルラウンド",
 		duration: 30000,
 		maxScore: 120,
 		spawns: stage3Spawns,
