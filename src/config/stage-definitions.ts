@@ -15,6 +15,8 @@ export type SpawnEntry = {
 	slotsOscillate?: boolean;
 	/** 列車: 移動方向 1=右→左, -1=左→右 */
 	direction?: number;
+	/** 列車: レーン 0=上, 1=中, 2=下 */
+	trainLane?: number;
 };
 
 export type StageDefinition = {
@@ -56,7 +58,13 @@ const stage1Spawns: SpawnEntry[] = (() => {
 	}
 
 	// 25s: 列車1台（終盤、右から）
-	spawns.push({ time: 25000, type: "train", nx: 1.2, ny: 0.4, direction: 1 });
+	spawns.push({
+		time: 25000,
+		type: "train",
+		nx: 0,
+		direction: 1,
+		trainLane: 1,
+	});
 
 	return spawns.sort((a, b) => a.time - b.time);
 })();
@@ -137,14 +145,14 @@ const stage2Spawns: SpawnEntry[] = (() => {
 		});
 	}
 
-	// 28s: 列車（左から）
+	// 28s: 列車（左から、中レーン）
 	spawns.push({
 		time: 28000,
 		type: "train",
 		nx: 0,
-		ny: 0.4,
 		slotsOscillate: true,
 		direction: -1,
+		trainLane: 1,
 	});
 
 	return spawns.sort((a, b) => a.time - b.time);
@@ -181,15 +189,15 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		spawns.push({ time, type, nx: 0, gx, gy, visibleDuration: dur });
 	};
 
-	// 列車ヘルパー
-	const train = (time: number, ny: number, dir = 1) => {
+	// 列車ヘルパー (lane: 0=上, 1=中, 2=下)
+	const train = (time: number, lane: number, dir = 1) => {
 		spawns.push({
 			time,
 			type: "train",
 			nx: 0,
-			ny,
 			slotsOscillate: true,
 			direction: dir,
+			trainLane: lane,
 		});
 	};
 
@@ -199,7 +207,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 	target(1700, "ground", 7, 3);
 	target(2900, "ground", 4, 0);
 	target(4100, "ground", 1, 4);
-	train(3000, 0.3, 1);
+	train(3000, 0, 1);
 
 	// 5~10s: 風船8 + 通常4 + 金2 + ペナ1
 	for (let i = 0; i < 8; i++) balloon(5200 + i * 550);
@@ -222,7 +230,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 	target(14000, "ground-gold", 5, 3);
 	target(12500, "ground-penalty", 0, 0);
 	target(14500, "ground-penalty", 7, 4);
-	train(12000, 0.5, -1);
+	train(12000, 2, -1);
 
 	// 15~20s: 風船8 + 通常8 + 金3 + ペナ2
 	for (let i = 0; i < 8; i++) balloon(15200 + i * 450);
@@ -256,7 +264,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 	target(24000, "ground", 6, 0);
 	target(24500, "ground-gold", 8, 4);
 	target(23500, "ground-penalty", 5, 2);
-	train(22000, 0.4, 1);
+	train(22000, 1, 1);
 
 	// 25~30s: フィナーレラッシュ — 的のみ
 	target(25500, "ground", 0, 0, 1.5);

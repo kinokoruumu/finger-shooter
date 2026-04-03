@@ -17,6 +17,8 @@ export type TrainTargetData = {
 	slotsOscillate: boolean;
 	/** 移動方向: 1=右→左, -1=左→右 */
 	direction: number;
+	/** レーン 0=上, 1=中, 2=下 */
+	lane: number;
 };
 
 type Props = {

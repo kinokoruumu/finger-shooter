@@ -1,6 +1,5 @@
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { STAGES } from "@/config/stage-definitions";
 import { CameraView } from "@/features/camera";
 import { useCamera } from "@/features/camera/hooks";
 import { Game3D } from "@/features/game";
@@ -12,6 +11,8 @@ import { DebugOverlay } from "@/features/hand-tracking/internal/debug-overlay";
 import { HUD } from "@/features/hud";
 import { AimCursor } from "@/features/hud/internal/aim-cursor";
 import { LoadingScreen } from "@/features/hud/internal/loading-screen";
+import { ResultScreen } from "@/features/hud/internal/result-screen";
+import { TitleScreen } from "@/features/hud/internal/title-screen";
 import { TrackingStatus } from "@/features/hud/internal/tracking-status";
 import { cn } from "@/lib/utils";
 import {
@@ -53,7 +54,7 @@ export const App = () => {
 		if (startRound !== undefined && startRound > 0) {
 			setCurrentStage(startRound);
 		}
-		setPhase("stage-transition");
+		setPhase("calibrating");
 	}, []);
 
 	const handleStageTransitionComplete = useCallback(() => {
@@ -61,11 +62,20 @@ export const App = () => {
 		setPhase("playing");
 	}, []);
 
+	// キャリブレーション完了検知 → ステージ遷移へ
+	useEffect(() => {
+		if (gameState.phase !== "calibrating") return;
+		if (gameState.gestureDebug?.calibration === "done") {
+			setPhase("stage-transition");
+		}
+	}, [gameState.phase, gameState.gestureDebug?.calibration]);
+
 	// タイトル・リザルト画面でピンチを検知してゲーム開始/リスタート
 	useEffect(() => {
 		if (
 			gameState.phase === "playing" ||
 			gameState.phase === "stage-transition" ||
+			gameState.phase === "calibrating" ||
 			isLoading
 		)
 			return;
@@ -124,12 +134,37 @@ export const App = () => {
 			/>
 
 			{/* Layer 2: HUD */}
-			<HUD
-				score={gameState.score}
-				timeRemaining={0}
-				isVisible={gameState.phase === "playing"}
-				gestureDebug={gameState.gestureDebug}
-			/>
+			<HUD score={gameState.score} isVisible={gameState.phase === "playing"} />
+
+			{/* キャリブレーション画面 */}
+			{gameState.phase === "calibrating" && (
+				<div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
+					<div className="flex w-80 flex-col items-center gap-4 rounded-2xl bg-black/70 px-8 py-8 backdrop-blur-sm">
+						<p
+							className="text-center font-bold text-lg text-white"
+							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
+						>
+							センタリング
+						</p>
+						<p className="text-center text-sm text-blue-200">
+							✋ パーを1.5秒キープしてください
+						</p>
+						<div className="h-3 w-full overflow-hidden rounded-full bg-white/10">
+							<div
+								className={cn(
+									"h-full rounded-full transition-all duration-100",
+									gameState.gestureDebug?.calibration === "progress"
+										? "bg-blue-400"
+										: "bg-white/5",
+								)}
+								style={{
+									width: `${(gameState.gestureDebug?.calibrationProgress ?? 0) * 100}%`,
+								}}
+							/>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{/* ステージ遷移テキスト */}
 			{gameState.phase === "stage-transition" && (
@@ -165,113 +200,15 @@ export const App = () => {
 
 			{/* タイトル画面 */}
 			{gameState.phase === "title" && !isLoading && (
-				<div className="absolute inset-0 z-30 flex flex-col items-center justify-center">
-					<div className="rounded-2xl bg-black/60 px-12 py-10 text-center backdrop-blur-sm">
-						<h1
-							className="mb-2 font-black text-5xl text-white"
-							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
-						>
-							Finger Shooter
-						</h1>
-						<p className="mb-2 text-white/60">
-							手を動かして狙い、指をつまんで撃て！
-						</p>
-						<p className="mb-8 font-mono text-white/40 text-xs">
-							✋ パーを1.5秒キープでセンタリング
-						</p>
-						<button
-							type="button"
-							className={cn(
-								"rounded-xl bg-red-500 px-8 py-3 font-bold text-lg text-white transition-colors",
-								"pointer-events-auto hover:bg-red-600 active:bg-red-700",
-							)}
-							onClick={() => startGame()}
-						>
-							START
-						</button>
-						<p className="mt-3 font-mono text-white/30 text-xs">
-							👌 ピンチでもOK
-						</p>
-						{/* デバッグ: ラウンド選択 */}
-						{debugMode && (
-							<div className="mt-4 flex justify-center gap-2">
-								{STAGES.map((s, i) => (
-									<button
-										key={s.name}
-										type="button"
-										className="pointer-events-auto rounded-md bg-white/10 px-3 py-1 font-mono text-white/50 text-xs hover:bg-white/20"
-										onClick={() => startGame(i)}
-									>
-										R{i + 1}
-									</button>
-								))}
-							</div>
-						)}
-					</div>
-				</div>
+				<TitleScreen onStart={startGame} debugMode={debugMode} />
 			)}
 
 			{/* リザルト画面 */}
 			{gameState.phase === "result" && (
-				<div className="absolute inset-0 z-30 flex flex-col items-center justify-center">
-					<div className="rounded-2xl bg-black/70 px-12 py-10 text-center backdrop-blur-sm">
-						<h2
-							className="mb-4 font-black text-3xl text-white"
-							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
-						>
-							GAME OVER
-						</h2>
-						{/* ラウンド別スコア */}
-						<div className="mb-4 flex justify-center gap-1">
-							{STAGES.map((s, i) => (
-								<div
-									key={s.name}
-									className="flex flex-col items-center rounded-lg bg-white/10 px-5 py-2"
-								>
-									<span
-										className="text-white/40 text-xs"
-										style={{
-											fontFamily: '"Rounded Mplus 1c", sans-serif',
-										}}
-									>
-										{s.name}
-									</span>
-									<span
-										className="font-black text-xl text-white tabular-nums"
-										style={{
-											fontFamily: '"Rounded Mplus 1c", sans-serif',
-										}}
-									>
-										{gameState.stageScores[i] ?? 0}
-									</span>
-								</div>
-							))}
-						</div>
-						<p className="mb-1 text-white/60">TOTAL</p>
-						<p
-							className="mb-8 font-black text-6xl text-white"
-							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
-						>
-							{gameState.stageScores.reduce<number>(
-								(sum, s) => sum + (s ?? 0),
-								0,
-							)}
-						</p>
-						<button
-							type="button"
-							className={cn(
-								"rounded-xl bg-red-500 px-8 py-3 font-bold text-lg text-white transition-colors",
-								"pointer-events-auto hover:bg-red-600 active:bg-red-700",
-							)}
-							onClick={() => startGame()}
-						>
-							RETRY
-						</button>
-						<p className="mt-3 font-mono text-white/30 text-xs">
-							👌 ピンチでもOK
-						</p>
-					</div>
-				</div>
+				<ResultScreen
+					stageScores={gameState.stageScores}
+					onRetry={() => startGame()}
+				/>
 			)}
 
 			{/* プレイ中以外のエイムカーソル */}

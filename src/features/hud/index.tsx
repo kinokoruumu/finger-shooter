@@ -1,19 +1,12 @@
 import { cn } from "@/lib/utils";
-import type { GestureDebug } from "@/stores/game-store";
 import { ScorePopupDisplay } from "./internal/score-popup";
 
 type Props = {
 	score: number;
-	timeRemaining: number;
 	isVisible: boolean;
-	gestureDebug: GestureDebug | null;
 };
 
-export const HUD = ({ score, isVisible, gestureDebug }: Props) => {
-	const isCalibrated = gestureDebug?.calibration === "done";
-	const isCalibrating = gestureDebug?.calibration === "progress";
-	const progress = gestureDebug?.calibrationProgress ?? 0;
-
+export const HUD = ({ score, isVisible }: Props) => {
 	return (
 		<div
 			className={cn(
@@ -35,32 +28,6 @@ export const HUD = ({ score, isVisible, gestureDebug }: Props) => {
 
 			{/* スコアポップアップ */}
 			<ScorePopupDisplay />
-
-			{/* センタリング UI */}
-			{!isCalibrated && (
-				<div className="absolute inset-x-0 top-20 flex justify-center">
-					<div className="flex w-72 flex-col items-center gap-3 rounded-xl bg-black/60 px-6 py-4 backdrop-blur-sm">
-						<p className="text-center text-sm text-blue-200">
-							✋ パーを1.5秒キープでセンタリング
-						</p>
-						{/* プログレスバー */}
-						<div className="h-3 w-full overflow-hidden rounded-full bg-white/10">
-							<div
-								className={cn(
-									"h-full rounded-full transition-all duration-100",
-									isCalibrating ? "bg-blue-400" : "bg-white/5",
-								)}
-								style={{ width: `${progress * 100}%` }}
-							/>
-						</div>
-						{isCalibrating && (
-							<p className="font-mono text-blue-300/80 text-xs">
-								{Math.round(progress * 100)}%
-							</p>
-						)}
-					</div>
-				</div>
-			)}
 		</div>
 	);
 };

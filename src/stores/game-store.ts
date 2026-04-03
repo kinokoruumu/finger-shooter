@@ -74,7 +74,12 @@ import type { GestureDebugValues } from "@/features/hand-tracking/gesture-detect
 
 export type GestureDebug = GestureDebugValues;
 
-export type GamePhase = "title" | "playing" | "stage-transition" | "result";
+export type GamePhase =
+	| "title"
+	| "calibrating"
+	| "playing"
+	| "stage-transition"
+	| "result";
 
 export type GameUIState = {
 	score: number;

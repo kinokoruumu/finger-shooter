@@ -88,8 +88,8 @@ export const useGameScene = (
 		(entry: SpawnEntry) => {
 			switch (entry.type) {
 				case "balloon": {
-					const [worldX] = screenToWorld(entry.nx, 0.5, -12);
-					const [, bottomY] = screenToWorld(0.5, 1.1, -12);
+					const [worldX] = screenToWorld(entry.nx, 0.5, -18);
+					const [, bottomY] = screenToWorld(0.5, 1.1, -18);
 					const speed = 1.5 + Math.random() * 2.0;
 					setBalloonTargets((prev) => [
 						...prev,
@@ -97,7 +97,7 @@ export const useGameScene = (
 							id: genId(),
 							x: worldX,
 							startY: bottomY,
-							z: -12,
+							z: -18,
 							speed,
 							color: randomBalloonColor(),
 						},
@@ -147,21 +147,28 @@ export const useGameScene = (
 				}
 				case "train": {
 					const dir = entry.direction ?? 1;
+					const lane = entry.trainLane ?? 1;
+					// 3ライン: 上=0.25, 中=0.45, 下=0.65
+					const laneNy = [0.25, 0.45, 0.65][lane];
 					const startNx = dir > 0 ? 1.3 : -0.3;
-					const [startX] = screenToWorld(startNx, 0.5, -18);
-					const ny = entry.ny ?? 0.4;
-					const [, trainY] = screenToWorld(0.5, ny, -18);
-					setTrainTargets((prev) => [
-						...prev,
-						{
-							id: genId(),
-							startX,
-							y: trainY,
-							z: -18,
-							slotsOscillate: entry.slotsOscillate ?? false,
-							direction: dir,
-						},
-					]);
+					const [startX] = screenToWorld(startNx, 0.5, -22);
+					const [, trainY] = screenToWorld(0.5, laneNy, -22);
+					setTrainTargets((prev) => {
+						// 同じレーンに列車がいたらスキップ
+						if (prev.some((t) => t.lane === lane)) return prev;
+						return [
+							...prev,
+							{
+								id: genId(),
+								startX,
+								y: trainY,
+								z: -22,
+								slotsOscillate: entry.slotsOscillate ?? false,
+								direction: dir,
+								lane,
+							},
+						];
+					});
 					break;
 				}
 			}
@@ -227,8 +234,8 @@ export const useGameScene = (
 			let hit = false;
 
 			if (sceneRef.current) {
-				// 風船ヒット判定（z=-12）
-				const hitWorldBalloon = screenToWorld(event.x, event.y, -12);
+				// 風船ヒット判定（z=-18）
+				const hitWorldBalloon = screenToWorld(event.x, event.y, -18);
 				for (const child of sceneRef.current.children) {
 					if (child.userData.type === "balloon-target" && child.visible) {
 						const posRef = child.userData.positionRef;
@@ -278,9 +285,9 @@ export const useGameScene = (
 					}
 				}
 
-				// 電車ターゲット判定（z=-18）
+				// 電車ターゲット判定（z=-22）
 				if (!hit) {
-					const hitWorldTrain = screenToWorld(event.x, event.y, -18);
+					const hitWorldTrain = screenToWorld(event.x, event.y, -22);
 					for (const child of sceneRef.current.children) {
 						if (child.userData.type === "train-target") {
 							const { slots, handleSlotHit } = child.userData;
