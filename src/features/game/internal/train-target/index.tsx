@@ -145,7 +145,8 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			}
 		}
 
-		const exitThreshold = Math.abs(data.startX) + CARS * CAR_WIDTH;
+		// 最後の車両が画面外に出たら消す
+		const exitThreshold = Math.abs(data.startX) + 5;
 		if (
 			(dir > 0 && groupRef.current.position.x < -exitThreshold) ||
 			(dir < 0 && groupRef.current.position.x > exitThreshold)
