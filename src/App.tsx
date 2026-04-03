@@ -20,7 +20,6 @@ import { HUD } from "@/features/hud";
 import { AimCursor } from "@/features/hud/components/aim-cursor";
 import { LoadingScreen } from "@/features/hud/components/loading-screen";
 import { ResultScreen } from "@/features/hud/components/result-screen";
-import { TitleScreen } from "@/features/hud/components/title-screen";
 import { TrackingStatus } from "@/features/hud/components/tracking-status";
 import { WelcomeScreen } from "@/features/hud/components/welcome-screen";
 import { cn } from "@/lib/utils";
@@ -40,16 +39,26 @@ export const App = () => {
 	const landmarksRef = useRef<NormalizedLandmark[] | null>(null);
 	const gameState = useGameState();
 
-	const handleWelcome = useCallback(() => {
-		setStarted(true);
-		startCamera();
-		preloadSounds();
-	}, [startCamera]);
+	const handleWelcome = useCallback(
+		(startRound?: number) => {
+			setStarted(true);
+			startCamera();
+			preloadSounds();
+			if (startRound !== undefined && startRound > 0) {
+				setCurrentStage(startRound);
+			}
+		},
+		[startCamera],
+	);
 
 	const handleTrackingReady = useCallback(() => {
 		if (hasNotifiedRef.current) return;
 		hasNotifiedRef.current = true;
-		setTimeout(() => setIsLoading(false), 300);
+		// ローディング完了 → 自動的にキャリブレーションへ
+		setTimeout(() => {
+			setIsLoading(false);
+			setPhase("calibrating");
+		}, 300);
 	}, []);
 
 	const startGame = useCallback((startRound?: number) => {
@@ -75,12 +84,11 @@ export const App = () => {
 		}
 	}, [gameState.phase, gameState.gestureDebug?.calibration]);
 
-	// リザルト・タイトル画面でピンチ検知（ボタン上のみ）
+	// リザルト画面でピンチ検知（ボタン上のみ）
 	useEffect(() => {
-		if (gameState.phase !== "result" && gameState.phase !== "title") return;
-		if (gameState.phase === "title" && isLoading) return;
+		if (gameState.phase !== "result") return;
 
-		const delay = gameState.phase === "result" ? 1500 : 1000;
+		const delay = 1500;
 		let ready = false;
 		const timer = setTimeout(() => {
 			consumeFireEvents();
@@ -119,11 +127,17 @@ export const App = () => {
 			cancelAnimationFrame(rafId);
 			clearTimeout(timer);
 		};
-	}, [gameState.phase, isLoading, startGame]);
+	}, [gameState.phase, startGame]);
 
 	// まだ「はじめる」を押していない
 	if (!started) {
-		return <WelcomeScreen onStart={handleWelcome} />;
+		return (
+			<WelcomeScreen
+				onStart={() => handleWelcome()}
+				debugMode={debugMode}
+				onDebugStart={(round) => handleWelcome(round)}
+			/>
+		);
 	}
 
 	if (cameraError) {
@@ -224,10 +238,6 @@ export const App = () => {
 						{showCamera ? "CAM ON" : "CAM OFF"}
 					</button>
 				</div>
-			)}
-
-			{gameState.phase === "title" && !isLoading && (
-				<TitleScreen onStart={startGame} debugMode={debugMode} />
 			)}
 
 			{gameState.phase === "result" && (
