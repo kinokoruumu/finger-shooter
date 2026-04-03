@@ -72,83 +72,182 @@ const stage1Spawns: SpawnEntry[] = (() => {
 	return spawns.sort((a, b) => a.time - b.time);
 })();
 
+// --- パターンヘルパー ---
+type TargetEntry = {
+	time: number;
+	type: SpawnEntry["type"];
+	gx: number;
+	gy: number;
+	dur: number;
+};
+
+const t = (
+	time: number,
+	type: SpawnEntry["type"],
+	gx: number,
+	gy: number,
+	dur = 3.5,
+): TargetEntry => ({ time, type, gx, gy, dur });
+
+/** 横一列に同時出現 */
+const horizontalLine = (
+	time: number,
+	gy: number,
+	type: SpawnEntry["type"] = "ground",
+	dur = 3.0,
+): TargetEntry[] =>
+	Array.from({ length: 8 }, (_, i) => t(time, type, i, gy, dur));
+
+/** 縦一列に同時出現 */
+const verticalLine = (
+	time: number,
+	gx: number,
+	type: SpawnEntry["type"] = "ground",
+	dur = 3.0,
+): TargetEntry[] =>
+	Array.from({ length: 4 }, (_, i) => t(time, type, gx, i, dur));
+
+/** 外周を時計回りに順番出現 */
+const borderClockwise = (
+	startTime: number,
+	interval: number,
+	type: SpawnEntry["type"] = "ground",
+	dur = 2.5,
+): TargetEntry[] => {
+	const coords: [number, number][] = [];
+	// 上辺: 左→右
+	for (let x = 0; x <= 7; x++) coords.push([x, 0]);
+	// 右辺: 上→下
+	for (let y = 1; y <= 3; y++) coords.push([7, y]);
+	// 下辺: 右→左
+	for (let x = 6; x >= 0; x--) coords.push([x, 3]);
+	// 左辺: 下→上
+	for (let y = 2; y >= 1; y--) coords.push([0, y]);
+
+	return coords.map(([gx, gy], i) =>
+		t(startTime + i * interval, type, gx, gy, dur),
+	);
+};
+
+/** 対角線（左上→右下） */
+const diagonal = (
+	startTime: number,
+	interval: number,
+	type: SpawnEntry["type"] = "ground",
+	dur = 3.0,
+): TargetEntry[] => {
+	const entries: TargetEntry[] = [];
+	for (let i = 0; i < 4; i++) {
+		entries.push(t(startTime + i * interval, type, i * 2, i, dur));
+		if (i * 2 + 1 <= 7) {
+			entries.push(
+				t(startTime + i * interval + interval / 2, type, i * 2 + 1, i, dur),
+			);
+		}
+	}
+	return entries;
+};
+
+/** V字パターン */
+const vShape = (
+	time: number,
+	type: SpawnEntry["type"] = "ground",
+	dur = 3.0,
+): TargetEntry[] => [
+	t(time, type, 0, 0, dur),
+	t(time, type, 7, 0, dur),
+	t(time + 200, type, 1, 1, dur),
+	t(time + 200, type, 6, 1, dur),
+	t(time + 400, type, 2, 2, dur),
+	t(time + 400, type, 5, 2, dur),
+	t(time + 600, type, 3, 3, dur),
+	t(time + 600, type, 4, 3, dur),
+];
+
+/** クロス（十字）パターン */
+const crossPattern = (
+	time: number,
+	type: SpawnEntry["type"] = "ground",
+	dur = 3.0,
+): TargetEntry[] => [
+	// 横線 (gy=2)
+	...Array.from({ length: 8 }, (_, i) => t(time, type, i, 2, dur)),
+	// 縦線 (gx=4) — 横線と重複するgy=2は除外
+	t(time, type, 4, 0, dur),
+	t(time, type, 4, 1, dur),
+	t(time, type, 4, 3, dur),
+];
+
+const entriesToSpawns = (entries: TargetEntry[]): SpawnEntry[] =>
+	entries.map((e) => ({
+		time: e.time,
+		type: e.type,
+		nx: 0,
+		gx: e.gx,
+		gy: e.gy,
+		visibleDuration: e.dur,
+	}));
+
 /**
- * ラウンド2: 通常25(25pt) + 金5(15pt) + 列車1台(6pt) = MAX 46
- * ペナルティ2個(-3)は回避前提。風船なし。全てグリッド座標指定。
+ * ラウンド2: パターン重視。風船なし。
  */
 const stage2Spawns: SpawnEntry[] = (() => {
-	const spawns: SpawnEntry[] = [];
-	type G = {
-		time: number;
-		type: SpawnEntry["type"];
-		gx: number;
-		gy: number;
-		dur?: number;
-	};
-	const g = (
-		time: number,
-		type: SpawnEntry["type"],
-		gx: number,
-		gy: number,
-		dur = 3.5,
-	): G => ({ time, type, gx, gy, dur });
+	const entries: TargetEntry[] = [
+		// 0~3s: 導入 — 散発的に4つ
+		t(500, "ground", 2, 1),
+		t(1500, "ground", 5, 2),
+		t(2500, "ground", 1, 0),
+		t(3500, "ground", 6, 3),
 
-	const entries: G[] = [
-		// 0~7s: ゆったり導入 — 通常4個
-		g(500, "ground", 3, 2),
-		g(2000, "ground", 7, 1),
-		g(3500, "ground", 1, 3),
-		g(5000, "ground", 7, 0),
+		// 4s: 横一列（gy=1）— 8個同時！
+		...horizontalLine(4500, 1, "ground", 2.5),
 
-		// 7~14s: 通常5 + 金1 + ペナ1
-		g(7000, "ground", 5, 3),
-		g(8200, "ground", 2, 1),
-		g(9000, "ground-gold", 6, 2),
-		g(9800, "ground", 0, 3),
-		g(10800, "ground", 7, 0),
-		g(11800, "ground-penalty", 4, 2),
-		g(12500, "ground", 7, 3),
+		// 7s: V字パターン — 8個
+		...vShape(7000, "ground", 3.0),
 
-		// 14~20s: 通常6 + 金2 — 少しペースアップ
-		g(14000, "ground", 1, 0),
-		g(15000, "ground", 7, 3),
-		g(15800, "ground-gold", 5, 1),
-		g(16600, "ground", 3, 3),
-		g(17400, "ground", 6, 0),
-		g(18200, "ground", 0, 2),
-		g(19000, "ground-gold", 7, 3),
-		g(19800, "ground", 2, 1),
+		// 10s: 対角線 — 7個
+		...diagonal(10000, 300, "ground", 3.0),
 
-		// 20~25s: 通常6 + 金1 + ペナ1
-		g(20500, "ground", 4, 0),
-		g(21200, "ground", 7, 2),
-		g(21900, "ground", 1, 3),
-		g(22600, "ground-gold", 5, 3),
-		g(23300, "ground", 7, 1),
-		g(24000, "ground-penalty", 3, 0),
-		g(24500, "ground", 6, 3),
-		g(25000, "ground", 0, 1),
+		// 13s: 金の横一列（gy=2）
+		...horizontalLine(13000, 2, "ground-gold", 3.0),
 
-		// 25~27s: ラッシュ — dur短め
-		g(25500, "ground", 2, 3, 2.5),
-		g(25900, "ground", 7, 0, 2.5),
-		g(26300, "ground", 4, 3, 2.5),
-		g(26700, "ground-gold", 7, 2, 2.5),
-		g(27100, "ground", 1, 1, 2.5),
+		// 15s: ペナルティ注意！十字 — 通常10 + ペナ中央
+		t(15500, "ground", 0, 2, 3.0),
+		t(15500, "ground", 1, 2, 3.0),
+		t(15500, "ground", 2, 2, 3.0),
+		t(15500, "ground", 3, 2, 3.0),
+		t(15500, "ground-penalty", 4, 2, 3.0),
+		t(15500, "ground", 5, 2, 3.0),
+		t(15500, "ground", 6, 2, 3.0),
+		t(15500, "ground", 7, 2, 3.0),
+		t(15500, "ground", 4, 0, 3.0),
+		t(15500, "ground", 4, 1, 3.0),
+		t(15500, "ground", 4, 3, 3.0),
+
+		// 19s: 外周ぐるっと — 20個
+		...borderClockwise(19000, 120, "ground", 2.0),
+
+		// 22s: 縦2列同時 + 金
+		...verticalLine(22500, 2, "ground", 3.0),
+		...verticalLine(22500, 5, "ground", 3.0),
+		t(22500, "ground-gold", 3, 1, 3.0),
+		t(22500, "ground-gold", 4, 2, 3.0),
+
+		// 25s: ペナルティ混在ラッシュ
+		t(25500, "ground", 1, 0, 2.5),
+		t(25500, "ground", 3, 1, 2.5),
+		t(25500, "ground-penalty", 5, 2, 2.5),
+		t(25500, "ground", 7, 3, 2.5),
+		t(26000, "ground", 0, 3, 2.5),
+		t(26000, "ground-gold", 4, 0, 2.5),
+		t(26000, "ground", 6, 1, 2.5),
+		t(26500, "ground", 2, 2, 2.5),
+		t(26500, "ground", 5, 0, 2.5),
 	];
 
-	for (const e of entries) {
-		spawns.push({
-			time: e.time,
-			type: e.type,
-			nx: 0,
-			gx: e.gx,
-			gy: e.gy,
-			visibleDuration: e.dur,
-		});
-	}
+	const spawns = entriesToSpawns(entries);
 
-	// 28s: 列車（左から、中レーン、やや速い）
+	// 28s: 列車（左から）
 	spawns.push({
 		time: 28000,
 		type: "train",
@@ -163,8 +262,7 @@ const stage2Spawns: SpawnEntry[] = (() => {
 })();
 
 /**
- * ファイナルラウンド: 風船20(20pt) + 通常15(15pt) + 金5(15pt) + 列車2台(12pt) = MAX 62
- * ペナルティ2個(-3)は回避前提。
+ * ファイナルラウンド: 風船+的+列車の混合、パターン重視。
  */
 const stage3Spawns: SpawnEntry[] = (() => {
 	const spawns: SpawnEntry[] = [];
@@ -179,79 +277,87 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		});
 	};
 
-	const target = (
-		time: number,
-		type: SpawnEntry["type"],
-		gx: number,
-		gy: number,
-		dur = 3.5,
-	) => {
-		spawns.push({ time, type, nx: 0, gx, gy, visibleDuration: dur });
-	};
-
-	const train = (time: number, lane: number, dir = 1, speed = 2.5) => {
+	const train = (time: number, dir = 1, speed = 2.5) => {
 		spawns.push({
 			time,
 			type: "train",
 			nx: 0,
 			slotsOscillate: true,
 			direction: dir,
-			trainLane: lane,
+			trainLane: 0,
 			trainSpeed: speed,
 		});
 	};
 
-	// 0~7s: 風船5 + 通常3 + 列車1(右から)
-	for (let i = 0; i < 5; i++) balloon(500 + i * 1200);
-	target(1000, "ground", 3, 1);
-	target(2500, "ground", 6, 2);
-	target(4000, "ground", 1, 0);
-	train(3500, 0, 1);
+	const entries: TargetEntry[] = [];
 
-	// 7~14s: 風船5 + 通常4 + 金2 + ペナ1
-	for (let i = 0; i < 5; i++) balloon(7200 + i * 1100);
-	target(7500, "ground", 5, 2);
-	target(8800, "ground", 2, 0);
-	target(9500, "ground-gold", 4, 1);
-	target(10500, "ground", 7, 3);
-	target(11500, "ground", 1, 2);
-	target(12000, "ground-gold", 6, 0);
-	target(13000, "ground-penalty", 3, 3);
+	// 0~4s: 風船5 + V字パターンで開幕
+	for (let i = 0; i < 5; i++) balloon(300 + i * 800);
+	entries.push(...vShape(1000, "ground", 3.5));
 
-	// 14~21s: 風船5 + 通常4 + 金2 + 列車1(左から) + ペナ1
-	for (let i = 0; i < 5; i++) balloon(14200 + i * 1000);
-	target(14500, "ground", 5, 0);
-	target(15500, "ground", 2, 2);
-	target(16500, "ground-gold", 7, 1);
-	target(17500, "ground", 4, 3);
-	target(18500, "ground", 1, 1);
-	target(19500, "ground-gold", 6, 2);
-	target(20000, "ground-penalty", 3, 0);
-	train(16000, 2, -1);
+	// 5s: 列車（右から）
+	train(5000, 1, 2.0);
 
-	// 21~28s: 風船5 + 通常4 + 金1
-	for (let i = 0; i < 5; i++) balloon(21200 + i * 900);
-	target(21500, "ground", 2, 1);
-	target(22500, "ground", 5, 3);
-	target(23500, "ground", 7, 0);
-	target(24500, "ground", 3, 2);
-	target(25500, "ground-gold", 6, 1, 3.0);
+	// 6~9s: 風船3 + 対角線パターン
+	for (let i = 0; i < 3; i++) balloon(6000 + i * 1000);
+	entries.push(...diagonal(6500, 400, "ground", 3.0));
 
-	// 26~28s: フィナーレ — 的3つ
-	target(26000, "ground", 1, 0, 3.0);
-	target(26800, "ground", 4, 2, 3.0);
-	target(27500, "ground", 7, 3, 3.0);
+	// 10s: 金の横一列！(gy=1)
+	entries.push(...horizontalLine(10000, 1, "ground-gold", 3.0));
+
+	// 13s: 風船5 + ペナルティ注意の縦列
+	for (let i = 0; i < 5; i++) balloon(13000 + i * 700);
+	entries.push(...verticalLine(13500, 3, "ground", 3.0));
+	entries.push(t(13500, "ground-penalty", 4, 1, 3.0));
+	entries.push(t(13500, "ground-penalty", 4, 2, 3.0));
+
+	// 16s: 列車（左から、速い）
+	train(16500, -1, 3.0);
+
+	// 17~20s: 外周パターン + 風船
+	for (let i = 0; i < 4; i++) balloon(17000 + i * 800);
+	entries.push(...borderClockwise(17500, 100, "ground", 2.0));
+
+	// 21s: クロスパターン（中央に金）
+	const cross = crossPattern(21000, "ground", 3.0);
+	// 中央を金に差し替え
+	entries.push(
+		...cross.map((e) =>
+			e.gx === 4 && e.gy === 2
+				? t(e.time, "ground-gold", e.gx, e.gy, e.dur)
+				: e,
+		),
+	);
+
+	// 23s: 風船ラッシュ
+	for (let i = 0; i < 5; i++) balloon(23000 + i * 500);
+
+	// 24s: 4つ同時出現（四隅）+ 金中央
+	entries.push(
+		t(24500, "ground", 0, 0, 2.5),
+		t(24500, "ground", 7, 0, 2.5),
+		t(24500, "ground", 0, 3, 2.5),
+		t(24500, "ground", 7, 3, 2.5),
+		t(24500, "ground-gold", 3, 1, 2.5),
+		t(24500, "ground-gold", 4, 2, 2.5),
+	);
+
+	// 26s: フィナーレ — 横一列ラッシュ
+	entries.push(...horizontalLine(26500, 0, "ground", 2.5));
+	entries.push(...horizontalLine(27000, 3, "ground", 2.5));
+
+	spawns.push(...entriesToSpawns(entries));
 
 	return spawns.sort((a, b) => a.time - b.time);
 })();
 
 export const STAGES: StageDefinition[] = [
 	{ name: "ラウンド1", duration: 30000, maxScore: 36, spawns: stage1Spawns },
-	{ name: "ラウンド2", duration: 30000, maxScore: 46, spawns: stage2Spawns },
+	{ name: "ラウンド2", duration: 30000, maxScore: 100, spawns: stage2Spawns },
 	{
 		name: "ファイナルラウンド",
 		duration: 30000,
-		maxScore: 62,
+		maxScore: 120,
 		spawns: stage3Spawns,
 	},
 ];
