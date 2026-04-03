@@ -131,12 +131,16 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 
 		if (data.slotsOscillate) {
 			oscillateTime.current += delta * 2.5;
+			// 屋根上端(的中心の上限) と 車体下端(的中心の下限)
+			const roofTop = (1.0 + 0.1) * SCALE;
+			const bodyBottom = -0.9 * SCALE;
 			const slotGroups = groupRef.current.children.filter(
 				(c) => c.userData.isSlot,
 			);
 			for (let i = 0; i < slotGroups.length; i++) {
 				const phase = oscillateTime.current + (i * Math.PI * 2) / 3;
-				slotGroups[i].position.y = slots[i].offsetY + Math.sin(phase) * 2.0;
+				const raw = slots[i].offsetY + Math.sin(phase) * 2.5;
+				slotGroups[i].position.y = Math.max(bodyBottom, Math.min(roofTop, raw));
 			}
 		}
 

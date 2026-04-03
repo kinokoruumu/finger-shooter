@@ -8,9 +8,9 @@ import { TrainTarget } from "../train-target";
 import { useGameScene } from "./hooks";
 
 /** 線路のY位置とZ位置（列車のスポーンと一致させる） */
-// 列車y=-5、車体高さ8.1の下端=y-9.05、線路はそこに合わせる
 const TRAIN_Y = -5;
-const RAILS_Y = TRAIN_Y - 4.5 * 1.1; // 車体下端あたり
+// タイヤ下端: (車輪中心y -1.1 - 半径0.35) * scale 4.5 = -6.525
+const RAILS_Y = TRAIN_Y - (1.1 + 0.35) * 4.5;
 const RAILS_Z = -22;
 
 type Props = {
