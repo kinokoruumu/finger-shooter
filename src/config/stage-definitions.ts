@@ -92,6 +92,44 @@ const t = (
 	dur = 3.5,
 ): TargetEntry => ({ time, type, gx, gy, dur });
 
+/**
+ * パターン内のground的をランダムに金/ペナルティに差し替える。
+ * 元々gold/penaltyの的はそのまま。groundの的だけが対象。
+ */
+const sprinkle = (
+	entries: TargetEntry[],
+	goldCount: number,
+	penaltyCount: number,
+): TargetEntry[] => {
+	const result = [...entries];
+	// groundの的のインデックスを集める
+	const groundIndices = result
+		.map((e, i) => (e.type === "ground" ? i : -1))
+		.filter((i) => i >= 0);
+
+	// シャッフル
+	for (let i = groundIndices.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[groundIndices[i], groundIndices[j]] = [groundIndices[j], groundIndices[i]];
+	}
+
+	// 先頭から金、次にペナルティを割り当て
+	let idx = 0;
+	for (let g = 0; g < goldCount && idx < groundIndices.length; g++, idx++) {
+		result[groundIndices[idx]] = {
+			...result[groundIndices[idx]],
+			type: "ground-gold",
+		};
+	}
+	for (let p = 0; p < penaltyCount && idx < groundIndices.length; p++, idx++) {
+		result[groundIndices[idx]] = {
+			...result[groundIndices[idx]],
+			type: "ground-penalty",
+		};
+	}
+	return result;
+};
+
 /** TargetEntryをSpawnEntryに変換（group付き） */
 const toSpawns = (entries: TargetEntry[], group: number): SpawnEntry[] =>
 	entries.map((e) => ({
@@ -199,65 +237,49 @@ const crossPattern = (
 const stage2Spawns: SpawnEntry[] = (() => {
 	const spawns: SpawnEntry[] = [];
 
-	// G0: 横一列（gy=1）
-	spawns.push(...toSpawns(horizontalLine(0, 1), 0));
+	// G0: 横一列（金1）
+	spawns.push(...toSpawns(sprinkle(horizontalLine(0, 1), 1, 0), 0));
 
-	// G1: V字
-	spawns.push(...toSpawns(vShape(0), 1));
+	// G1: V字（金1）
+	spawns.push(...toSpawns(sprinkle(vShape(0), 1, 0), 1));
 
-	// G2: 縦2列 + 金
+	// G2: 縦2列（金1）
 	spawns.push(
 		...toSpawns(
-			[
-				...verticalLine(0, 2),
-				...verticalLine(0, 5),
-				t(0, "ground-gold", 3, 1, 4.0),
-			],
+			sprinkle([...verticalLine(0, 2), ...verticalLine(0, 5)], 1, 0),
 			2,
 		),
 	);
 
-	// G3: 対角線
-	spawns.push(...toSpawns(diagonal(0, 300), 3));
+	// G3: 対角線（金1, ペナ1）
+	spawns.push(...toSpawns(sprinkle(diagonal(0, 300), 1, 1), 3));
 
-	// G4: 横一列（中央だけ金）
+	// G4: 横一列（金2）
+	spawns.push(...toSpawns(sprinkle(horizontalLine(0, 2), 2, 0), 4));
+
+	// G5: 十字（金1, ペナ1）
+	spawns.push(...toSpawns(sprinkle(crossPattern(0), 1, 1), 5));
+
+	// G6: 外周ぐるっと（金2, ペナ1）
+	spawns.push(...toSpawns(sprinkle(borderClockwise(0, 200), 2, 1), 6));
+
+	// G7: ラッシュ（金1, ペナ1）
 	spawns.push(
 		...toSpawns(
-			horizontalLine(0, 2).map((e) =>
-				e.gx === 3 || e.gx === 4 ? { ...e, type: "ground-gold" as const } : e,
+			sprinkle(
+				[
+					t(0, "ground", 1, 0, 4.0),
+					t(0, "ground", 3, 1, 4.0),
+					t(0, "ground", 5, 2, 4.0),
+					t(0, "ground", 7, 3, 4.0),
+					t(500, "ground", 0, 3, 4.0),
+					t(500, "ground", 6, 1, 4.0),
+					t(1000, "ground", 2, 2, 4.0),
+					t(1000, "ground", 5, 0, 4.0),
+				],
+				1,
+				1,
 			),
-			4,
-		),
-	);
-
-	// G5: 十字（中央ペナルティ）
-	spawns.push(
-		...toSpawns(
-			crossPattern(0).map((e) =>
-				e.gx === 4 && e.gy === 2
-					? { ...e, type: "ground-penalty" as const }
-					: e,
-			),
-			5,
-		),
-	);
-
-	// G6: 外周ぐるっと（後半）
-	spawns.push(...toSpawns(borderClockwise(0, 200), 6));
-
-	// G7: ペナルティ混在ラッシュ
-	spawns.push(
-		...toSpawns(
-			[
-				t(0, "ground", 1, 0, 4.0),
-				t(0, "ground", 3, 1, 4.0),
-				t(0, "ground-penalty", 5, 2, 4.0),
-				t(0, "ground", 7, 3, 4.0),
-				t(500, "ground", 0, 3, 4.0),
-				t(500, "ground", 6, 1, 4.0),
-				t(1000, "ground", 2, 2, 4.0),
-				t(1000, "ground", 5, 0, 4.0),
-			],
 			7,
 		),
 	);
@@ -296,16 +318,9 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		}
 	};
 
-	// G0: 風船5 + V字（底の2つが金）
+	// G0: 風船5 + V字（金2）
 	balloons(0, 5, 800);
-	spawns.push(
-		...toSpawns(
-			vShape(0).map((e) =>
-				e.gy === 3 ? { ...e, type: "ground-gold" as const } : e,
-			),
-			0,
-		),
-	);
+	spawns.push(...toSpawns(sprinkle(vShape(0), 2, 0), 0));
 
 	// G1: 列車（右から）
 	spawns.push({
@@ -319,40 +334,26 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		trainSpeed: 2.5,
 	});
 
-	// G2: 風船3 + 対角線（最後が金）
+	// G2: 風船3 + 対角線（金2, ペナ1）
 	balloons(2, 3, 1000);
-	spawns.push(
-		...toSpawns(
-			diagonal(0, 300).map((e, i, arr) =>
-				i >= arr.length - 2 ? { ...e, type: "ground-gold" as const } : e,
-			),
-			2,
-		),
-	);
+	spawns.push(...toSpawns(sprinkle(diagonal(0, 300), 2, 1), 2));
 
-	// G3: 横一列（両端ペナルティ）
-	spawns.push(
-		...toSpawns(
-			horizontalLine(0, 1).map((e) =>
-				e.gx === 0 || e.gx === 7
-					? { ...e, type: "ground-penalty" as const }
-					: e,
-			),
-			3,
-		),
-	);
+	// G3: 横一列（金1, ペナ2）
+	spawns.push(...toSpawns(sprinkle(horizontalLine(0, 1), 1, 2), 3));
 
-	// G4: 風船5 + ペナルティ縦列 + 金
+	// G4: 風船5 + 縦列+散らし（金2, ペナ2）
 	balloons(4, 5, 700);
 	spawns.push(
 		...toSpawns(
-			[
-				...verticalLine(0, 3),
-				t(0, "ground-penalty", 4, 1, 4.0),
-				t(0, "ground-penalty", 4, 2, 4.0),
-				t(0, "ground-gold", 5, 0, 4.0),
-				t(0, "ground-gold", 5, 3, 4.0),
-			],
+			sprinkle(
+				[
+					...verticalLine(0, 3),
+					t(0, "ground", 5, 0, 4.0),
+					t(0, "ground", 5, 3, 4.0),
+				],
+				2,
+				2,
+			),
 			4,
 		),
 	);
@@ -369,66 +370,46 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		trainSpeed: 3.0,
 	});
 
-	// G6: 外周 + 風船4
+	// G6: 外周 + 風船4（金3, ペナ2）
 	balloons(6, 4, 800);
-	spawns.push(...toSpawns(borderClockwise(0, 200), 6));
+	spawns.push(...toSpawns(sprinkle(borderClockwise(0, 200), 3, 2), 6));
 
-	// G7: クロス（中央金、四隅ペナルティ）
-	spawns.push(
-		...toSpawns(
-			crossPattern(0).map((e) => {
-				if (e.gx === 4 && e.gy === 2)
-					return { ...e, type: "ground-gold" as const };
-				return e;
-			}),
-			7,
-		),
-	);
-	spawns.push(
-		...toSpawns(
-			[t(0, "ground-penalty", 0, 0, 6.0), t(0, "ground-penalty", 7, 3, 6.0)],
-			7,
-		),
-	);
+	// G7: クロス（金2, ペナ2）
+	spawns.push(...toSpawns(sprinkle(crossPattern(0), 2, 2), 7));
 
-	// G8: 金とペナルティの混在パターン
+	// G8: 風船3 + 散らし8個（金3, ペナ2）
 	balloons(8, 3, 600);
 	spawns.push(
 		...toSpawns(
-			[
-				t(0, "ground-gold", 1, 0, 5.0),
-				t(0, "ground-gold", 6, 0, 5.0),
-				t(0, "ground-penalty", 3, 0, 5.0),
-				t(0, "ground", 1, 3, 5.0),
-				t(0, "ground", 6, 3, 5.0),
-				t(0, "ground-penalty", 4, 3, 5.0),
-				t(0, "ground-gold", 3, 1, 5.0),
-				t(0, "ground-gold", 4, 2, 5.0),
-			],
+			sprinkle(
+				[
+					t(0, "ground", 1, 0, 5.0),
+					t(0, "ground", 6, 0, 5.0),
+					t(0, "ground", 3, 0, 5.0),
+					t(0, "ground", 1, 3, 5.0),
+					t(0, "ground", 6, 3, 5.0),
+					t(0, "ground", 4, 3, 5.0),
+					t(0, "ground", 3, 1, 5.0),
+					t(0, "ground", 4, 2, 5.0),
+				],
+				3,
+				2,
+			),
 			8,
 		),
 	);
 
-	// G9: フィナーレ — 横一列2段（中央金、端ペナ）
+	// G9: フィナーレ — 横一列2段（金3, ペナ2）
 	spawns.push(
 		...toSpawns(
-			horizontalLine(0, 0, "ground", 5.0).map((e) => {
-				if (e.gx === 3 || e.gx === 4)
-					return { ...e, type: "ground-gold" as const };
-				if (e.gx === 0) return { ...e, type: "ground-penalty" as const };
-				return e;
-			}),
-			9,
-		),
-	);
-	spawns.push(
-		...toSpawns(
-			horizontalLine(500, 3, "ground", 5.0).map((e) => {
-				if (e.gx === 3 || e.gx === 4)
-					return { ...e, type: "ground-gold" as const };
-				if (e.gx === 7) return { ...e, type: "ground-penalty" as const };
-				return e;
-			}),
+			sprinkle(
+				[
+					...horizontalLine(0, 0, "ground", 5.0),
+					...horizontalLine(500, 3, "ground", 5.0),
+				],
+				3,
+				2,
+			),
 			9,
 		),
 	);
