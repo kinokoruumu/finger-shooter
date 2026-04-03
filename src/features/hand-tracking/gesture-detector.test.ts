@@ -105,6 +105,38 @@ describe("detectGesture", () => {
 });
 
 describe("スムージング", () => {
+	test("スムージングフレーム数を超えると古いフレームが捨てられる", () => {
+		const base = {
+			[WRIST]: { x: 0.5, y: 0.6 },
+			[INDEX_MCP]: { x: 0.5, y: 0.4 },
+			[MIDDLE_MCP]: { x: 0.5, y: 0.4 },
+			[RING_MCP]: { x: 0.5, y: 0.4 },
+			[PINKY_MCP]: { x: 0.5, y: 0.4 },
+		};
+
+		// smoothingFrames(7) を超える8回呼び出す
+		for (let i = 0; i < 8; i++) {
+			detectGesture(createLandmarks(base));
+		}
+
+		// 全く異なる位置で1フレーム追加
+		const shifted = createLandmarks({
+			[WRIST]: { x: 0.7, y: 0.6 },
+			[INDEX_MCP]: { x: 0.7, y: 0.4 },
+			[MIDDLE_MCP]: { x: 0.7, y: 0.4 },
+			[RING_MCP]: { x: 0.7, y: 0.4 },
+			[PINKY_MCP]: { x: 0.7, y: 0.4 },
+		});
+		const result = detectGesture(shifted);
+
+		// 古いフレームが捨てられているため、baseの8フレーム全部が残っていない
+		// → 平均がbase位置とは異なる
+		const baseOnly = createLandmarks(base);
+		resetGestureState();
+		const baseResult = detectGesture(baseOnly);
+		expect(result.aim?.x).not.toBe(baseResult.aim?.x);
+	});
+
 	test("複数フレームの入力で照準が平均化される", () => {
 		const landmarks1 = createLandmarks({
 			[WRIST]: { x: 0.5, y: 0.6 },
@@ -237,7 +269,7 @@ describe("キャリブレーション", () => {
 
 	test("パーを一定時間保持するとキャリブレーション完了", () => {
 		const openPalm = createOpenPalmLandmarks();
-		let time = 0;
+		let time = 100;
 		vi.spyOn(performance, "now").mockImplementation(() => time);
 
 		// キャリブレーション開始
@@ -245,7 +277,7 @@ describe("キャリブレーション", () => {
 		expect(result1.debug.calibration).toBe("progress");
 
 		// 1500ms 経過（CALIBRATION_HOLD_MS）
-		time = 1500;
+		time = 1600;
 		const result2 = detectGesture(openPalm);
 		expect(result2.debug.calibration).toBe("done");
 		expect(isCalibrated()).toBe(true);
@@ -253,13 +285,27 @@ describe("キャリブレーション", () => {
 
 	test("パーの途中で手を閉じるとキャリブレーションがリセットされる", () => {
 		const openPalm = createOpenPalmLandmarks();
-		const closedHand = createLandmarks();
+		// 指を閉じた状態（指先がMCPに近い＝握り拳に近い）
+		const closedHand = createLandmarks({
+			[WRIST]: { x: 0.5, y: 0.8 },
+			[MIDDLE_MCP]: { x: 0.5, y: 0.55 },
+			// 指先をMCPのすぐ近くに配置（屈曲状態）
+			[INDEX_TIP]: { x: 0.45, y: 0.53 },
+			[MIDDLE_TIP]: { x: 0.5, y: 0.53 },
+			[RING_TIP]: { x: 0.55, y: 0.53 },
+			[PINKY_TIP]: { x: 0.6, y: 0.56 },
+			[THUMB_TIP]: { x: 0.48, y: 0.58 },
+			[THUMB_MCP]: { x: 0.5, y: 0.6 },
+			[INDEX_MCP]: { x: 0.45, y: 0.55 },
+			[RING_MCP]: { x: 0.55, y: 0.55 },
+			[PINKY_MCP]: { x: 0.6, y: 0.58 },
+		});
 
-		let time = 0;
+		let time = 100;
 		vi.spyOn(performance, "now").mockImplementation(() => time);
 
 		detectGesture(openPalm); // progress開始
-		time = 500;
+		time = 600;
 		const result = detectGesture(closedHand); // 途中で閉じる
 		expect(result.debug.calibration).toBe("none");
 	});
@@ -285,13 +331,12 @@ describe("デバッグ値", () => {
 
 	test("calibrationProgressが0-1の範囲", () => {
 		const openPalm = createOpenPalmLandmarks();
-		let time = 0;
+		let time = 100;
 		vi.spyOn(performance, "now").mockImplementation(() => time);
 
-		time = 0;
-		detectGesture(openPalm);
+		detectGesture(openPalm); // start at 100
 
-		time = 750; // 50%
+		time = 850; // 750ms elapsed = 50%
 		const result = detectGesture(openPalm);
 		expect(result.debug.calibrationProgress).toBeCloseTo(0.5, 1);
 	});
@@ -300,12 +345,11 @@ describe("デバッグ値", () => {
 describe("resetGestureState", () => {
 	test("リセット後はキャリブレーション未完了に戻る", () => {
 		const openPalm = createOpenPalmLandmarks();
-		let time = 0;
+		let time = 100;
 		vi.spyOn(performance, "now").mockImplementation(() => time);
 
-		time = 0;
 		detectGesture(openPalm);
-		time = 1500;
+		time = 1600;
 		detectGesture(openPalm);
 		expect(isCalibrated()).toBe(true);
 

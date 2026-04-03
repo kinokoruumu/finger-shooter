@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { STAGES, STAGE_TRANSITION_DURATION } from "./stage-definitions";
+import { STAGE_TRANSITION_DURATION, STAGES } from "./stage-definitions";
 
 describe("STAGE_TRANSITION_DURATION", () => {
 	test("正の値が設定されている", () => {
