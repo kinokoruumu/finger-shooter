@@ -35,36 +35,66 @@ export type StageDefinition = {
 export const STAGE_TRANSITION_DURATION = 3000;
 
 /**
- * ラウンド1: 風船30個(30pt) + 列車1台(3+3=6pt) = MAX 36
+ * ラウンド1: 風船のみ + 列車。パターンで変化をつける。
  */
 const stage1Spawns: SpawnEntry[] = (() => {
 	const spawns: SpawnEntry[] = [];
-	const balloonXs = [
-		0.3, 0.7, 0.5, 0.2, 0.8, 0.4, 0.6, 0.35, 0.65, 0.25, 0.75, 0.45,
-	];
 
-	// グループ0: 風船30個（時間ベース、風船は待つ必要なし）
-	for (let i = 0; i < 15; i++) {
-		spawns.push({
-			time: 500 + i * 1000,
-			group: 0,
-			type: "balloon",
-			nx: balloonXs[i % balloonXs.length],
-		});
-	}
-	for (let i = 0; i < 15; i++) {
-		spawns.push({
-			time: 15500 + i * 650,
-			group: 0,
-			type: "balloon",
-			nx: balloonXs[(i + 5) % balloonXs.length],
-		});
-	}
+	const b = (time: number, group: number, nx: number) => {
+		spawns.push({ time, group, type: "balloon", nx });
+	};
 
-	// グループ1: 列車（風船の後）
+	// G0: ゆったり導入（3個、左→中→右）
+	b(0, 0, 0.3);
+	b(800, 0, 0.5);
+	b(1600, 0, 0.7);
+
+	// G1: 左右交互ラッシュ（6個、速い間隔）
+	b(0, 1, 0.25);
+	b(400, 1, 0.75);
+	b(800, 1, 0.3);
+	b(1200, 1, 0.7);
+	b(1600, 1, 0.35);
+	b(2000, 1, 0.65);
+
+	// G2: 中央に集中（4個、同時に近い）
+	b(0, 2, 0.4);
+	b(200, 2, 0.5);
+	b(400, 2, 0.6);
+	b(600, 2, 0.45);
+
+	// G3: 散発（3個、間隔広め）
+	b(0, 3, 0.2);
+	b(1200, 3, 0.8);
+	b(2400, 3, 0.5);
+
+	// G4: 端から端へスイープ（5個）
+	b(0, 4, 0.2);
+	b(500, 4, 0.35);
+	b(1000, 4, 0.5);
+	b(1500, 4, 0.65);
+	b(2000, 4, 0.8);
+
+	// G5: 同時3個（横に並ぶ）
+	b(0, 5, 0.3);
+	b(0, 5, 0.5);
+	b(0, 5, 0.7);
+
+	// G6: ジグザグ（4個）
+	b(0, 6, 0.25);
+	b(500, 6, 0.65);
+	b(1000, 6, 0.35);
+	b(1500, 6, 0.75);
+
+	// G7: 両端同時 → 中央（3個）
+	b(0, 7, 0.2);
+	b(0, 7, 0.8);
+	b(800, 7, 0.5);
+
+	// G8: 列車
 	spawns.push({
 		time: 0,
-		group: 1,
+		group: 8,
 		type: "train",
 		nx: 0,
 		direction: 1,
@@ -418,7 +448,7 @@ const stage3Spawns: SpawnEntry[] = (() => {
 })();
 
 export const STAGES: StageDefinition[] = [
-	{ name: "ラウンド1", duration: 30000, maxScore: 42, spawns: stage1Spawns },
+	{ name: "ラウンド1", duration: 30000, maxScore: 43, spawns: stage1Spawns },
 	{ name: "ラウンド2", duration: 30000, maxScore: 100, spawns: stage2Spawns },
 	{
 		name: "ファイナルラウンド",
