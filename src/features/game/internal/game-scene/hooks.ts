@@ -276,7 +276,7 @@ export const useGameScene = (
 						if (posRef?.current) {
 							if (checkHit3D(hitWorldBalloon, posRef.current, 2.5)) {
 								child.userData.handleHit?.();
-								playSound("balloon-pop", 0.6);
+								playSound("balloon-pop", 0.85);
 								setBalloonTargets((prev) =>
 									prev.filter((t) => t.id !== child.userData.id),
 								);
