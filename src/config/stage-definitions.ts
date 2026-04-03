@@ -4,10 +4,17 @@ export type SpawnEntry = {
 	type: "balloon" | "ground" | "ground-gold" | "ground-penalty" | "train";
 	/** 横位置(正規化 0-1) */
 	nx: number;
-	/** 縦位置(正規化 0-1、列車用) */
+	/** 縦位置(正規化 0-1) */
 	ny?: number;
-	/** ステージ2以降: 列車の的が上下に動く */
+	/** グリッド座標(0-9=横, 0-4=縦) — 的用 */
+	gx?: number;
+	gy?: number;
+	/** 的の表示時間(秒) */
+	visibleDuration?: number;
+	/** 列車: 的が上下に動く */
 	slotsOscillate?: boolean;
+	/** 列車: 移動方向 1=右→左, -1=左→右 */
+	direction?: number;
 };
 
 export type StageDefinition = {
@@ -48,8 +55,8 @@ const stage1Spawns: SpawnEntry[] = (() => {
 		});
 	}
 
-	// 25s: 列車1台（終盤）
-	spawns.push({ time: 25000, type: "train", nx: 1.2, ny: 0.4 });
+	// 25s: 列車1台（終盤、右から）
+	spawns.push({ time: 25000, type: "train", nx: 1.2, ny: 0.4, direction: 1 });
 
 	return spawns.sort((a, b) => a.time - b.time);
 })();
@@ -100,13 +107,14 @@ const stage2Spawns: SpawnEntry[] = (() => {
 	add(26500, "ground-gold");
 	add(26000, "ground-penalty");
 
-	// 27.5s: 列車
+	// 27.5s: 列車（左から）
 	spawns.push({
 		time: 27500,
 		type: "train",
-		nx: 1.2,
+		nx: 0,
 		ny: 0.4,
 		slotsOscillate: true,
+		direction: -1,
 	});
 
 	return spawns.sort((a, b) => a.time - b.time);

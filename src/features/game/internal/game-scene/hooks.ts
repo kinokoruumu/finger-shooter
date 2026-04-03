@@ -74,6 +74,16 @@ export const useGameScene = (
 		}
 	}, [phase, currentStage]);
 
+	// グリッド座標(gx: 0-9, gy: 0-4)→正規化座標に変換
+	const gridToNormalized = useCallback(
+		(gx: number, gy: number): [number, number] => {
+			const nx = 0.1 + (gx / 9) * 0.8;
+			const ny = 0.15 + (gy / 4) * 0.7;
+			return [nx, ny];
+		},
+		[],
+	);
+
 	const spawnFromEntry = useCallback(
 		(entry: SpawnEntry) => {
 			switch (entry.type) {
@@ -97,46 +107,55 @@ export const useGameScene = (
 				case "ground":
 				case "ground-gold":
 				case "ground-penalty": {
-					const [worldX] = screenToWorld(entry.nx, 0.5, -15);
-					const [, bottomY] = screenToWorld(0.5, 0.95, -15);
-					const [, topY] = screenToWorld(0.5, 0.3, -15);
-					const peakY = topY - Math.random() * 2;
+					// グリッド座標があればそれを使う、なければnxから変換
+					let nx: number;
+					let ny: number;
+					if (entry.gx !== undefined && entry.gy !== undefined) {
+						[nx, ny] = gridToNormalized(entry.gx, entry.gy);
+					} else {
+						nx = entry.nx;
+						ny = entry.ny ?? 0.5;
+					}
+					const [worldX] = screenToWorld(nx, 0.5, -15);
+					const [, worldY] = screenToWorld(0.5, ny, -15);
 					const isGold = entry.type === "ground-gold";
 					const isPenalty = entry.type === "ground-penalty";
-					const rotateIn = currentStage >= 1;
 					setGroundTargets((prev) => [
 						...prev,
 						{
 							id: genId(),
 							x: worldX,
-							groundY: bottomY - 2,
-							peakY,
+							y: worldY,
+							z: -15,
 							isGold,
 							isPenalty,
-							rotateIn,
+							visibleDuration: entry.visibleDuration ?? 2.5,
 						},
 					]);
 					break;
 				}
 				case "train": {
-					const [rightX] = screenToWorld(entry.nx, 0.5, -18);
+					const dir = entry.direction ?? 1;
+					const startNx = dir > 0 ? 1.3 : -0.3;
+					const [startX] = screenToWorld(startNx, 0.5, -18);
 					const ny = entry.ny ?? 0.4;
 					const [, trainY] = screenToWorld(0.5, ny, -18);
 					setTrainTargets((prev) => [
 						...prev,
 						{
 							id: genId(),
-							startX: rightX,
+							startX,
 							y: trainY,
 							z: -18,
 							slotsOscillate: entry.slotsOscillate ?? false,
+							direction: dir,
 						},
 					]);
 					break;
 				}
 			}
 		},
-		[screenToWorld, currentStage],
+		[screenToWorld, gridToNormalized],
 	);
 
 	useFrame((state) => {
@@ -263,7 +282,7 @@ export const useGameScene = (
 								const slotWorld: [number, number, number] = [
 									child.position.x + slot.offsetX,
 									child.position.y + slot.offsetY,
-									child.position.z + 1.05,
+									child.position.z + 2.0,
 								];
 
 								if (checkHit3D(hitWorldTrain, slotWorld, 1.2)) {

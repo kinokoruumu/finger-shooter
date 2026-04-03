@@ -3,22 +3,17 @@ import { useFrame } from "@react-three/fiber";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
 
-type TargetState =
-	| "appearing"
-	| "rising"
-	| "hovering"
-	| "falling"
-	| "destroyed";
+type TargetState = "appearing" | "visible" | "leaving" | "destroyed";
 
 export type GroundTargetData = {
 	id: number;
 	x: number;
-	groundY: number;
-	peakY: number;
+	y: number;
+	z: number;
 	isGold: boolean;
 	isPenalty: boolean;
-	/** ステージ2: 回転しながら出現 */
-	rotateIn?: boolean;
+	/** 表示時間(秒) */
+	visibleDuration: number;
 };
 
 type Props = {
@@ -52,7 +47,7 @@ const NormalTarget = () => {
 	);
 };
 
-/** ゴールドの的: 明るい金色 + 中央に「+3」 */
+/** ゴールドの的 */
 const GoldTarget = () => {
 	return (
 		<group scale={1.8}>
@@ -98,7 +93,7 @@ const GoldTarget = () => {
 	);
 };
 
-/** ペナルティの的: 黒/グレー + 中央に「-3」 */
+/** ペナルティの的 */
 const PenaltyTarget = () => {
 	const rings: { radius: number; color: string; z: number }[] = [
 		{ radius: 1.0, color: "#1a1a1a", z: 0 },
@@ -221,22 +216,20 @@ const DestroyParticles = ({
 	);
 };
 
+const APPEAR_DURATION = 0.6;
+const LEAVE_DURATION = 0.4;
+const Z_BACK = -20;
+
 export const GroundTarget = ({ data, onDead }: Props) => {
 	const groupRef = useRef<THREE.Group>(null);
-	const initialState: TargetState = data.rotateIn ? "appearing" : "rising";
-	const [state, setState] = useState<TargetState>(initialState);
+	const [state, setState] = useState<TargetState>("appearing");
 	const [showParticles, setShowParticles] = useState(false);
 	const elapsed = useRef(0);
 	const positionRef = useRef<[number, number, number]>([
 		data.x,
-		data.groundY,
-		-15,
+		data.y,
+		data.z,
 	]);
-
-	const appearDuration = 0.6;
-	const riseDuration = 0.6;
-	const hoverDuration = 2.5;
-	const fallDuration = 0.5;
 
 	useFrame((_, delta) => {
 		if (!groupRef.current || state === "destroyed") return;
@@ -245,49 +238,48 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 
 		switch (state) {
 			case "appearing": {
-				// 側面(Y軸90度回転)→正面(0度)に回転しながらフェードイン
-				const t = Math.min(elapsed.current / appearDuration, 1);
+				// 奥(Z_BACK)から手前(data.z)にイン + Y軸90度回転(右向き→正面)
+				const t = Math.min(elapsed.current / APPEAR_DURATION, 1);
 				const eased = 1 - (1 - t) ** 3;
+
+				const z = Z_BACK + (data.z - Z_BACK) * eased;
+				groupRef.current.position.z = z;
 				groupRef.current.rotation.y = (Math.PI / 2) * (1 - eased);
-				// 同時にスケールでフェードイン
+
+				// スケールでフェードイン
 				const s = 0.3 + 0.7 * eased;
 				groupRef.current.scale.setScalar(s);
+
+				positionRef.current = [data.x, data.y, z];
 
 				if (t >= 1) {
 					groupRef.current.rotation.y = 0;
 					groupRef.current.scale.setScalar(1);
-					setState("rising");
+					groupRef.current.position.z = data.z;
+					positionRef.current = [data.x, data.y, data.z];
+					setState("visible");
 					elapsed.current = 0;
 				}
 				break;
 			}
-			case "rising": {
-				const t = Math.min(elapsed.current / riseDuration, 1);
-				const eased = 1 - (1 - t) ** 2;
-				const y = data.groundY + (data.peakY - data.groundY) * eased;
-				groupRef.current.position.y = y;
-				positionRef.current = [data.x, y, -15];
-				if (t >= 1) {
-					setState("hovering");
+			case "visible": {
+				// グリッド位置に留まる
+				if (elapsed.current >= data.visibleDuration) {
+					setState("leaving");
 					elapsed.current = 0;
 				}
 				break;
 			}
-			case "hovering": {
-				const y = data.peakY + Math.sin(elapsed.current * 3) * 0.1;
-				groupRef.current.position.y = y;
-				positionRef.current = [data.x, y, -15];
-				if (elapsed.current >= hoverDuration) {
-					setState("falling");
-					elapsed.current = 0;
-				}
-				break;
-			}
-			case "falling": {
-				const t = Math.min(elapsed.current / fallDuration, 1);
+			case "leaving": {
+				// 奥に戻りながら消える
+				const t = Math.min(elapsed.current / LEAVE_DURATION, 1);
 				const eased = t ** 2;
-				const y = data.peakY + (data.groundY - 2 - data.peakY) * eased;
-				groupRef.current.position.y = y;
+
+				const z = data.z + (Z_BACK - data.z) * eased;
+				groupRef.current.position.z = z;
+				groupRef.current.rotation.y = (Math.PI / 2) * eased;
+				groupRef.current.scale.setScalar(1 - eased * 0.7);
+
 				if (t >= 1) {
 					setState("destroyed");
 					onDead(data.id);
@@ -313,7 +305,7 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 			{state !== "destroyed" && (
 				<group
 					ref={groupRef}
-					position={[data.x, data.groundY, -15]}
+					position={[data.x, data.y, Z_BACK]}
 					userData={{
 						type: "ground-target",
 						id: data.id,

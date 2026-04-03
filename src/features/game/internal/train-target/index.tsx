@@ -15,6 +15,8 @@ export type TrainTargetData = {
 	y: number;
 	z: number;
 	slotsOscillate: boolean;
+	/** 移動方向: 1=右→左, -1=左→右 */
+	direction: number;
 };
 
 type Props = {
@@ -35,7 +37,7 @@ const SmallTarget = ({ alive }: { alive: boolean }) => {
 	];
 
 	return (
-		<group scale={1.2}>
+		<group scale={1.8}>
 			<mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.06]}>
 				<cylinderGeometry args={[0.6, 0.6, 0.12, 32]} />
 				<meshStandardMaterial color="#3a3a3a" />
@@ -52,7 +54,7 @@ const SmallTarget = ({ alive }: { alive: boolean }) => {
 
 const TrainBody = () => {
 	return (
-		<group scale={1.3}>
+		<group scale={2.5}>
 			{/* 車体 */}
 			<mesh position={[0, 0, 0]}>
 				<boxGeometry args={[5, 1.8, 1.5]} />
@@ -66,7 +68,7 @@ const TrainBody = () => {
 			{/* 窓 */}
 			{[-1.5, 0, 1.5].map((wx) => (
 				<mesh key={wx} position={[wx, 0.3, 0.76]}>
-					<planeGeometry args={[0.8, 0.5]} />
+					<planeGeometry args={[0.8, 0.6]} />
 					<meshStandardMaterial color="#aaddff" />
 				</mesh>
 			))}
@@ -77,7 +79,7 @@ const TrainBody = () => {
 					position={[wx, -1.1, 0.8]}
 					rotation={[Math.PI / 2, 0, 0]}
 				>
-					<cylinderGeometry args={[0.25, 0.25, 0.1, 16]} />
+					<cylinderGeometry args={[0.35, 0.35, 0.15, 16]} />
 					<meshStandardMaterial color="#333333" />
 				</mesh>
 			))}
@@ -89,18 +91,21 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 	const groupRef = useRef<THREE.Group>(null);
 	const [alive, setAlive] = useState(true);
 	const oscillateTime = useRef(Math.random() * Math.PI * 2);
+	const dir = data.direction;
 
-	// 窓位置に合わせた的（窓3つ＝的3つ）
+	// 窓位置に合わせた的（窓3つ＝的3つ）scale 2.5でのオフセット
 	const [slots, setSlots] = useState<SlotState[]>([
-		{ offsetX: -2.0, offsetY: 0, alive: true },
-		{ offsetX: 0, offsetY: 0, alive: true },
-		{ offsetX: 2.0, offsetY: 0, alive: true },
+		{ offsetX: -1.5 * 2.5, offsetY: 0.3 * 2.5, alive: true },
+		{ offsetX: 0, offsetY: 0.3 * 2.5, alive: true },
+		{ offsetX: 1.5 * 2.5, offsetY: 0.3 * 2.5, alive: true },
 	]);
 
 	useFrame((_, delta) => {
 		if (!groupRef.current || !alive) return;
 
-		groupRef.current.position.x -= GAME_CONFIG.target.trainSpeed * delta * 2;
+		// dir=1: 右→左（x減少）, dir=-1: 左→右（x増加）
+		groupRef.current.position.x -=
+			GAME_CONFIG.target.trainSpeed * delta * 2 * dir;
 
 		// ステージ2以降: 的が上下に揺れる
 		if (data.slotsOscillate) {
@@ -110,11 +115,16 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			);
 			for (let i = 0; i < slotGroups.length; i++) {
 				const phase = oscillateTime.current + (i * Math.PI * 2) / 3;
-				slotGroups[i].position.y = slots[i].offsetY + Math.sin(phase) * 0.4;
+				slotGroups[i].position.y = slots[i].offsetY + Math.sin(phase) * 0.6;
 			}
 		}
 
-		if (groupRef.current.position.x < data.startX * -1 - 5) {
+		// 画面外に出たか
+		const exitThreshold = Math.abs(data.startX) + 10;
+		if (
+			(dir > 0 && groupRef.current.position.x < -exitThreshold) ||
+			(dir < 0 && groupRef.current.position.x > exitThreshold)
+		) {
 			setAlive(false);
 			onDead(data.id);
 		}
@@ -146,7 +156,7 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 			{slots.map((slot, i) => (
 				<group
 					key={slot.offsetX}
-					position={[slot.offsetX, slot.offsetY, 1.05]}
+					position={[slot.offsetX, slot.offsetY, 0.76 * 2.5 + 0.1]}
 					userData={{ isSlot: true, slotIndex: i }}
 				>
 					<SmallTarget alive={slot.alive} />
