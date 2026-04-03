@@ -105,7 +105,7 @@ const Bullet = ({
 
 			{/* 弾丸本体 */}
 			<mesh ref={bulletRef} position={bullet.startPos}>
-				<sphereGeometry args={[0.15, 12, 12]} />
+				<sphereGeometry args={[0.3, 12, 12]} />
 				<meshBasicMaterial color="#ffee55" transparent opacity={1} />
 			</mesh>
 

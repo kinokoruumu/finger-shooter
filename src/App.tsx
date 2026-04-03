@@ -72,24 +72,15 @@ export const App = () => {
 		}
 	}, [gameState.phase, gameState.gestureDebug?.calibration]);
 
-	// タイトル・リザルト画面でピンチを検知してゲーム開始/リスタート
+	// リザルト画面のみピンチでリスタート（タイトルはボタンのみ）
 	useEffect(() => {
-		if (
-			gameState.phase === "playing" ||
-			gameState.phase === "stage-transition" ||
-			gameState.phase === "calibrating" ||
-			isLoading
-		)
-			return;
+		if (gameState.phase !== "result") return;
 
-		// タイトル/リザルトどちらもクールダウンを入れて誤爆防止
-		const delay = gameState.phase === "result" ? 1500 : 500;
 		let ready = false;
-
 		const timer = setTimeout(() => {
 			consumeFireEvents();
 			ready = true;
-		}, delay);
+		}, 1500);
 
 		const checkPinch = () => {
 			const events = consumeFireEvents();
@@ -105,7 +96,7 @@ export const App = () => {
 			cancelAnimationFrame(rafId);
 			clearTimeout(timer);
 		};
-	}, [gameState.phase, isLoading, startGame]);
+	}, [gameState.phase, startGame]);
 
 	if (cameraError) {
 		return (

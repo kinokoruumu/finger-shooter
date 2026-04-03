@@ -241,7 +241,7 @@ export const useGameScene = (
 					if (child.userData.type === "balloon-target" && child.visible) {
 						const posRef = child.userData.positionRef;
 						if (posRef?.current) {
-							if (checkHit3D(hitWorldBalloon, posRef.current, 1.5)) {
+							if (checkHit3D(hitWorldBalloon, posRef.current, 2.5)) {
 								child.userData.handleHit?.();
 								playSound("balloon-pop", 0.6);
 								setBalloonTargets((prev) =>
@@ -262,7 +262,7 @@ export const useGameScene = (
 						if (child.userData.type === "ground-target" && child.visible) {
 							const posRef = child.userData.positionRef;
 							if (posRef?.current) {
-								if (checkHit3D(hitWorldGround, posRef.current, 2.0)) {
+								if (checkHit3D(hitWorldGround, posRef.current, 3.0)) {
 									child.userData.handleHit?.();
 									setGroundTargets((prev) =>
 										prev.filter((t) => t.id !== child.userData.id),
@@ -305,7 +305,7 @@ export const useGameScene = (
 									child.position.z + 2.0,
 								];
 
-								if (checkHit3D(hitWorldTrain, slotWorld, 1.2)) {
+								if (checkHit3D(hitWorldTrain, slotWorld, 2.5)) {
 									handleSlotHit(i);
 									addScoreWithPopup(1, "+1", event.x, event.y);
 									const remaining = slots.filter(
