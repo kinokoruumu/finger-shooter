@@ -149,15 +149,13 @@ export const useGameScene = (
 				}
 				case "train": {
 					const dir = entry.direction ?? 1;
-					const lane = entry.trainLane ?? 1;
-					// 3ライン: 上=0.25, 中=0.45, 下=0.65
-					const laneNy = [0.25, 0.45, 0.65][lane];
-					const startNx = dir > 0 ? 1.3 : -0.3;
+					const startNx = dir > 0 ? 1.5 : -0.5;
 					const [startX] = screenToWorld(startNx, 0.5, -22);
-					const [, trainY] = screenToWorld(0.5, laneNy, -22);
+					// 固定Y位置: 線路の上（RAILS_Y = -8 と同じ）
+					const trainY = -8;
 					setTrainTargets((prev) => {
-						// 同じレーンに列車がいたらスキップ
-						if (prev.some((t) => t.lane === lane)) return prev;
+						// 既に列車がいたらスキップ
+						if (prev.length > 0) return prev;
 						return [
 							...prev,
 							{
@@ -167,8 +165,7 @@ export const useGameScene = (
 								z: -22,
 								slotsOscillate: entry.slotsOscillate ?? false,
 								direction: dir,
-								lane,
-								cars: 3,
+								lane: 0,
 							},
 						];
 					});
@@ -307,7 +304,7 @@ export const useGameScene = (
 								const slotWorld: [number, number, number] = [
 									child.position.x + slot.offsetX,
 									child.position.y + slot.offsetY,
-									child.position.z + 2.0,
+									child.position.z + 3.5,
 								];
 
 								if (checkHit3D(hitWorldTrain, slotWorld, 2.5)) {

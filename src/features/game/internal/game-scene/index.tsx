@@ -3,8 +3,13 @@ import { BalloonTarget } from "../balloon-target";
 import { BulletEffects } from "../bullet-effect";
 import { Crosshair } from "../crosshair";
 import { GroundTarget } from "../ground-target";
+import { Rails } from "../rails";
 import { TrainTarget } from "../train-target";
 import { useGameScene } from "./hooks";
+
+/** 線路のY位置とZ位置（列車のスポーンと一致させる） */
+const RAILS_Y = -8;
+const RAILS_Z = -22;
 
 type Props = {
 	isPlaying: boolean;
@@ -29,6 +34,9 @@ export const GameScene = ({ isPlaying, currentStage, phase }: Props) => {
 
 	return (
 		<group ref={sceneRef}>
+			{/* 常設の線路（画面下部） */}
+			<Rails y={RAILS_Y} z={RAILS_Z} />
+
 			<Crosshair screenToWorld={screenToWorld} phase={phase} />
 
 			{balloonTargets.map((t) => (
