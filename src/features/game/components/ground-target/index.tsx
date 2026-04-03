@@ -74,11 +74,13 @@ const GoldTarget = () => {
 			</mesh>
 			<Text
 				position={[0, 0, 0.13]}
-				fontSize={0.45}
-				color="#996600"
+				fontSize={0.5}
+				color="#552200"
 				fontWeight={900}
 				anchorX="center"
 				anchorY="middle"
+				outlineWidth={0.03}
+				outlineColor="#ffffff"
 			>
 				+3
 			</Text>
@@ -109,11 +111,13 @@ const PenaltyTarget = () => {
 			))}
 			<Text
 				position={[0, 0, 0.05]}
-				fontSize={0.4}
-				color="#ff4444"
+				fontSize={0.5}
+				color="#ff2222"
 				fontWeight={900}
 				anchorX="center"
 				anchorY="middle"
+				outlineWidth={0.03}
+				outlineColor="#ffffff"
 			>
 				-3
 			</Text>
