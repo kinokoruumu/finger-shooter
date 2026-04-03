@@ -170,7 +170,7 @@ export const App = () => {
 						>
 							手のひらをカメラに向けて
 							<br />
-							1.5秒キープしてください
+							キープしてください
 						</p>
 						<div className="h-4 w-full overflow-hidden rounded-full bg-stone-700">
 							<div
