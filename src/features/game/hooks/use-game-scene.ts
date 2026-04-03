@@ -1,20 +1,21 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type * as THREE from "three";
-import type { SpawnEntry } from "@/config/stage-definitions";
-import { STAGES } from "@/config/stage-definitions";
 import { playSound } from "@/features/audio";
+import type { SpawnEntry } from "@/features/game/constants/stage-definitions";
+import { STAGES } from "@/features/game/constants/stage-definitions";
 import {
 	addScoreWithPopup,
 	consumeFireEvents,
 	nextStage,
 } from "@/stores/game-store";
-import { checkHit3D, createScreenToWorld } from "../../utils";
-import type { BalloonTargetData } from "../balloon-target";
-import { randomBalloonColor } from "../balloon-target/utils";
-import type { BulletData } from "../bullet-effect";
-import type { GroundTargetData } from "../ground-target";
-import type { TrainTargetData } from "../train-target";
+import type { BalloonTargetData } from "../components/balloon-target";
+import { randomBalloonColor } from "../components/balloon-target/utils";
+import type { BulletData } from "../components/bullet-effect";
+import type { GroundTargetData } from "../components/ground-target";
+import type { TrainTargetData } from "../components/train-target";
+import { checkHit3D } from "../utils/check-hit";
+import { createScreenToWorld } from "../utils/screen-to-world";
 
 let nextId = 0;
 const genId = () => ++nextId;

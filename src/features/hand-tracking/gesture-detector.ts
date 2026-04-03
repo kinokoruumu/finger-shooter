@@ -1,5 +1,5 @@
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
-import { GAME_CONFIG } from "@/config/game-config";
+import { GAME_CONFIG } from "@/features/game/constants/game-config";
 import type { AimPosition } from "@/types/shared";
 
 export type CalibrationState = "none" | "progress" | "done";

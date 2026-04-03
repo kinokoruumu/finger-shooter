@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { STAGES } from "@/config/stage-definitions";
+import { STAGES } from "@/features/game/constants/stage-definitions";
 import { cn } from "@/lib/utils";
 
 type Props = {

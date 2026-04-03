@@ -1,7 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import type * as THREE from "three";
-import { GAME_CONFIG } from "@/config/game-config";
+import { GAME_CONFIG } from "@/features/game/constants/game-config";
 
 type SlotState = {
 	offsetX: number;

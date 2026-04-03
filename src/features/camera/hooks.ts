@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GAME_CONFIG } from "@/config/game-config";
+import { GAME_CONFIG } from "@/features/game/constants/game-config";
 
 export const useCamera = () => {
 	const videoRef = useRef<HTMLVideoElement>(null);

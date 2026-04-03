@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { checkHit3D } from "./utils";
+import { checkHit3D } from "./check-hit";
 
 describe("checkHit3D", () => {
 	test("同じ座標はヒットする", () => {

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { STAGES } from "@/config/stage-definitions";
 import { StageTransition } from "@/features/game/components/stage-transition";
+import { STAGES } from "@/features/game/constants/stage-definitions";
 import { ResultScreen } from "@/features/hud/components/result-screen";
 import { TitleScreen } from "@/features/hud/components/title-screen";
 import { cn } from "@/lib/utils";

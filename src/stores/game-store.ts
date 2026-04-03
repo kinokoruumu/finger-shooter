@@ -1,5 +1,5 @@
-import { GAME_CONFIG } from "@/config/game-config";
-import { STAGES } from "@/config/stage-definitions";
+import { GAME_CONFIG } from "@/features/game/constants/game-config";
+import { STAGES } from "@/features/game/constants/stage-definitions";
 import type { FireEvent, SharedState } from "@/types/shared";
 
 /** MediaPipe↔Game 共有状態（ミュータブルオブジェクト） */

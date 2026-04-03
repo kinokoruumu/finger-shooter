@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { STAGES } from "@/config/stage-definitions";
+import { STAGES } from "@/features/game/constants/stage-definitions";
 
 type Props = {
 	onStart: (startRound?: number) => void;

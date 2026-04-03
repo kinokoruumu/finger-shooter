@@ -1,11 +1,11 @@
 import type { GamePhase } from "@/stores/game-store";
+import { useGameScene } from "../../hooks/use-game-scene";
 import { BalloonTarget } from "../balloon-target";
 import { BulletEffects } from "../bullet-effect";
 import { Crosshair } from "../crosshair";
 import { GroundTarget } from "../ground-target";
 import { Rails } from "../rails";
 import { TrainTarget } from "../train-target";
-import { useGameScene } from "./hooks";
 
 /** 線路のY位置とZ位置（列車のスポーンと一致させる） */
 const TRAIN_Y = -5;
