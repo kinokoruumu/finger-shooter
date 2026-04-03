@@ -22,6 +22,7 @@ import { LoadingScreen } from "@/features/hud/components/loading-screen";
 import { ResultScreen } from "@/features/hud/components/result-screen";
 import { TitleScreen } from "@/features/hud/components/title-screen";
 import { TrackingStatus } from "@/features/hud/components/tracking-status";
+import { WelcomeScreen } from "@/features/hud/components/welcome-screen";
 import { cn } from "@/lib/utils";
 
 export const App = () => {
@@ -31,6 +32,7 @@ export const App = () => {
 		error: cameraError,
 		startCamera,
 	} = useCamera();
+	const [started, setStarted] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [showCamera, setShowCamera] = useState(false);
 	const debugMode = new URLSearchParams(window.location.search).has("debug");
@@ -38,7 +40,8 @@ export const App = () => {
 	const landmarksRef = useRef<NormalizedLandmark[] | null>(null);
 	const gameState = useGameState();
 
-	useEffect(() => {
+	const handleWelcome = useCallback(() => {
+		setStarted(true);
 		startCamera();
 		preloadSounds();
 	}, [startCamera]);
@@ -60,7 +63,7 @@ export const App = () => {
 	}, []);
 
 	const handleStageTransitionComplete = useCallback(() => {
-		consumeFireEvents(); // 遷移中のイベントを捨てる
+		consumeFireEvents();
 		setPhase("playing");
 	}, []);
 
@@ -72,7 +75,7 @@ export const App = () => {
 		}
 	}, [gameState.phase, gameState.gestureDebug?.calibration]);
 
-	// タイトル・リザルト画面でピンチ検知（ボタン上のみ、クールダウン付き）
+	// リザルト・タイトル画面でピンチ検知（ボタン上のみ）
 	useEffect(() => {
 		if (gameState.phase !== "result" && gameState.phase !== "title") return;
 		if (gameState.phase === "title" && isLoading) return;
@@ -90,7 +93,6 @@ export const App = () => {
 			const rect = btn.getBoundingClientRect();
 			const screenX = aimX * window.innerWidth;
 			const screenY = aimY * window.innerHeight;
-			// ボタンより少し広めの判定
 			const pad = 30;
 			return (
 				screenX >= rect.left - pad &&
@@ -119,6 +121,11 @@ export const App = () => {
 		};
 	}, [gameState.phase, isLoading, startGame]);
 
+	// まだ「はじめる」を押していない
+	if (!started) {
+		return <WelcomeScreen onStart={handleWelcome} />;
+	}
+
 	if (cameraError) {
 		return (
 			<div className="flex h-screen items-center justify-center bg-black">
@@ -138,23 +145,17 @@ export const App = () => {
 			className="relative h-screen w-screen overflow-hidden bg-cover bg-center bg-no-repeat"
 			style={{ backgroundImage: "url('/images/bg.png')" }}
 		>
-			{/* Layer 0: カメラ映像（トグル可能） */}
 			<CameraView videoRef={videoRef} isVisible={showCamera} />
-
-			{/* ランドマーク描画（カメラ表示時のみ） */}
 			{showCamera && <DebugOverlay landmarksRef={landmarksRef} />}
 
-			{/* Layer 1: Three.js 3Dシーン */}
 			<Game3D
 				isPlaying={isPlayingOrTransition}
 				currentStage={gameState.currentStage}
 				phase={gameState.phase}
 			/>
 
-			{/* Layer 2: HUD */}
 			<HUD score={gameState.score} isVisible={gameState.phase === "playing"} />
 
-			{/* キャリブレーション画面 */}
 			{gameState.phase === "calibrating" && (
 				<div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
 					<div className="flex w-[90vw] max-w-md flex-col items-center gap-5 rounded-2xl border border-stone-700/60 bg-stone-900/80 px-8 py-8 shadow-2xl shadow-black/40 backdrop-blur-xl">
@@ -195,7 +196,6 @@ export const App = () => {
 				</div>
 			)}
 
-			{/* ステージ遷移テキスト */}
 			{gameState.phase === "stage-transition" && (
 				<StageTransition
 					stageIndex={gameState.currentStage}
@@ -204,7 +204,6 @@ export const App = () => {
 				/>
 			)}
 
-			{/* 左下: トラッキングステータス + カメラボタン */}
 			{!isLoading && (
 				<div className="absolute bottom-4 left-4 z-20 flex flex-col gap-2">
 					<TrackingStatus
@@ -227,12 +226,10 @@ export const App = () => {
 				</div>
 			)}
 
-			{/* タイトル画面 */}
 			{gameState.phase === "title" && !isLoading && (
 				<TitleScreen onStart={startGame} debugMode={debugMode} />
 			)}
 
-			{/* リザルト画面 */}
 			{gameState.phase === "result" && (
 				<ResultScreen
 					stageScores={gameState.stageScores}
@@ -240,10 +237,8 @@ export const App = () => {
 				/>
 			)}
 
-			{/* プレイ中以外のエイムカーソル */}
 			{gameState.phase !== "playing" && <AimCursor />}
 
-			{/* ハンドトラッキング */}
 			<HandTracking
 				videoRef={videoRef}
 				isVideoReady={isVideoReady}
@@ -251,7 +246,6 @@ export const App = () => {
 				landmarksRef={landmarksRef}
 			/>
 
-			{/* ローディング */}
 			<LoadingScreen isVisible={isLoading} />
 		</div>
 	);
