@@ -107,11 +107,11 @@ export const useGameScene = (
 				case "ground":
 				case "ground-gold":
 				case "ground-penalty": {
-					// グリッド座標があればそれを使う、なければnxから変換
+					const hasGrid = entry.gx !== undefined && entry.gy !== undefined;
 					let nx: number;
 					let ny: number;
-					if (entry.gx !== undefined && entry.gy !== undefined) {
-						[nx, ny] = gridToNormalized(entry.gx, entry.gy);
+					if (hasGrid) {
+						[nx, ny] = gridToNormalized(entry.gx as number, entry.gy as number);
 					} else {
 						nx = entry.nx;
 						ny = entry.ny ?? 0.5;
@@ -120,18 +120,29 @@ export const useGameScene = (
 					const [, worldY] = screenToWorld(0.5, ny, -15);
 					const isGold = entry.type === "ground-gold";
 					const isPenalty = entry.type === "ground-penalty";
-					setGroundTargets((prev) => [
-						...prev,
-						{
-							id: genId(),
-							x: worldX,
-							y: worldY,
-							z: -15,
-							isGold,
-							isPenalty,
-							visibleDuration: entry.visibleDuration ?? 2.5,
-						},
-					]);
+					setGroundTargets((prev) => {
+						// グリッド座標指定時、同位置に的がいたらスキップ
+						if (
+							hasGrid &&
+							prev.some((t) => t.gx === entry.gx && t.gy === entry.gy)
+						) {
+							return prev;
+						}
+						return [
+							...prev,
+							{
+								id: genId(),
+								x: worldX,
+								y: worldY,
+								z: -15,
+								isGold,
+								isPenalty,
+								visibleDuration: entry.visibleDuration ?? 2.5,
+								gx: entry.gx,
+								gy: entry.gy,
+							},
+						];
+					});
 					break;
 				}
 				case "train": {

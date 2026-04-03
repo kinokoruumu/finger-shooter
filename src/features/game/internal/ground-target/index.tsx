@@ -14,6 +14,9 @@ export type GroundTargetData = {
 	isPenalty: boolean;
 	/** 表示時間(秒) */
 	visibleDuration: number;
+	/** グリッド座標（被り判定用） */
+	gx?: number;
+	gy?: number;
 };
 
 type Props = {
