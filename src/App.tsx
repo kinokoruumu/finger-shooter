@@ -18,6 +18,7 @@ import {
 	consumeFireEvents,
 	resetGameUI,
 	resetSharedState,
+	setCurrentStage,
 	setPhase,
 } from "@/stores/game-store";
 
@@ -30,6 +31,7 @@ export const App = () => {
 	} = useCamera();
 	const [isLoading, setIsLoading] = useState(true);
 	const [showCamera, setShowCamera] = useState(false);
+	const debugMode = new URLSearchParams(window.location.search).has("debug");
 	const hasNotifiedRef = useRef(false);
 	const landmarksRef = useRef<NormalizedLandmark[] | null>(null);
 	const gameState = useGameState();
@@ -44,10 +46,13 @@ export const App = () => {
 		setTimeout(() => setIsLoading(false), 300);
 	}, []);
 
-	const startGame = useCallback(() => {
+	const startGame = useCallback((startRound?: number) => {
 		resetGameUI();
 		resetSharedState();
 		resetGestureState();
+		if (startRound !== undefined && startRound > 0) {
+			setCurrentStage(startRound);
+		}
 		setPhase("stage-transition");
 	}, []);
 
@@ -180,13 +185,28 @@ export const App = () => {
 								"rounded-xl bg-red-500 px-8 py-3 font-bold text-lg text-white transition-colors",
 								"pointer-events-auto hover:bg-red-600 active:bg-red-700",
 							)}
-							onClick={startGame}
+							onClick={() => startGame()}
 						>
 							START
 						</button>
 						<p className="mt-3 font-mono text-white/30 text-xs">
 							👌 ピンチでもOK
 						</p>
+						{/* デバッグ: ラウンド選択 */}
+						{debugMode && (
+							<div className="mt-4 flex justify-center gap-2">
+								{STAGES.map((s, i) => (
+									<button
+										key={s.name}
+										type="button"
+										className="pointer-events-auto rounded-md bg-white/10 px-3 py-1 font-mono text-white/50 text-xs hover:bg-white/20"
+										onClick={() => startGame(i)}
+									>
+										R{i + 1}
+									</button>
+								))}
+							</div>
+						)}
 					</div>
 				</div>
 			)}
@@ -243,7 +263,7 @@ export const App = () => {
 								"rounded-xl bg-red-500 px-8 py-3 font-bold text-lg text-white transition-colors",
 								"pointer-events-auto hover:bg-red-600 active:bg-red-700",
 							)}
-							onClick={startGame}
+							onClick={() => startGame()}
 						>
 							RETRY
 						</button>
