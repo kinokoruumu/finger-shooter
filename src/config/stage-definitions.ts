@@ -200,49 +200,49 @@ const stage2Spawns: SpawnEntry[] = (() => {
 		t(3500, "ground", 6, 3),
 
 		// 4s: 横一列（gy=1）— 8個同時！
-		...horizontalLine(4500, 1, "ground", 2.5),
+		...horizontalLine(4500, 1, "ground", 4.5),
 
 		// 7s: V字パターン — 8個
-		...vShape(7000, "ground", 3.0),
+		...vShape(7000, "ground", 4.5),
 
 		// 10s: 対角線 — 7個
-		...diagonal(10000, 300, "ground", 3.0),
+		...diagonal(10000, 300, "ground", 4.0),
 
-		// 13s: 金の横一列（gy=2）
-		...horizontalLine(13000, 2, "ground-gold", 3.0),
+		// 13s: 横一列（gy=2）中央だけ金
+		...horizontalLine(13000, 2, "ground", 4.5).map((e) =>
+			e.gx === 3 || e.gx === 4 ? { ...e, type: "ground-gold" as const } : e,
+		),
 
 		// 15s: ペナルティ注意！十字 — 通常10 + ペナ中央
-		t(15500, "ground", 0, 2, 3.0),
-		t(15500, "ground", 1, 2, 3.0),
-		t(15500, "ground", 2, 2, 3.0),
-		t(15500, "ground", 3, 2, 3.0),
-		t(15500, "ground-penalty", 4, 2, 3.0),
-		t(15500, "ground", 5, 2, 3.0),
-		t(15500, "ground", 6, 2, 3.0),
-		t(15500, "ground", 7, 2, 3.0),
-		t(15500, "ground", 4, 0, 3.0),
-		t(15500, "ground", 4, 1, 3.0),
-		t(15500, "ground", 4, 3, 3.0),
+		t(15500, "ground", 0, 2, 4.5),
+		t(15500, "ground", 1, 2, 4.5),
+		t(15500, "ground", 2, 2, 4.5),
+		t(15500, "ground", 3, 2, 4.5),
+		t(15500, "ground-penalty", 4, 2, 4.5),
+		t(15500, "ground", 5, 2, 4.5),
+		t(15500, "ground", 6, 2, 4.5),
+		t(15500, "ground", 7, 2, 4.5),
+		t(15500, "ground", 4, 0, 4.5),
+		t(15500, "ground", 4, 1, 4.5),
+		t(15500, "ground", 4, 3, 4.5),
 
 		// 19s: 外周ぐるっと — 20個
-		...borderClockwise(19000, 120, "ground", 2.0),
+		...borderClockwise(19000, 150, "ground", 3.0),
 
 		// 22s: 縦2列同時 + 金
-		...verticalLine(22500, 2, "ground", 3.0),
-		...verticalLine(22500, 5, "ground", 3.0),
-		t(22500, "ground-gold", 3, 1, 3.0),
-		t(22500, "ground-gold", 4, 2, 3.0),
+		...verticalLine(22500, 2, "ground", 4.0),
+		...verticalLine(22500, 5, "ground", 4.0),
+		t(22500, "ground-gold", 3, 1, 4.0),
 
 		// 25s: ペナルティ混在ラッシュ
-		t(25500, "ground", 1, 0, 2.5),
-		t(25500, "ground", 3, 1, 2.5),
-		t(25500, "ground-penalty", 5, 2, 2.5),
-		t(25500, "ground", 7, 3, 2.5),
-		t(26000, "ground", 0, 3, 2.5),
-		t(26000, "ground-gold", 4, 0, 2.5),
-		t(26000, "ground", 6, 1, 2.5),
-		t(26500, "ground", 2, 2, 2.5),
-		t(26500, "ground", 5, 0, 2.5),
+		t(25500, "ground", 1, 0, 3.5),
+		t(25500, "ground", 3, 1, 3.5),
+		t(25500, "ground-penalty", 5, 2, 3.5),
+		t(25500, "ground", 7, 3, 3.5),
+		t(26000, "ground", 0, 3, 3.5),
+		t(26000, "ground", 6, 1, 3.5),
+		t(26500, "ground", 2, 2, 3.5),
+		t(26500, "ground", 5, 0, 3.5),
 	];
 
 	const spawns = entriesToSpawns(entries);
@@ -293,21 +293,21 @@ const stage3Spawns: SpawnEntry[] = (() => {
 
 	// 0~4s: 風船5 + V字パターンで開幕
 	for (let i = 0; i < 5; i++) balloon(300 + i * 800);
-	entries.push(...vShape(1000, "ground", 3.5));
+	entries.push(...vShape(1000, "ground", 4.5));
 
 	// 5s: 列車（右から）
 	train(5000, 1, 2.0);
 
 	// 6~9s: 風船3 + 対角線パターン
 	for (let i = 0; i < 3; i++) balloon(6000 + i * 1000);
-	entries.push(...diagonal(6500, 400, "ground", 3.0));
+	entries.push(...diagonal(6500, 400, "ground", 4.0));
 
-	// 10s: 金の横一列！(gy=1)
-	entries.push(...horizontalLine(10000, 1, "ground-gold", 3.0));
+	// 10s: 金の横一列→通常に変更（金出すぎ対策）
+	entries.push(...horizontalLine(10000, 1, "ground", 4.5));
 
 	// 13s: 風船5 + ペナルティ注意の縦列
 	for (let i = 0; i < 5; i++) balloon(13000 + i * 700);
-	entries.push(...verticalLine(13500, 3, "ground", 3.0));
+	entries.push(...verticalLine(13500, 3, "ground", 4.0));
 	entries.push(t(13500, "ground-penalty", 4, 1, 3.0));
 	entries.push(t(13500, "ground-penalty", 4, 2, 3.0));
 
@@ -316,10 +316,10 @@ const stage3Spawns: SpawnEntry[] = (() => {
 
 	// 17~20s: 外周パターン + 風船
 	for (let i = 0; i < 4; i++) balloon(17000 + i * 800);
-	entries.push(...borderClockwise(17500, 100, "ground", 2.0));
+	entries.push(...borderClockwise(17500, 150, "ground", 3.0));
 
 	// 21s: クロスパターン（中央に金）
-	const cross = crossPattern(21000, "ground", 3.0);
+	const cross = crossPattern(21000, "ground", 4.5);
 	// 中央を金に差し替え
 	entries.push(
 		...cross.map((e) =>
@@ -334,17 +334,16 @@ const stage3Spawns: SpawnEntry[] = (() => {
 
 	// 24s: 4つ同時出現（四隅）+ 金中央
 	entries.push(
-		t(24500, "ground", 0, 0, 2.5),
-		t(24500, "ground", 7, 0, 2.5),
-		t(24500, "ground", 0, 3, 2.5),
-		t(24500, "ground", 7, 3, 2.5),
-		t(24500, "ground-gold", 3, 1, 2.5),
-		t(24500, "ground-gold", 4, 2, 2.5),
+		t(24500, "ground", 0, 0, 3.5),
+		t(24500, "ground", 7, 0, 3.5),
+		t(24500, "ground", 0, 3, 3.5),
+		t(24500, "ground", 7, 3, 3.5),
+		t(24500, "ground-gold", 4, 2, 3.5),
 	);
 
 	// 26s: フィナーレ — 横一列ラッシュ
-	entries.push(...horizontalLine(26500, 0, "ground", 2.5));
-	entries.push(...horizontalLine(27000, 3, "ground", 2.5));
+	entries.push(...horizontalLine(26500, 0, "ground", 3.5));
+	entries.push(...horizontalLine(27500, 3, "ground", 3.5));
 
 	spawns.push(...entriesToSpawns(entries));
 

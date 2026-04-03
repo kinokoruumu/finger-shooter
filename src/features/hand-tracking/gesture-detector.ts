@@ -82,23 +82,23 @@ const isOpenPalm = (
 		[PINKY_TIP, PINKY_MCP],
 	];
 
-	// 4本の指がしっかり伸びている
+	// 4本の指が伸びている（緩め）
 	for (const [tipIdx, mcpIdx] of fingers) {
 		const fingerLen = dist3d(landmarks[tipIdx], landmarks[mcpIdx]) / handSize;
-		if (fingerLen < 0.65) return false;
+		if (fingerLen < 0.5) return false;
 	}
 
-	// 親指もしっかり開いている
+	// 親指も開いている（緩め）
 	const thumbLen =
 		dist3d(landmarks[THUMB_TIP], landmarks[THUMB_MCP]) / handSize;
-	if (thumbLen < 0.45) return false;
+	if (thumbLen < 0.35) return false;
 
-	// 指同士が開いている（隣り合う指先の距離）
+	// 指同士が開いている（緩め）
 	const fingerTips = [INDEX_TIP, MIDDLE_TIP, RING_TIP, PINKY_TIP];
 	for (let i = 0; i < fingerTips.length - 1; i++) {
 		const spread =
 			dist2d(landmarks[fingerTips[i]], landmarks[fingerTips[i + 1]]) / handSize;
-		if (spread < 0.15) return false;
+		if (spread < 0.1) return false;
 	}
 
 	return true;
