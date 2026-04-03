@@ -22,7 +22,7 @@ export type StageDefinition = {
 export const STAGE_TRANSITION_DURATION = 3000;
 
 /**
- * ステージ1: 風船48個 + 列車2台(3的+全滅ボーナス ×2 = 12pt) = MAX 60
+ * ステージ1: 風船54個(54pt) + 列車1台(3+3=6pt) = MAX 60
  */
 const stage1Spawns: SpawnEntry[] = (() => {
 	const spawns: SpawnEntry[] = [];
@@ -30,8 +30,8 @@ const stage1Spawns: SpawnEntry[] = (() => {
 		0.3, 0.7, 0.5, 0.2, 0.8, 0.4, 0.6, 0.35, 0.65, 0.25, 0.75, 0.45,
 	];
 
-	// 0~3.5s: 最初の7個 (0.5s間隔)
-	for (let i = 0; i < 7; i++) {
+	// 0~12s: 前半24個 (0.5s間隔)
+	for (let i = 0; i < 24; i++) {
 		spawns.push({
 			time: 500 + i * 500,
 			type: "balloon",
@@ -39,38 +39,17 @@ const stage1Spawns: SpawnEntry[] = (() => {
 		});
 	}
 
-	// 4s: 列車1台目
-	spawns.push({ time: 4000, type: "train", nx: 1.2, ny: 0.35 });
-
-	// 4.5~9s: 10個 (0.5s間隔)
-	for (let i = 0; i < 10; i++) {
+	// 13~24s: 後半30個 (0.4s間隔、ペースアップ)
+	for (let i = 0; i < 30; i++) {
 		spawns.push({
-			time: 4500 + i * 500,
-			type: "balloon",
-			nx: balloonXs[(i + 3) % balloonXs.length],
-		});
-	}
-
-	// 10~16.5s: 13個 (0.5s間隔)
-	for (let i = 0; i < 13; i++) {
-		spawns.push({
-			time: 10000 + i * 500,
+			time: 13000 + i * 400,
 			type: "balloon",
 			nx: balloonXs[(i + 5) % balloonXs.length],
 		});
 	}
 
-	// 17s: 列車2台目
-	spawns.push({ time: 17000, type: "train", nx: 1.2, ny: 0.45 });
-
-	// 17.5~28.5s: 18個 (0.6s間隔、少し余裕)
-	for (let i = 0; i < 18; i++) {
-		spawns.push({
-			time: 17500 + i * 600,
-			type: "balloon",
-			nx: balloonXs[(i + 2) % balloonXs.length],
-		});
-	}
+	// 25s: 列車1台（終盤）
+	spawns.push({ time: 25000, type: "train", nx: 1.2, ny: 0.4 });
 
 	return spawns.sort((a, b) => a.time - b.time);
 })();
