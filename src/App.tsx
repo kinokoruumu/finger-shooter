@@ -1,5 +1,6 @@
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { STAGES } from "@/config/stage-definitions";
 import { CameraView } from "@/features/camera";
 import { useCamera } from "@/features/camera/hooks";
 import { Game3D } from "@/features/game";
@@ -129,6 +130,7 @@ export const App = () => {
 			{gameState.phase === "stage-transition" && (
 				<StageTransition
 					stageIndex={gameState.currentStage}
+					stageScores={gameState.stageScores}
 					onComplete={handleStageTransitionComplete}
 				/>
 			)}
@@ -194,17 +196,46 @@ export const App = () => {
 				<div className="absolute inset-0 z-30 flex flex-col items-center justify-center">
 					<div className="rounded-2xl bg-black/70 px-12 py-10 text-center backdrop-blur-sm">
 						<h2
-							className="mb-2 font-black text-3xl text-white"
+							className="mb-4 font-black text-3xl text-white"
 							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
 						>
 							GAME OVER
 						</h2>
-						<p className="mb-1 text-white/60">TOTAL SCORE</p>
+						{/* ステージ別スコア */}
+						<div className="mb-4 flex justify-center gap-1">
+							{STAGES.map((s, i) => (
+								<div
+									key={s.name}
+									className="flex flex-col items-center rounded-lg bg-white/10 px-5 py-2"
+								>
+									<span
+										className="text-white/40 text-xs"
+										style={{
+											fontFamily: '"Rounded Mplus 1c", sans-serif',
+										}}
+									>
+										S{i + 1}
+									</span>
+									<span
+										className="font-black text-xl text-white tabular-nums"
+										style={{
+											fontFamily: '"Rounded Mplus 1c", sans-serif',
+										}}
+									>
+										{gameState.stageScores[i] ?? 0}
+									</span>
+								</div>
+							))}
+						</div>
+						<p className="mb-1 text-white/60">TOTAL</p>
 						<p
 							className="mb-8 font-black text-6xl text-white"
 							style={{ fontFamily: '"Rounded Mplus 1c", sans-serif' }}
 						>
-							{gameState.score}
+							{gameState.stageScores.reduce<number>(
+								(sum, s) => sum + (s ?? 0),
+								0,
+							)}
 						</p>
 						<button
 							type="button"

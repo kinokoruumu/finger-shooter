@@ -80,6 +80,8 @@ export type GameUIState = {
 	score: number;
 	phase: GamePhase;
 	currentStage: number;
+	/** 各ステージ終了時のスコア（null=未プレイ） */
+	stageScores: (number | null)[];
 	isLoading: boolean;
 	isHandDetected: boolean;
 	isGunPose: boolean;
@@ -90,6 +92,7 @@ let gameUISnapshot: GameUIState = {
 	score: 0,
 	phase: "title",
 	currentStage: 0,
+	stageScores: [null, null, null],
 	isLoading: true,
 	isHandDetected: false,
 	isGunPose: false,
@@ -116,11 +119,21 @@ export const setCurrentStage = (stage: number) => {
 };
 
 export const nextStage = () => {
-	const next = gameUISnapshot.currentStage + 1;
+	// 現ステージのスコアを記録
+	const current = gameUISnapshot.currentStage;
+	const newStageScores = [...gameUISnapshot.stageScores];
+	newStageScores[current] = gameUISnapshot.score;
+
+	const next = current + 1;
 	if (next >= STAGES.length) {
-		updateSnapshot({ phase: "result" });
+		updateSnapshot({ stageScores: newStageScores, phase: "result" });
 	} else {
-		updateSnapshot({ currentStage: next, phase: "stage-transition" });
+		updateSnapshot({
+			stageScores: newStageScores,
+			currentStage: next,
+			score: 0,
+			phase: "stage-transition",
+		});
 	}
 };
 
@@ -176,5 +189,6 @@ export const resetGameUI = () => {
 	updateSnapshot({
 		score: 0,
 		currentStage: 0,
+		stageScores: [null, null, null],
 	});
 };
