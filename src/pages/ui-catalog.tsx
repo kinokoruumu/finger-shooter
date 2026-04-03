@@ -167,7 +167,7 @@ export const UICatalog = () => {
 							<button
 								type="button"
 								className="rounded-md bg-stone-700 px-3 py-1 text-sm text-white hover:bg-stone-600"
-								onClick={() => playSound("target-appear", 1.0, appearOffset)}
+								onClick={() => playSound("target-appear", 1.0)}
 							>
 								試聴
 							</button>

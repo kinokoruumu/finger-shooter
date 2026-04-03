@@ -4,6 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
 import { playSound } from "@/features/audio";
 
+/** 出現音のデバウンス（100ms以内の連続呼び出しは1回にまとめる） */
+let lastAppearSoundTime = 0;
+const playAppearSound = () => {
+	const now = performance.now();
+	if (now - lastAppearSoundTime < 100) return;
+	lastAppearSoundTime = now;
+	playSound("target-appear", 0.5);
+};
+
 type TargetState = "appearing" | "visible" | "leaving" | "destroyed";
 
 export type GroundTargetData = {
@@ -224,9 +233,9 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 	const [showParticles, setShowParticles] = useState(false);
 	const elapsed = useRef(0);
 
-	// 出現時に音を鳴らす
+	// 出現時に音を鳴らす（同時出現はデバウンスで1回にまとめる）
 	useEffect(() => {
-		playSound("target-appear", 0.5);
+		playAppearSound();
 	}, []);
 	const positionRef = useRef<[number, number, number]>([
 		data.x,
