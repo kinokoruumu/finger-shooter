@@ -56,22 +56,22 @@ export const StageTransition = ({
 							animate={{ opacity: 1, scale: 1, y: 0 }}
 							exit={{ opacity: 0, y: -20 }}
 							transition={{ duration: 0.4, ease: "easeOut" }}
-							className="flex w-1/2 min-w-80 max-w-lg flex-col items-center gap-5 rounded-2xl border border-stone-400/40 bg-amber-50/90 px-8 py-8 shadow-2xl shadow-black/25 backdrop-blur-xl"
+							className="flex w-[90vw] max-w-2xl flex-col items-center gap-5 rounded-2xl border border-stone-700/60 bg-stone-900/80 px-8 py-8 shadow-2xl shadow-black/40 backdrop-blur-xl"
 						>
 							{prevStage && (
-								<h2 className="font-black text-2xl text-stone-800" style={rf}>
+								<h2 className="font-black text-2xl text-white" style={rf}>
 									{prevStage.name}
 								</h2>
 							)}
 
-							<div className="flex w-full overflow-hidden rounded-xl border border-stone-300 bg-white/80 shadow-inner">
+							<div className="flex w-full overflow-hidden rounded-xl border border-stone-600 bg-stone-800/60 shadow-inner">
 								{STAGES.map((s, i) => {
 									const score = stageScores[i];
 									const hasScore = score !== null;
 									return (
 										<div
 											key={s.name}
-											className="flex flex-1 flex-col items-center border-r border-stone-300 py-3 last:border-r-0"
+											className="flex flex-1 flex-col items-center border-r border-stone-600 py-3 last:border-r-0"
 										>
 											<span className="mb-1 text-stone-400 text-xs" style={rf}>
 												{s.name}
@@ -79,7 +79,7 @@ export const StageTransition = ({
 											<span
 												className={cn(
 													"font-black text-3xl tabular-nums",
-													hasScore ? "text-stone-800" : "text-stone-300",
+													hasScore ? "text-white" : "text-stone-600",
 												)}
 												style={rf}
 											>
@@ -88,12 +88,12 @@ export const StageTransition = ({
 										</div>
 									);
 								})}
-								<div className="flex flex-1 flex-col items-center border-l-2 border-stone-400 bg-stone-50 py-3">
+								<div className="flex flex-1 flex-col items-center border-l border-stone-600 bg-stone-700/50 py-3">
 									<span className="mb-1 text-stone-400 text-xs" style={rf}>
 										合計
 									</span>
 									<span
-										className="font-black text-3xl text-orange-500 tabular-nums"
+										className="font-black text-3xl text-orange-400 tabular-nums"
 										style={rf}
 									>
 										{total}
@@ -120,10 +120,10 @@ export const StageTransition = ({
 							animate={{ opacity: 1, scale: 1, y: 0 }}
 							exit={{ opacity: 0, scale: 1.1, y: -30 }}
 							transition={{ duration: 0.5, ease: "easeOut" }}
-							className="rounded-2xl border border-stone-400/40 bg-amber-50/90 px-12 py-8 shadow-2xl shadow-black/25 backdrop-blur-xl"
+							className="rounded-2xl border border-stone-700/60 bg-stone-900/80 px-12 py-8 shadow-2xl shadow-black/40 backdrop-blur-xl"
 						>
 							<motion.h2
-								className="font-black text-stone-800"
+								className="font-black text-white"
 								style={{
 									...rf,
 									fontSize: stageIndex === 2 ? "3rem" : "3.5rem",
