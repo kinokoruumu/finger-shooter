@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import {
+	consumeScorePopups,
+	type ScorePopup,
+} from "@/features/game/stores/game-store";
 import { cn } from "@/lib/utils";
-import { consumeScorePopups, type ScorePopup } from "@/stores/game-store";
 
 type PopupItem = ScorePopup & { createdAt: number };
 

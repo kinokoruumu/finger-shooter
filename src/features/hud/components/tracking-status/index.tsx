@@ -1,5 +1,5 @@
+import type { GestureDebug } from "@/features/game/stores/game-store";
 import { cn } from "@/lib/utils";
-import type { GestureDebug } from "@/stores/game-store";
 
 type Props = {
 	isHandDetected: boolean;

@@ -2,7 +2,7 @@ import { Ring } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import type * as THREE from "three";
-import { sharedState } from "@/stores/game-store";
+import { sharedState } from "@/features/game/stores/game-store";
 
 type Props = {
 	screenToWorld: (

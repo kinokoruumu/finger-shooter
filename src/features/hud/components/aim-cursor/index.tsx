@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { sharedState } from "@/stores/game-store";
+import { sharedState } from "@/features/game/stores/game-store";
 
 export const AimCursor = () => {
 	const dotRef = useRef<HTMLDivElement>(null);

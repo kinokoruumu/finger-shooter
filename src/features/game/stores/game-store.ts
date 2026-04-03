@@ -1,6 +1,6 @@
 import { GAME_CONFIG } from "@/features/game/constants/game-config";
 import { STAGES } from "@/features/game/constants/stage-definitions";
-import type { FireEvent, SharedState } from "@/types/shared";
+import type { FireEvent, SharedState } from "@/features/game/types/shared";
 
 /** MediaPipe↔Game 共有状態（ミュータブルオブジェクト） */
 export const sharedState: SharedState = {

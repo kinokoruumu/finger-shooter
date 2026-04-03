@@ -8,7 +8,7 @@ import {
 	addScoreWithPopup,
 	consumeFireEvents,
 	nextStage,
-} from "@/stores/game-store";
+} from "@/features/game/stores/game-store";
 import type { BalloonTargetData } from "../components/balloon-target";
 import { randomBalloonColor } from "../components/balloon-target/utils";
 import type { BulletData } from "../components/bullet-effect";

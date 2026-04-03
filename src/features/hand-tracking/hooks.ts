@@ -7,7 +7,7 @@ import {
 	setHandDetected,
 	updateAim,
 	updateTrackingStatus,
-} from "@/stores/game-store";
+} from "@/features/game/stores/game-store";
 import { detectGesture } from "./gesture-detector";
 import { getHandLandmarker, initHandLandmarker } from "./hand-landmarker";
 

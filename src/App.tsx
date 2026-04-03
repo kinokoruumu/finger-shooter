@@ -6,6 +6,13 @@ import { useCamera } from "@/features/camera/hooks";
 import { Game3D } from "@/features/game/components/game-3d";
 import { StageTransition } from "@/features/game/components/stage-transition";
 import { useGameState } from "@/features/game/hooks/use-game-state";
+import {
+	consumeFireEvents,
+	resetGameUI,
+	resetSharedState,
+	setCurrentStage,
+	setPhase,
+} from "@/features/game/stores/game-store";
 import { HandTracking } from "@/features/hand-tracking";
 import { DebugOverlay } from "@/features/hand-tracking/components/debug-overlay";
 import { resetGestureState } from "@/features/hand-tracking/gesture-detector";
@@ -16,13 +23,6 @@ import { ResultScreen } from "@/features/hud/components/result-screen";
 import { TitleScreen } from "@/features/hud/components/title-screen";
 import { TrackingStatus } from "@/features/hud/components/tracking-status";
 import { cn } from "@/lib/utils";
-import {
-	consumeFireEvents,
-	resetGameUI,
-	resetSharedState,
-	setCurrentStage,
-	setPhase,
-} from "@/stores/game-store";
 
 export const App = () => {
 	const {

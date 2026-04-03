@@ -1,4 +1,4 @@
-import type { GamePhase } from "@/stores/game-store";
+import type { GamePhase } from "@/features/game/stores/game-store";
 import { useGameScene } from "../../hooks/use-game-scene";
 import { BalloonTarget } from "../balloon-target";
 import { BulletEffects } from "../bullet-effect";

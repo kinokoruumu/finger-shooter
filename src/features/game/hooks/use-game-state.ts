@@ -3,7 +3,7 @@ import {
 	type GameUIState,
 	getGameUISnapshot,
 	subscribe,
-} from "@/stores/game-store";
+} from "@/features/game/stores/game-store";
 
 export const useGameState = (): GameUIState => {
 	return useSyncExternalStore(subscribe, getGameUISnapshot);

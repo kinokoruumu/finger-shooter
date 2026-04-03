@@ -1,6 +1,6 @@
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { useEffect, useRef } from "react";
-import { sharedState } from "@/stores/game-store";
+import { sharedState } from "@/features/game/stores/game-store";
 
 // MediaPipe Hand Landmark の接続関係
 const CONNECTIONS: [number, number][] = [
