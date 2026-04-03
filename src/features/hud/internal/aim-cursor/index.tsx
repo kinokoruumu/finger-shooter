@@ -28,7 +28,7 @@ export const AimCursor = () => {
 	return (
 		<div
 			ref={dotRef}
-			className="pointer-events-none absolute z-40 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-red-500/60 opacity-0 transition-opacity duration-150"
+			className="pointer-events-none absolute z-50 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-stone-800 bg-orange-500/70 opacity-0 shadow-lg shadow-black/30 transition-opacity duration-150"
 		/>
 	);
 };

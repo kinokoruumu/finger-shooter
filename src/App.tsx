@@ -72,15 +72,18 @@ export const App = () => {
 		}
 	}, [gameState.phase, gameState.gestureDebug?.calibration]);
 
-	// リザルト画面のみピンチでリスタート（タイトルはボタンのみ）
+	// タイトル・リザルト画面でピンチ検知（クールダウン付き）
 	useEffect(() => {
-		if (gameState.phase !== "result") return;
+		if (gameState.phase !== "result" && gameState.phase !== "title") return;
+		if (gameState.phase === "title" && isLoading) return;
 
+		// タイトル: 1秒、リザルト: 1.5秒のクールダウン
+		const delay = gameState.phase === "result" ? 1500 : 1000;
 		let ready = false;
 		const timer = setTimeout(() => {
 			consumeFireEvents();
 			ready = true;
-		}, 1500);
+		}, delay);
 
 		const checkPinch = () => {
 			const events = consumeFireEvents();
@@ -96,7 +99,7 @@ export const App = () => {
 			cancelAnimationFrame(rafId);
 			clearTimeout(timer);
 		};
-	}, [gameState.phase, startGame]);
+	}, [gameState.phase, isLoading, startGame]);
 
 	if (cameraError) {
 		return (
