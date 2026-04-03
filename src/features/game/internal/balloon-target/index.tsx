@@ -167,7 +167,7 @@ export const BalloonTarget = ({ data, onDead }: Props) => {
 					</mesh>
 					{/* 紐 */}
 					<mesh position={[0, -2.4, 0]}>
-						<cylinderGeometry args={[0.015, 0.015, 1.0, 4]} />
+						<cylinderGeometry args={[0.04, 0.04, 1.0, 6]} />
 						<meshBasicMaterial color="#888888" />
 					</mesh>
 				</group>
