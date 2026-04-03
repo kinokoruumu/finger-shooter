@@ -3,10 +3,13 @@ import { useRef, useState } from "react";
 import type * as THREE from "three";
 import { GAME_CONFIG } from "@/features/game/constants/game-config";
 
+type SlotType = "normal" | "gold" | "penalty";
+
 type SlotState = {
 	offsetX: number;
 	offsetY: number;
 	alive: boolean;
+	slotType: SlotType;
 };
 
 export type TrainTargetData = {
@@ -18,6 +21,8 @@ export type TrainTargetData = {
 	direction: number;
 	lane: number;
 	speed: number;
+	goldSlots: number;
+	penaltySlots: number;
 };
 
 type Props = {
@@ -33,22 +38,53 @@ const WINDOW_XS = [-1.5, 0, 1.5];
 const SLOT_Y = 0.3 * SCALE;
 const SLOT_Z = 0.76 * SCALE + 0.1;
 
-const SmallTarget = ({ alive }: { alive: boolean }) => {
-	if (!alive) return null;
-
-	const rings: { radius: number; color: string; z: number }[] = [
+const RING_SETS: Record<
+	SlotType,
+	{ radius: number; color: string; z: number }[]
+> = {
+	normal: [
 		{ radius: 0.6, color: "#222222", z: 0 },
 		{ radius: 0.47, color: "#ffffff", z: 0.02 },
 		{ radius: 0.34, color: "#222222", z: 0.04 },
 		{ radius: 0.22, color: "#ffffff", z: 0.06 },
 		{ radius: 0.12, color: "#dd2222", z: 0.08 },
-	];
+	],
+	gold: [
+		{ radius: 0.6, color: "#daa520", z: 0 },
+		{ radius: 0.47, color: "#ffe566", z: 0.02 },
+		{ radius: 0.34, color: "#ffcc00", z: 0.04 },
+		{ radius: 0.22, color: "#fff2a0", z: 0.06 },
+	],
+	penalty: [
+		{ radius: 0.6, color: "#1a1a1a", z: 0 },
+		{ radius: 0.47, color: "#444444", z: 0.02 },
+		{ radius: 0.34, color: "#1a1a1a", z: 0.04 },
+		{ radius: 0.22, color: "#333333", z: 0.06 },
+	],
+};
+
+const BODY_COLORS: Record<SlotType, string> = {
+	normal: "#3a3a3a",
+	gold: "#8b6914",
+	penalty: "#111111",
+};
+
+const SmallTarget = ({
+	alive,
+	slotType,
+}: {
+	alive: boolean;
+	slotType: SlotType;
+}) => {
+	if (!alive) return null;
+
+	const rings = RING_SETS[slotType];
 
 	return (
 		<group scale={3.0}>
 			<mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.06]}>
 				<cylinderGeometry args={[0.6, 0.6, 0.12, 32]} />
-				<meshStandardMaterial color="#3a3a3a" />
+				<meshStandardMaterial color={BODY_COLORS[slotType]} />
 			</mesh>
 			{rings.map((ring) => (
 				<mesh key={ring.color + ring.radius} position={[0, 0, ring.z]}>
@@ -101,7 +137,7 @@ const TrainBody = () => {
 	);
 };
 
-const buildSlots = (): SlotState[] => {
+const buildSlots = (goldCount: number, penaltyCount: number): SlotState[] => {
 	const slots: SlotState[] = [];
 	for (let c = 0; c < CARS; c++) {
 		const carOffset = (c - (CARS - 1) / 2) * CAR_WIDTH;
@@ -110,8 +146,22 @@ const buildSlots = (): SlotState[] => {
 				offsetX: carOffset + wx * SCALE,
 				offsetY: SLOT_Y,
 				alive: true,
+				slotType: "normal",
 			});
 		}
+	}
+	// ランダムに金/ペナルティを割り当て
+	const indices = slots.map((_, i) => i);
+	for (let i = indices.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[indices[i], indices[j]] = [indices[j], indices[i]];
+	}
+	let idx = 0;
+	for (let g = 0; g < goldCount && idx < indices.length; g++, idx++) {
+		slots[indices[idx]].slotType = "gold";
+	}
+	for (let p = 0; p < penaltyCount && idx < indices.length; p++, idx++) {
+		slots[indices[idx]].slotType = "penalty";
 	}
 	return slots;
 };
@@ -122,7 +172,9 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 	const oscillateTime = useRef(Math.random() * Math.PI * 2);
 	const dir = data.direction;
 
-	const [slots, setSlots] = useState<SlotState[]>(() => buildSlots());
+	const [slots, setSlots] = useState<SlotState[]>(() =>
+		buildSlots(data.goldSlots, data.penaltySlots),
+	);
 
 	useFrame((_, delta) => {
 		if (!groupRef.current || !alive) return;
@@ -192,7 +244,7 @@ export const TrainTarget = ({ data, onDead, onSlotHit }: Props) => {
 					position={[slot.offsetX, slot.offsetY, SLOT_Z]}
 					userData={{ isSlot: true, slotIndex: i }}
 				>
-					<SmallTarget alive={slot.alive} />
+					<SmallTarget alive={slot.alive} slotType={slot.slotType} />
 				</group>
 			))}
 		</group>

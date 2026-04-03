@@ -167,6 +167,8 @@ export const useGameScene = (
 								direction: dir,
 								lane: 0,
 								speed: entry.trainSpeed ?? 1.0,
+								goldSlots: entry.goldSlots ?? 0,
+								penaltySlots: entry.penaltySlots ?? 0,
 							},
 						];
 					});
@@ -356,8 +358,17 @@ export const useGameScene = (
 
 								if (checkHit3D(hitWorldTrain, slotWorld, 2.5)) {
 									handleSlotHit(i);
-									playSound("target-hit", 1.0);
-									addScoreWithPopup(1, "+1", event.x, event.y);
+									const st = slot.slotType ?? "normal";
+									if (st === "gold") {
+										playSound("gold-hit", 0.7);
+										addScoreWithPopup(3, "+3", event.x, event.y);
+									} else if (st === "penalty") {
+										playSound("penalty-hit", 0.7);
+										addScoreWithPopup(-3, "-3", event.x, event.y);
+									} else {
+										playSound("target-hit", 1.0);
+										addScoreWithPopup(1, "+1", event.x, event.y);
+									}
 									const remaining = slots.filter(
 										(s: { alive: boolean }, idx: number) =>
 											idx === i ? false : s.alive,

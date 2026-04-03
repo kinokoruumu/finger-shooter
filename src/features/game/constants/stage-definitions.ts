@@ -21,6 +21,10 @@ export type SpawnEntry = {
 	trainLane?: number;
 	/** 列車: 速度倍率（デフォルト1.0） */
 	trainSpeed?: number;
+	/** 列車: 金の的の数 */
+	goldSlots?: number;
+	/** 列車: ペナルティの的の数 */
+	penaltySlots?: number;
 };
 
 export type StageDefinition = {
@@ -100,6 +104,8 @@ const stage1Spawns: SpawnEntry[] = (() => {
 		direction: 1,
 		trainLane: 1,
 		trainSpeed: 1.5,
+		goldSlots: 1,
+		penaltySlots: 0,
 	});
 
 	return spawns;
@@ -324,6 +330,8 @@ const stage2Spawns: SpawnEntry[] = (() => {
 		direction: -1,
 		trainLane: 1,
 		trainSpeed: 2.0,
+		goldSlots: 2,
+		penaltySlots: 1,
 	});
 
 	return spawns;
@@ -362,6 +370,8 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		direction: 1,
 		trainLane: 0,
 		trainSpeed: 2.5,
+		goldSlots: 2,
+		penaltySlots: 1,
 	});
 
 	// G2: 風船3 + 対角線（金2, ペナ1）
@@ -398,6 +408,8 @@ const stage3Spawns: SpawnEntry[] = (() => {
 		direction: -1,
 		trainLane: 0,
 		trainSpeed: 3.0,
+		goldSlots: 2,
+		penaltySlots: 1,
 	});
 
 	// G6: 外周 + 風船4（金3, ペナ2）
