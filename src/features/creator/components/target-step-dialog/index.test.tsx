@@ -145,6 +145,33 @@ describe("TargetStepDialog", () => {
 		expect(onClose).toHaveBeenCalledOnce();
 	});
 
+	it("ステップカード全体がクリック可能（アクティブ切替）", () => {
+		const set = makeSet({
+			steps: [
+				{ targetIds: [], interval: 100, startTime: 0 },
+				{ targetIds: [], interval: 100, startTime: 500 },
+			],
+		});
+		render(
+			<TargetStepDialog
+				{...defaultProps}
+				group={makeGroup([set])}
+				targetSet={set}
+				initialStepIndex={0}
+			/>,
+		);
+
+		// ステップ2のカードをクリック
+		const step2Card = screen.getByText("ステップ 2").closest(
+			"[class*='cursor-pointer']",
+		);
+		expect(step2Card).toBeTruthy();
+		if (step2Card) fireEvent.click(step2Card);
+
+		// ステップ2がアクティブ（border-amber-800）になっている
+		expect(step2Card?.className).toContain("border-amber-800");
+	});
+
 	it("アニメーションタブのステップリストがスクロール可能", () => {
 		const set = makeSet({
 			steps: Array.from({ length: 10 }, (_, i) => ({

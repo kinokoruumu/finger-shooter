@@ -112,15 +112,29 @@ export const TargetStepDialog = ({
 			}
 
 			if (existing) {
-				if (existing.type === editorMode) return;
-				updateSet((s) => ({
-					...s,
-					targets: s.targets.map((t) =>
-						t.id === existing.id
-							? { ...t, type: editorMode }
-							: t,
-					),
-				}));
+				if (existing.type === editorMode) {
+					// 同じ種類 → 削除（トグル）
+					updateSet((s) => ({
+						...s,
+						targets: s.targets.filter((t) => t.id !== existing.id),
+						steps: s.steps.map((st) => ({
+							...st,
+							targetIds: st.targetIds.filter(
+								(id) => id !== existing.id,
+							),
+						})),
+					}));
+				} else {
+					// 別の種類 → 変更
+					updateSet((s) => ({
+						...s,
+						targets: s.targets.map((t) =>
+							t.id === existing.id
+								? { ...t, type: editorMode }
+								: t,
+						),
+					}));
+				}
 			} else {
 				updateSet((s) => ({
 					...s,
@@ -325,18 +339,17 @@ export const TargetStepDialog = ({
 									<div
 										key={`step-${i}`}
 										className={cn(
-											"rounded-lg border-2 p-3 transition-all",
+											"cursor-pointer rounded-lg border-2 p-3 transition-all",
 											isActive
 												? "border-amber-800 bg-amber-50"
 												: "border-amber-900/10 bg-white hover:border-amber-900/20",
 										)}
+										onClick={() =>
+											setActiveStepIndex(i)
+										}
 									>
-										<button
-											type="button"
+										<div
 											className="flex w-full items-center justify-between text-left"
-											onClick={() =>
-												setActiveStepIndex(i)
-											}
 										>
 											<span
 												className={cn(
@@ -404,7 +417,7 @@ export const TargetStepDialog = ({
 													</button>
 												)}
 											</div>
-										</button>
+										</div>
 
 										{step.targetIds.length > 0 && (
 											<div className="mt-2 flex flex-wrap gap-1">
