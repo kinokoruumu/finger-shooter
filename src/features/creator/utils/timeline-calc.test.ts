@@ -4,6 +4,7 @@ import {
 	calcBalloonsDuration,
 	calcDraggedTime,
 	calcGroupDuration,
+	calcResizeLeft,
 	calcTargetStepTimes,
 	calcTargetsDuration,
 	timeToX,
@@ -191,5 +192,42 @@ describe("calcDraggedTime", () => {
 		const after = calcDraggedTime(500, delta, DURATION, WIDTH);
 		const back = calcDraggedTime(after, -delta, DURATION, WIDTH);
 		expect(back).toBe(500);
+	});
+});
+
+describe("calcResizeLeft", () => {
+	const DURATION = 2000;
+	const WIDTH = 600;
+
+	it("deltaX=0 なら元の startTime と interval のまま", () => {
+		// startTime=100, endTime=500, count=5 → interval = (500-100)/4 = 100
+		const result = calcResizeLeft(100, 500, 5, 0, DURATION, WIDTH);
+		expect(result.startTime).toBe(100);
+		expect(result.interval).toBe(100);
+	});
+
+	it("左に伸ばすと startTime が減り interval が増える（endTime 固定）", () => {
+		const result = calcResizeLeft(200, 600, 5, -50, DURATION, WIDTH);
+		expect(result.startTime).toBeLessThan(200);
+		// endTime=600 は固定、startTime が小さくなるので interval は大きくなる
+		expect(result.interval).toBeGreaterThan((600 - 200) / 4);
+	});
+
+	it("右に縮めると startTime が増え interval が減る（endTime 固定）", () => {
+		const result = calcResizeLeft(200, 600, 5, 50, DURATION, WIDTH);
+		expect(result.startTime).toBeGreaterThan(200);
+		expect(result.interval).toBeLessThan((600 - 200) / 4);
+	});
+
+	it("startTime は endTime を超えない", () => {
+		const result = calcResizeLeft(100, 500, 3, 9999, DURATION, WIDTH);
+		expect(result.startTime).toBeLessThanOrEqual(500);
+		expect(result.interval).toBe(0);
+	});
+
+	it("count=1 の場合は interval=0 で startTime のみ変更", () => {
+		const result = calcResizeLeft(100, 100, 1, -50, DURATION, WIDTH);
+		expect(result.interval).toBe(0);
+		expect(result.startTime).toBeLessThan(100);
 	});
 });

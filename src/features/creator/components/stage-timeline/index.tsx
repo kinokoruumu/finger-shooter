@@ -8,6 +8,7 @@ import type {
 import {
 	calcDraggedTime,
 	calcGroupDuration,
+	calcResizeLeft,
 	calcTargetStepTimes,
 	timeToX,
 	xToTime,
@@ -144,17 +145,29 @@ const TargetTrack = ({
 									),
 								});
 							} else if (mode === "resize-left") {
-								const newTime = calcDraggedTime(
-									dragInitialRef.current.time,
-									totalDx,
-									duration,
-									width,
-								);
+								const endTime =
+									dragInitialRef.current.time +
+									(count > 1
+										? (count - 1) * dragInitialRef.current.interval
+										: 0);
+								const { startTime: newStart, interval: newInterval } =
+									calcResizeLeft(
+										dragInitialRef.current.time,
+										endTime,
+										count,
+										totalDx,
+										duration,
+										width,
+									);
 								onUpdateGroup({
 									...group,
 									targetSteps: steps.map((s, si) =>
 										si === i
-											? { ...s, startTime: newTime }
+											? {
+													...s,
+													startTime: newStart,
+													interval: newInterval,
+												}
 											: s,
 									),
 								});
@@ -286,7 +299,7 @@ const BalloonTrack = ({
 									),
 								});
 
-							if (mode === "move" || mode === "resize-left") {
+							if (mode === "move") {
 								const newTime = calcDraggedTime(
 									dragInitialRef.current.time,
 									totalDx,
@@ -294,6 +307,23 @@ const BalloonTrack = ({
 									width,
 								);
 								update({ time: newTime });
+							} else if (mode === "resize-left") {
+								const endTime =
+									dragInitialRef.current.time +
+									(entry.count > 1
+										? (entry.count - 1) *
+											dragInitialRef.current.interval
+										: 0);
+								const { startTime: newStart, interval: newInterval } =
+									calcResizeLeft(
+										dragInitialRef.current.time,
+										endTime,
+										entry.count,
+										totalDx,
+										duration,
+										width,
+									);
+								update({ time: newStart, interval: newInterval });
 							} else if (
 								mode === "resize-right" &&
 								entry.count > 1

@@ -20,6 +20,35 @@ export const xToTime = (
 	return Math.max(0, Math.round(t / SNAP_MS) * SNAP_MS);
 };
 
+/**
+ * 左端リサイズ: endTime 固定で startTime と interval を計算。
+ * count が 1 の場合は startTime のみ変更。
+ */
+export const calcResizeLeft = (
+	initialStartTime: number,
+	endTime: number,
+	count: number,
+	totalDeltaX: number,
+	duration: number,
+	width: number,
+): { startTime: number; interval: number } => {
+	const newStartTime = calcDraggedTime(
+		initialStartTime,
+		totalDeltaX,
+		duration,
+		width,
+	);
+	const clamped = Math.min(newStartTime, endTime);
+	if (count <= 1) {
+		return { startTime: clamped, interval: 0 };
+	}
+	const newInterval = Math.max(
+		0,
+		Math.round((endTime - clamped) / (count - 1)),
+	);
+	return { startTime: clamped, interval: newInterval };
+};
+
 /** ドラッグ移動後の新しい時間を計算 */
 export const calcDraggedTime = (
 	initialTime: number,
