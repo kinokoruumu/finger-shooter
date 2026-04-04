@@ -24,7 +24,7 @@ import { TrackingStatus } from "@/features/hud/components/tracking-status";
 import { WelcomeScreen } from "@/features/hud/components/welcome-screen";
 import { cn } from "@/lib/utils";
 
-export const App = () => {
+export const GamePage = () => {
 	const {
 		videoRef,
 		isReady: isVideoReady,
