@@ -29,9 +29,10 @@ const GroupContent = ({
 	isSelected,
 }: { group: CreatorGroup; isSelected: boolean }) => {
 	const targets = group.targets ?? [];
-	const hasBalloons = group.steps?.some((s) => (s.balloonCount ?? 0) > 0);
-	const hasTrainStep = group.steps?.some((s) => s.trainStart);
-	const hasAny = targets.length > 0 || hasBalloons || (group.train && hasTrainStep);
+	const balloonEntries = group.balloonEntries ?? [];
+	const hasBalloons = balloonEntries.length > 0;
+	const hasTrain = group.train && group.trainStartTime != null;
+	const hasAny = targets.length > 0 || hasBalloons || hasTrain;
 
 	if (!hasAny) {
 		return (
@@ -81,8 +82,8 @@ const GroupContent = ({
 						風
 					</span>
 					<span className="text-[10px] text-amber-900/40">
-						{group.steps.reduce(
-							(sum, s) => sum + (s.balloonCount ?? 0),
+						{balloonEntries.reduce(
+							(sum, e) => sum + e.count,
 							0,
 						)}
 						個
@@ -90,13 +91,13 @@ const GroupContent = ({
 				</div>
 			)}
 			{/* 列車 */}
-			{group.train && hasTrainStep && (
+			{hasTrain && (
 				<div className="flex items-center gap-1.5">
 					<span className="w-6 shrink-0 text-[10px] font-bold text-violet-500/60">
 						列
 					</span>
 					<span className="text-[10px] text-amber-900/40">
-						{group.train.direction === 1 ? "右→左" : "左→右"}
+						{group.train?.direction === 1 ? "右→左" : "左→右"}
 					</span>
 				</div>
 			)}
