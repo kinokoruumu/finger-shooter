@@ -6,7 +6,6 @@ import { getStage, saveStage } from "../../stores/creator-store";
 import type { CreatorGroup, CreatorStage } from "../../types";
 import { AnimationEditor } from "../animation-editor";
 import { useAnimationEditor } from "../animation-editor/hooks";
-import { BalloonEditor } from "../balloon-editor";
 import {
 	EditorCanvasWrapper,
 	EditorScene,
@@ -150,6 +149,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 	const handleCellClick = useCallback(
 		(gx: number, gy: number) => {
 			if (selectedGroupIdx === null || activeTab !== "placement") return;
+			if (editorMode === "balloon") return; // 風船はグリッドクリックで配置しない
 			const group = stage?.groups[selectedGroupIdx];
 			if (!group) return;
 
@@ -203,6 +203,47 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		[selectedGroupIdx, activeTab, stage, editorMode, updateGroup],
 	);
 
+	// 風船エリアクリック
+	const handleBalloonAreaClick = useCallback(
+		(nx: number) => {
+			if (selectedGroupIdx === null || activeTab !== "placement") return;
+			if (editorMode !== "balloon") return;
+			const group = stage?.groups[selectedGroupIdx];
+			if (!group) return;
+
+			const newBalloon = {
+				id: crypto.randomUUID(),
+				nx: Math.round(nx * 100) / 100,
+				speed: 3,
+			};
+			updateGroup(selectedGroupIdx, {
+				...group,
+				balloons: [...(group.balloons ?? []), newBalloon],
+			});
+		},
+		[selectedGroupIdx, activeTab, editorMode, stage, updateGroup],
+	);
+
+	// 風船クリック（削除モード）
+	const handleBalloonClick = useCallback(
+		(id: string) => {
+			if (selectedGroupIdx === null || activeTab !== "placement") return;
+			if (editorMode !== "delete") return;
+			const group = stage?.groups[selectedGroupIdx];
+			if (!group) return;
+
+			updateGroup(selectedGroupIdx, {
+				...group,
+				balloons: (group.balloons ?? []).filter((b) => b.id !== id),
+				steps: group.steps.map((s) => ({
+					...s,
+					targetIds: s.targetIds.filter((tid) => tid !== id),
+				})),
+			});
+		},
+		[selectedGroupIdx, activeTab, editorMode, stage, updateGroup],
+	);
+
 	if (!stage) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-[#f5f0e8]">
@@ -245,6 +286,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			return (
 				<EditorScene
 					targets={selectedGroup.targets}
+					balloons={selectedGroup.balloons ?? []}
 					onCellClick={() => {}}
 					onCellRightClick={() => {}}
 					ghostTargetIds={animEditor.ghostTargetIds}
@@ -259,8 +301,12 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		return (
 			<EditorScene
 				targets={selectedGroup.targets}
+				balloons={selectedGroup.balloons ?? []}
 				onCellClick={handleCellClick}
 				onCellRightClick={() => {}}
+				onBalloonAreaClick={handleBalloonAreaClick}
+				onBalloonClick={handleBalloonClick}
+				showBalloonArea={editorMode === "balloon"}
 			/>
 		);
 	};
@@ -371,14 +417,13 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 								<EditorToolbar
 									currentMode={editorMode}
 									onModeChange={setEditorMode}
-									targetCount={selectedGroup.targets.length}
-								/>
-								<BalloonEditor
-									group={selectedGroup}
-									onUpdateGroup={(g) =>
-										selectedGroupIdx !== null &&
-										updateGroup(selectedGroupIdx, g)
+									targetCount={
+										selectedGroup.targets.length
 									}
+									balloonCount={
+										(selectedGroup.balloons ?? []).length
+									}
+									hasTrain={!!selectedGroup.train}
 								/>
 								<TrainEditor
 									group={selectedGroup}
