@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { randomBalloonColor } from "@/features/game/components/balloon-target/utils";
 import { cn } from "@/lib/utils";
 import { getStage, saveStage } from "../../stores/creator-store";
 import type { CreatorGroup, CreatorStage } from "../../types";
@@ -35,7 +36,7 @@ const createEmptyGroup = (): CreatorGroup => ({
 	targets: [],
 	balloons: [],
 	train: null,
-	steps: [{ targetIds: [], interval: 100 }],
+	steps: [{ targetIds: [], targetInterval: 100, balloonIds: [], balloonInterval: 100, trainStart: false }],
 	stepDelay: 300,
 });
 
@@ -215,6 +216,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 				id: crypto.randomUUID(),
 				nx: Math.round(nx * 100) / 100,
 				speed: 3,
+				color: randomBalloonColor(),
 			};
 			updateGroup(selectedGroupIdx, {
 				...group,

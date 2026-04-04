@@ -9,57 +9,72 @@ const convertGroup = (
 	let time = 0;
 
 	for (const step of group.steps) {
+		// 的
 		for (let i = 0; i < step.targetIds.length; i++) {
-			const id = step.targetIds[i];
-
-			// 的から探す
-			const target = group.targets.find((t) => t.id === id);
-			if (target) {
-				spawns.push({
-					time: time + i * step.interval,
-					group: groupIndex,
-					type: target.type,
-					nx: 0,
-					gx: target.gx,
-					gy: target.gy,
-					visibleDuration: target.visibleDuration,
-				});
-				continue;
-			}
-
-			// 風船から探す
-			const balloon = group.balloons.find((b) => b.id === id);
-			if (balloon) {
-				spawns.push({
-					time: time + i * step.interval,
-					group: groupIndex,
-					type: "balloon",
-					nx: balloon.nx,
-				});
-			}
+			const target = group.targets.find(
+				(t) => t.id === step.targetIds[i],
+			);
+			if (!target) continue;
+			spawns.push({
+				time: time + i * step.targetInterval,
+				group: groupIndex,
+				type: target.type,
+				nx: 0,
+				gx: target.gx,
+				gy: target.gy,
+				visibleDuration: target.visibleDuration,
+			});
 		}
-		if (step.targetIds.length > 0) {
-			time +=
-				(step.targetIds.length - 1) * step.interval + group.stepDelay;
-		}
-	}
 
-	// 列車
-	if (group.train) {
-		spawns.push({
-			time: 0,
-			group: groupIndex,
-			type: "train",
-			nx: 0,
-			direction: group.train.direction,
-			trainSpeed: group.train.speed,
-			slotsOscillate: group.train.slotsOscillate,
-			goldSlots: group.train.slots.filter((s) => s.type === "gold")
-				.length,
-			penaltySlots: group.train.slots.filter(
-				(s) => s.type === "penalty",
-			).length,
-		});
+		// 風船
+		for (let i = 0; i < step.balloonIds.length; i++) {
+			const balloon = group.balloons.find(
+				(b) => b.id === step.balloonIds[i],
+			);
+			if (!balloon) continue;
+			spawns.push({
+				time: time + i * step.balloonInterval,
+				group: groupIndex,
+				type: "balloon",
+				nx: balloon.nx,
+			});
+		}
+
+		// 列車
+		if (step.trainStart && group.train) {
+			spawns.push({
+				time,
+				group: groupIndex,
+				type: "train",
+				nx: 0,
+				direction: group.train.direction,
+				trainSpeed: group.train.speed,
+				slotsOscillate: group.train.slotsOscillate,
+				goldSlots: group.train.slots.filter((s) => s.type === "gold")
+					.length,
+				penaltySlots: group.train.slots.filter(
+					(s) => s.type === "penalty",
+				).length,
+			});
+		}
+
+		// 次ステップの開始時刻
+		const targetEnd =
+			step.targetIds.length > 0
+				? (step.targetIds.length - 1) * step.targetInterval
+				: 0;
+		const balloonEnd =
+			step.balloonIds.length > 0
+				? (step.balloonIds.length - 1) * step.balloonInterval
+				: 0;
+		const stepDuration = Math.max(targetEnd, balloonEnd);
+		if (
+			step.targetIds.length > 0 ||
+			step.balloonIds.length > 0 ||
+			step.trainStart
+		) {
+			time += stepDuration + group.stepDelay;
+		}
 	}
 
 	return spawns;

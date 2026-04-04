@@ -132,14 +132,17 @@ export const TrainEditor = ({ group, onUpdateGroup }: Props) => {
 							value={train.speed}
 							onChange={(e) =>
 								handleUpdate({
-									speed: Math.max(0.5, Number(e.target.value)),
+									speed: Math.max(0.5, Math.min(5, Number(e.target.value))),
 								})
 							}
 							className="h-8 w-20 border-amber-900/15 text-center text-xs"
 							min={0.5}
-							max={10}
+							max={5}
 							step={0.5}
 						/>
+						<span className="text-amber-900/30 text-[10px]">
+							（1=ゆっくり / 2=普通 / 3=速い / 5=最速）
+						</span>
 					</div>
 
 					{/* 上下揺れ */}

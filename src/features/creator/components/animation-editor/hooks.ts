@@ -1,12 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import type { CreatorAnimationStep, CreatorGroup } from "../../types";
 
-export type SceneContentProps = {
-	ghostTargetIds: Set<string>;
-	targetLabels: Map<string, string>;
-	onTargetClick: (targetId: string) => void;
-};
-
 export const useAnimationEditor = (
 	group: CreatorGroup,
 	onUpdateGroup: (group: CreatorGroup) => void,
@@ -17,14 +11,13 @@ export const useAnimationEditor = (
 	const registeredIds = useMemo(() => {
 		const ids = new Set<string>();
 		for (const step of group.steps) {
-			for (const tid of step.targetIds) {
-				ids.add(tid);
-			}
+			for (const tid of step.targetIds) ids.add(tid);
+			for (const bid of step.balloonIds) ids.add(bid);
 		}
 		return ids;
 	}, [group.steps]);
 
-	// 未登録の的/風船 → 半透明表示（クリックで追加可能）
+	// 未登録の的/風船 → 半透明表示
 	const ghostTargetIds = useMemo(() => {
 		const ids = new Set<string>();
 		for (const t of group.targets) {
@@ -41,9 +34,8 @@ export const useAnimationEditor = (
 		const ids = new Set<string>();
 		for (let i = 0; i < group.steps.length; i++) {
 			if (i === activeStepIndex) continue;
-			for (const tid of group.steps[i].targetIds) {
-				ids.add(tid);
-			}
+			for (const tid of group.steps[i].targetIds) ids.add(tid);
+			for (const bid of group.steps[i].balloonIds) ids.add(bid);
 		}
 		return ids;
 	}, [group.steps, activeStepIndex]);
@@ -53,34 +45,61 @@ export const useAnimationEditor = (
 		const labels = new Map<string, string>();
 		const activeStep = group.steps[activeStepIndex];
 		if (!activeStep) return labels;
-		for (let i = 0; i < activeStep.targetIds.length; i++) {
-			labels.set(activeStep.targetIds[i], String(i + 1));
+
+		let counter = 1;
+		for (const tid of activeStep.targetIds) {
+			labels.set(tid, `的${counter}`);
+			counter++;
+		}
+		counter = 1;
+		for (const bid of activeStep.balloonIds) {
+			labels.set(bid, `風${counter}`);
+			counter++;
 		}
 		return labels;
 	}, [group.steps, activeStepIndex]);
 
+	// 的クリック: アクティブステップの targetIds に追加/除外
 	const handleTargetClick = useCallback(
 		(targetId: string) => {
 			const steps = [...group.steps];
 			if (activeStepIndex >= steps.length) return;
 
+			const isTarget = group.targets.some((t) => t.id === targetId);
+			const isBalloon = group.balloons.some((b) => b.id === targetId);
+			const field = isTarget
+				? "targetIds"
+				: isBalloon
+					? "balloonIds"
+					: null;
+			if (!field) return;
+
 			const step = steps[activeStepIndex];
-			if (step.targetIds.includes(targetId)) {
+			const ids = step[field] as string[];
+
+			if (ids.includes(targetId)) {
+				// このステップから除外
 				steps[activeStepIndex] = {
 					...step,
-					targetIds: step.targetIds.filter((id) => id !== targetId),
+					[field]: ids.filter((id) => id !== targetId),
 				};
 			} else {
+				// 他のステップから除外してからこのステップに追加
 				const newSteps = steps.map((s, i) => {
 					if (i === activeStepIndex) return s;
 					return {
 						...s,
-						targetIds: s.targetIds.filter((id) => id !== targetId),
+						[field]: (s[field] as string[]).filter(
+							(id) => id !== targetId,
+						),
 					};
 				});
 				newSteps[activeStepIndex] = {
 					...newSteps[activeStepIndex],
-					targetIds: [...newSteps[activeStepIndex].targetIds, targetId],
+					[field]: [
+						...(newSteps[activeStepIndex][field] as string[]),
+						targetId,
+					],
 				};
 				onUpdateGroup({ ...group, steps: newSteps });
 				return;
@@ -93,7 +112,10 @@ export const useAnimationEditor = (
 	const handleAddStep = useCallback(() => {
 		const newStep: CreatorAnimationStep = {
 			targetIds: [],
-			interval: 100,
+			targetInterval: 100,
+			balloonIds: [],
+			balloonInterval: 100,
+			trainStart: false,
 		};
 		const steps = [...group.steps, newStep];
 		onUpdateGroup({ ...group, steps });
@@ -111,10 +133,10 @@ export const useAnimationEditor = (
 		[group, activeStepIndex, onUpdateGroup],
 	);
 
-	const handleIntervalChange = useCallback(
-		(stepIndex: number, interval: number) => {
+	const handleStepUpdate = useCallback(
+		(stepIndex: number, update: Partial<CreatorAnimationStep>) => {
 			const steps = group.steps.map((s, i) =>
-				i === stepIndex ? { ...s, interval } : s,
+				i === stepIndex ? { ...s, ...update } : s,
 			);
 			onUpdateGroup({ ...group, steps });
 		},
@@ -128,11 +150,20 @@ export const useAnimationEditor = (
 		[group, onUpdateGroup],
 	);
 
-	const handleRemoveTarget = useCallback(
-		(stepIndex: number, targetId: string) => {
+	const handleRemoveItem = useCallback(
+		(
+			stepIndex: number,
+			itemId: string,
+			field: "targetIds" | "balloonIds",
+		) => {
 			const steps = group.steps.map((s, i) =>
 				i === stepIndex
-					? { ...s, targetIds: s.targetIds.filter((id) => id !== targetId) }
+					? {
+							...s,
+							[field]: (s[field] as string[]).filter(
+								(id) => id !== itemId,
+							),
+						}
 					: s,
 			);
 			onUpdateGroup({ ...group, steps });
@@ -149,8 +180,8 @@ export const useAnimationEditor = (
 		handleTargetClick,
 		handleAddStep,
 		handleDeleteStep,
-		handleIntervalChange,
+		handleStepUpdate,
 		handleStepDelayChange,
-		handleRemoveTarget,
+		handleRemoveItem,
 	};
 };

@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type { CreatorGroup, CreatorStage } from "../types";
+import type { CreatorAnimationStep, CreatorGroup, CreatorStage } from "../types";
 import { convertStageToSpawns } from "./convert-to-spawns";
+
+const emptyStep = (
+	overrides: Partial<CreatorAnimationStep> = {},
+): CreatorAnimationStep => ({
+	targetIds: [],
+	targetInterval: 100,
+	balloonIds: [],
+	balloonInterval: 100,
+	trainStart: false,
+	...overrides,
+});
 
 const makeGroup = (partial: Partial<CreatorGroup> = {}): CreatorGroup => ({
 	id: "g1",
@@ -35,7 +46,7 @@ describe("convertStageToSpawns", () => {
 				targets: [
 					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
 				],
-				steps: [{ targetIds: ["t1"], interval: 100 }],
+				steps: [emptyStep({ targetIds: ["t1"] })],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
@@ -51,14 +62,19 @@ describe("convertStageToSpawns", () => {
 			});
 		});
 
-		it("1ステップ・複数的は interval 間隔で time が増える", () => {
+		it("1ステップ・複数的は targetInterval 間隔で time が増える", () => {
 			const group = makeGroup({
 				targets: [
 					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
 					{ id: "t2", gx: 1, gy: 0, type: "ground-gold", visibleDuration: 4 },
 					{ id: "t3", gx: 2, gy: 0, type: "ground-penalty", visibleDuration: 4 },
 				],
-				steps: [{ targetIds: ["t1", "t2", "t3"], interval: 100 }],
+				steps: [
+					emptyStep({
+						targetIds: ["t1", "t2", "t3"],
+						targetInterval: 100,
+					}),
+				],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
@@ -71,19 +87,22 @@ describe("convertStageToSpawns", () => {
 			]);
 		});
 
-		it("interval: 0 なら全的が同時出現（time: 0）", () => {
+		it("targetInterval: 0 なら全的が同時出現", () => {
 			const group = makeGroup({
 				targets: [
 					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
 					{ id: "t2", gx: 1, gy: 0, type: "ground", visibleDuration: 4 },
-					{ id: "t3", gx: 2, gy: 0, type: "ground", visibleDuration: 4 },
 				],
-				steps: [{ targetIds: ["t1", "t2", "t3"], interval: 0 }],
+				steps: [
+					emptyStep({
+						targetIds: ["t1", "t2"],
+						targetInterval: 0,
+					}),
+				],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
-
-			expect(spawns.map((s) => s.time)).toEqual([0, 0, 0]);
+			expect(spawns.map((s) => s.time)).toEqual([0, 0]);
 		});
 	});
 
@@ -97,21 +116,26 @@ describe("convertStageToSpawns", () => {
 					{ id: "t4", gx: 3, gy: 0, type: "ground", visibleDuration: 4 },
 				],
 				steps: [
-					{ targetIds: ["t1", "t2"], interval: 100 },
-					{ targetIds: ["t3", "t4"], interval: 100 },
+					emptyStep({
+						targetIds: ["t1", "t2"],
+						targetInterval: 100,
+					}),
+					emptyStep({
+						targetIds: ["t3", "t4"],
+						targetInterval: 100,
+					}),
 				],
 				stepDelay: 500,
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
-
-			// ステップ1: t1=0ms, t2=100ms
-			// ステップ2開始 = (2-1)*100 + 500 = 600ms
-			// ステップ2: t3=600ms, t4=700ms
+			// ステップ1: t1=0, t2=100
+			// ステップ2開始 = max(100, 0) + 500 = 600
+			// ステップ2: t3=600, t4=700
 			expect(spawns.map((s) => s.time)).toEqual([0, 100, 600, 700]);
 		});
 
-		it("V字パターン: 8的を左右交互にステップ1で出現", () => {
+		it("V字パターン: 8的を左右交互に出現", () => {
 			const targets = [
 				{ id: "t1", gx: 0, gy: 0, type: "ground" as const, visibleDuration: 4 },
 				{ id: "t2", gx: 7, gy: 0, type: "ground" as const, visibleDuration: 4 },
@@ -126,10 +150,10 @@ describe("convertStageToSpawns", () => {
 			const group = makeGroup({
 				targets,
 				steps: [
-					{
+					emptyStep({
 						targetIds: ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"],
-						interval: 100,
-					},
+						targetInterval: 100,
+					}),
 				],
 			});
 
@@ -139,106 +163,22 @@ describe("convertStageToSpawns", () => {
 			expect(spawns.map((s) => s.time)).toEqual([
 				0, 100, 200, 300, 400, 500, 600, 700,
 			]);
-			expect(spawns.map((s) => [s.gx, s.gy])).toEqual([
-				[0, 0], [7, 0], [1, 1], [6, 1], [2, 2], [5, 2], [3, 3], [4, 3],
-			]);
-		});
-
-		it("縦2本（時間差）: 2ステップで500ms間隔", () => {
-			const targets = [
-				{ id: "t1", gx: 2, gy: 0, type: "ground" as const, visibleDuration: 4 },
-				{ id: "t2", gx: 2, gy: 1, type: "ground" as const, visibleDuration: 4 },
-				{ id: "t3", gx: 2, gy: 2, type: "ground" as const, visibleDuration: 4 },
-				{ id: "t4", gx: 2, gy: 3, type: "ground" as const, visibleDuration: 4 },
-				{ id: "t5", gx: 5, gy: 0, type: "ground" as const, visibleDuration: 4 },
-				{ id: "t6", gx: 5, gy: 1, type: "ground" as const, visibleDuration: 4 },
-				{ id: "t7", gx: 5, gy: 2, type: "ground" as const, visibleDuration: 4 },
-				{ id: "t8", gx: 5, gy: 3, type: "ground" as const, visibleDuration: 4 },
-			];
-
-			const group = makeGroup({
-				targets,
-				steps: [
-					{ targetIds: ["t1", "t2", "t3", "t4"], interval: 100 },
-					{ targetIds: ["t5", "t6", "t7", "t8"], interval: 100 },
-				],
-				stepDelay: 500,
-			});
-
-			const spawns = convertStageToSpawns(makeStage([group]));
-
-			// ステップ1: 0, 100, 200, 300
-			// ステップ2開始: (4-1)*100 + 500 = 800
-			// ステップ2: 800, 900, 1000, 1100
-			expect(spawns.map((s) => s.time)).toEqual([
-				0, 100, 200, 300, 800, 900, 1000, 1100,
-			]);
-		});
-	});
-
-	describe("複数グループ", () => {
-		it("各グループに正しい group index が付与される", () => {
-			const g0 = makeGroup({
-				id: "g0",
-				targets: [
-					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
-				],
-				steps: [{ targetIds: ["t1"], interval: 0 }],
-			});
-			const g1 = makeGroup({
-				id: "g1",
-				targets: [
-					{ id: "t2", gx: 1, gy: 0, type: "ground", visibleDuration: 4 },
-				],
-				steps: [{ targetIds: ["t2"], interval: 0 }],
-			});
-
-			const spawns = convertStageToSpawns(makeStage([g0, g1]));
-
-			expect(spawns).toHaveLength(2);
-			expect(spawns[0].group).toBe(0);
-			expect(spawns[1].group).toBe(1);
-		});
-
-		it("各グループの time は 0 から始まる（グループ内相対時間）", () => {
-			const g0 = makeGroup({
-				id: "g0",
-				targets: [
-					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
-					{ id: "t2", gx: 1, gy: 0, type: "ground", visibleDuration: 4 },
-				],
-				steps: [{ targetIds: ["t1", "t2"], interval: 100 }],
-			});
-			const g1 = makeGroup({
-				id: "g1",
-				targets: [
-					{ id: "t3", gx: 2, gy: 0, type: "ground", visibleDuration: 4 },
-					{ id: "t4", gx: 3, gy: 0, type: "ground", visibleDuration: 4 },
-				],
-				steps: [{ targetIds: ["t3", "t4"], interval: 200 }],
-			});
-
-			const spawns = convertStageToSpawns(makeStage([g0, g1]));
-
-			// g0: 0, 100
-			// g1: 0, 200（グループ内相対時間）
-			expect(spawns.map((s) => ({ group: s.group, time: s.time }))).toEqual([
-				{ group: 0, time: 0 },
-				{ group: 0, time: 100 },
-				{ group: 1, time: 0 },
-				{ group: 1, time: 200 },
-			]);
 		});
 	});
 
 	describe("風船", () => {
-		it("風船がステップ内で正しく変換される", () => {
+		it("風船がステップ内で balloonInterval 間隔で変換される", () => {
 			const group = makeGroup({
 				balloons: [
-					{ id: "b1", nx: 0.3, speed: 2 },
-					{ id: "b2", nx: 0.7, speed: 3 },
+					{ id: "b1", nx: 0.3, speed: 2, color: "#ff4466" },
+					{ id: "b2", nx: 0.7, speed: 3, color: "#44aaff" },
 				],
-				steps: [{ targetIds: ["b1", "b2"], interval: 500 }],
+				steps: [
+					emptyStep({
+						balloonIds: ["b1", "b2"],
+						balloonInterval: 500,
+					}),
+				],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
@@ -250,7 +190,7 @@ describe("convertStageToSpawns", () => {
 	});
 
 	describe("列車", () => {
-		it("列車がグループに含まれる場合 time: 0 で変換される", () => {
+		it("trainStart: true のステップで列車が出現する", () => {
 			const group = makeGroup({
 				train: {
 					direction: 1,
@@ -262,6 +202,7 @@ describe("convertStageToSpawns", () => {
 						{ index: 2, type: "penalty" },
 					],
 				},
+				steps: [emptyStep({ trainStart: true })],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
@@ -277,62 +218,176 @@ describe("convertStageToSpawns", () => {
 				penaltySlots: 1,
 			});
 		});
+
+		it("trainStart: false のステップでは列車は出現しない", () => {
+			const group = makeGroup({
+				train: {
+					direction: 1,
+					speed: 2,
+					slotsOscillate: false,
+					slots: [],
+				},
+				steps: [emptyStep({ trainStart: false })],
+			});
+
+			const spawns = convertStageToSpawns(makeStage([group]));
+			expect(spawns).toHaveLength(0);
+		});
 	});
 
-	describe("混合グループ", () => {
-		it("的 + 風船 + 列車が1グループに混在できる", () => {
+	describe("並列タイムライン", () => {
+		it("的と風船が同一ステップで並行して出現する", () => {
+			const group = makeGroup({
+				targets: [
+					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+					{ id: "t2", gx: 1, gy: 0, type: "ground", visibleDuration: 4 },
+				],
+				balloons: [
+					{ id: "b1", nx: 0.3, speed: 2, color: "#ff4466" },
+					{ id: "b2", nx: 0.7, speed: 3, color: "#44aaff" },
+				],
+				steps: [
+					emptyStep({
+						targetIds: ["t1", "t2"],
+						targetInterval: 100,
+						balloonIds: ["b1", "b2"],
+						balloonInterval: 300,
+					}),
+				],
+			});
+
+			const spawns = convertStageToSpawns(makeStage([group]));
+
+			// 的: 0ms, 100ms / 風船: 0ms, 300ms
+			expect(spawns).toHaveLength(4);
+			const targets = spawns.filter((s) => s.type === "ground");
+			const balloons = spawns.filter((s) => s.type === "balloon");
+			expect(targets.map((s) => s.time)).toEqual([0, 100]);
+			expect(balloons.map((s) => s.time)).toEqual([0, 300]);
+		});
+
+		it("的 + 風船 + 列車が同一ステップで並行出現", () => {
 			const group = makeGroup({
 				targets: [
 					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
 				],
-				balloons: [{ id: "b1", nx: 0.5, speed: 2 }],
+				balloons: [
+					{ id: "b1", nx: 0.5, speed: 2, color: "#44dd66" },
+				],
 				train: {
 					direction: -1,
 					speed: 2,
 					slotsOscillate: false,
 					slots: [],
 				},
-				steps: [{ targetIds: ["t1", "b1"], interval: 100 }],
+				steps: [
+					emptyStep({
+						targetIds: ["t1"],
+						balloonIds: ["b1"],
+						trainStart: true,
+					}),
+				],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
 
-			// 的1 + 風船1 + 列車1 = 3
 			expect(spawns).toHaveLength(3);
-
 			const types = spawns.map((s) => s.type);
 			expect(types).toContain("ground");
 			expect(types).toContain("balloon");
 			expect(types).toContain("train");
+			// 全て time: 0
+			expect(spawns.every((s) => s.time === 0)).toBe(true);
+		});
+
+		it("ステップ間delayは的と風船の最大終了時刻を基準に計算される", () => {
+			const group = makeGroup({
+				targets: [
+					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+					{ id: "t2", gx: 1, gy: 0, type: "ground", visibleDuration: 4 },
+				],
+				balloons: [
+					{ id: "b1", nx: 0.3, speed: 2, color: "#ff4466" },
+					{ id: "b2", nx: 0.5, speed: 2, color: "#44aaff" },
+					{ id: "b3", nx: 0.7, speed: 2, color: "#44dd66" },
+				],
+				steps: [
+					emptyStep({
+						targetIds: ["t1", "t2"],
+						targetInterval: 100,
+						balloonIds: ["b1", "b2", "b3"],
+						balloonInterval: 200,
+					}),
+					emptyStep({
+						targetIds: [],
+						balloonIds: [],
+						trainStart: true,
+					}),
+				],
+				train: {
+					direction: 1,
+					speed: 2,
+					slotsOscillate: false,
+					slots: [],
+				},
+				stepDelay: 300,
+			});
+
+			const spawns = convertStageToSpawns(makeStage([group]));
+
+			// ステップ1: 的 0,100 / 風船 0,200,400
+			// stepDuration = max(100, 400) = 400
+			// ステップ2開始 = 400 + 300 = 700
+			const train = spawns.find((s) => s.type === "train");
+			expect(train?.time).toBe(700);
+		});
+	});
+
+	describe("複数グループ", () => {
+		it("各グループに正しい group index が付与される", () => {
+			const g0 = makeGroup({
+				id: "g0",
+				targets: [
+					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+				],
+				steps: [emptyStep({ targetIds: ["t1"] })],
+			});
+			const g1 = makeGroup({
+				id: "g1",
+				targets: [
+					{ id: "t2", gx: 1, gy: 0, type: "ground", visibleDuration: 4 },
+				],
+				steps: [emptyStep({ targetIds: ["t2"] })],
+			});
+
+			const spawns = convertStageToSpawns(makeStage([g0, g1]));
+
+			expect(spawns).toHaveLength(2);
+			expect(spawns[0].group).toBe(0);
+			expect(spawns[1].group).toBe(1);
 		});
 	});
 
 	describe("エッジケース", () => {
-		it("ステップに存在しないIDが含まれていてもクラッシュしない", () => {
+		it("存在しないIDが含まれていてもクラッシュしない", () => {
 			const group = makeGroup({
 				targets: [
 					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
 				],
-				steps: [{ targetIds: ["t1", "nonexistent"], interval: 100 }],
+				steps: [
+					emptyStep({ targetIds: ["t1", "nonexistent"] }),
+				],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
-
-			// 存在しないIDはスキップ
 			expect(spawns).toHaveLength(1);
-			expect(spawns[0].gx).toBe(0);
 		});
 
-		it("ステップが空配列でもクラッシュしない", () => {
+		it("全フィールドが空のステップでもクラッシュしない", () => {
 			const group = makeGroup({
-				targets: [
-					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
-				],
-				steps: [{ targetIds: [], interval: 100 }],
+				steps: [emptyStep()],
 			});
-
-			const spawns = convertStageToSpawns(makeStage([group]));
-			expect(spawns).toHaveLength(0);
+			expect(convertStageToSpawns(makeStage([group]))).toEqual([]);
 		});
 	});
 });

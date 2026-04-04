@@ -19,6 +19,7 @@ export const BalloonEditor = ({ group, onUpdateGroup }: Props) => {
 			id: crypto.randomUUID(),
 			nx: 0.5,
 			speed: 3,
+			color: "#44aaff",
 		};
 		onUpdateGroup({
 			...group,

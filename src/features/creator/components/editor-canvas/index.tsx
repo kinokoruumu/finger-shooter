@@ -53,6 +53,8 @@ const BalloonMarker = ({
 	const scale = disabled ? 0.6 : 1;
 	const opacity = ghost ? 0.4 : disabled ? 0.5 : 1;
 
+	const color = balloon.color ?? "#44aaff";
+
 	return (
 		<group
 			position={position}
@@ -63,28 +65,38 @@ const BalloonMarker = ({
 				}
 			}}
 		>
-			{/* 風船の簡易表示（楕円 + 紐） */}
+			{/* ゲーム本編と同じ風船モデル */}
 			<group scale={scale}>
-				<mesh>
-					<sphereGeometry args={[1.2, 16, 16]} />
+				{/* 風船本体（楕円球） */}
+				<mesh scale={[2.0, 2.5, 2.0]}>
+					<sphereGeometry args={[0.7, 16, 16]} />
 					<meshStandardMaterial
-						color="#44aaff"
+						color={color}
+						roughness={0.3}
+						metalness={0.1}
 						transparent
 						opacity={opacity}
 					/>
 				</mesh>
-				<mesh position={[0, -1.5, 0]}>
-					<cylinderGeometry args={[0.03, 0.03, 1, 4]} />
-					<meshBasicMaterial
-						color="#888888"
-						transparent
-						opacity={opacity * 0.5}
-					/>
+				{/* ハイライト */}
+				<mesh position={[-0.25, 0.4, 0.9]} scale={[0.35, 0.5, 0.15]}>
+					<sphereGeometry args={[1, 8, 8]} />
+					<meshBasicMaterial color="#ffffff" transparent opacity={opacity * 0.4} />
+				</mesh>
+				{/* 結び目 */}
+				<mesh position={[0, -1.8, 0]}>
+					<coneGeometry args={[0.1, 0.2, 8]} />
+					<meshStandardMaterial color={color} transparent opacity={opacity} />
+				</mesh>
+				{/* 紐 */}
+				<mesh position={[0, -2.4, 0]}>
+					<cylinderGeometry args={[0.04, 0.04, 1.0, 6]} />
+					<meshBasicMaterial color="#888888" transparent opacity={opacity * 0.5} />
 				</mesh>
 			</group>
 			{label && (
 				<Text
-					position={[0, 2, 0.1]}
+					position={[0, 2.5, 0.1]}
 					fontSize={1}
 					color="#ffffff"
 					fontWeight={900}
@@ -123,21 +135,35 @@ const BalloonClickArea = ({
 	}, [screenToWorld]);
 
 	return (
-		<mesh
-			position={[area.centerX, area.y, -18.1]}
-			onClick={(e) => {
-				e.stopPropagation();
-				// クリック位置からnxを逆算
-				const [leftX] = screenToWorld(0.1, 0.5, -18);
-				const [rightX] = screenToWorld(0.9, 0.5, -18);
-				const nx = 0.1 + ((e.point.x - leftX) / (rightX - leftX)) * 0.8;
-				const clamped = Math.max(0.1, Math.min(0.9, nx));
-				onClick(clamped);
-			}}
-		>
-			<planeGeometry args={[area.width, 3]} />
-			<meshBasicMaterial color="#44aaff" transparent opacity={0.06} />
-		</mesh>
+		<group>
+			{/* 配置エリア背景 */}
+			<mesh position={[area.centerX, area.y, -18.2]}>
+				<planeGeometry args={[area.width, 4]} />
+				<meshBasicMaterial color="#44aaff" transparent opacity={0.08} />
+			</mesh>
+			{/* 上端のライン */}
+			<mesh position={[area.centerX, area.y + 2, -18.15]}>
+				<planeGeometry args={[area.width, 0.08]} />
+				<meshBasicMaterial color="#44aaff" transparent opacity={0.3} />
+			</mesh>
+			{/* クリック領域 */}
+			<mesh
+				position={[area.centerX, area.y, -18.1]}
+				onClick={(e) => {
+					e.stopPropagation();
+					const [leftX] = screenToWorld(0.1, 0.5, -18);
+					const [rightX] = screenToWorld(0.9, 0.5, -18);
+					const nx =
+						0.1 +
+						((e.point.x - leftX) / (rightX - leftX)) * 0.8;
+					const clamped = Math.max(0.1, Math.min(0.9, nx));
+					onClick(clamped);
+				}}
+			>
+				<planeGeometry args={[area.width, 4]} />
+				<meshBasicMaterial transparent opacity={0} />
+			</mesh>
+		</group>
 	);
 };
 
