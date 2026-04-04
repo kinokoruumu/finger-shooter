@@ -29,7 +29,7 @@ describe("calcTargetStepBars", () => {
 		expect(calcTargetStepBars(makeGroup())).toEqual([]);
 	});
 
-	it("startTime〜spawnEnd〜endTime を正しく計算", () => {
+	it("startTime〜spawnEnd〜endTime を APPEAR_DELAY 含めて計算", () => {
 		const group = makeGroup({
 			targets: [
 				{ id: "a", gx: 0, gy: 0, type: "ground", visibleDuration: 3 },
@@ -42,8 +42,10 @@ describe("calcTargetStepBars", () => {
 
 		expect(bars).toHaveLength(1);
 		expect(bars[0].startTime).toBe(500);
-		expect(bars[0].spawnEndTime).toBe(600); // 500 + (2-1)*100
-		expect(bars[0].endTime).toBe(3600); // 600 + 3000
+		// spawnEndTime = 500 + 100 + 350(APPEAR_DELAY) = 950
+		expect(bars[0].spawnEndTime).toBe(950);
+		// endTime = 600 + 350 + 3000 = 3950
+		expect(bars[0].endTime).toBe(3950);
 	});
 });
 
@@ -52,7 +54,7 @@ describe("calcTargetsDuration", () => {
 		expect(calcTargetsDuration(makeGroup())).toBe(0);
 	});
 
-	it("visibleDuration を含む最大終了時刻", () => {
+	it("APPEAR_DELAY + visibleDuration を含む最大終了時刻", () => {
 		const group = makeGroup({
 			targets: [
 				{ id: "a", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
@@ -60,8 +62,8 @@ describe("calcTargetsDuration", () => {
 			],
 			targetSteps: [{ targetIds: ["a", "b"], interval: 100, startTime: 0 }],
 		});
-		// spawnEnd=100, endTime=100+4000=4100
-		expect(calcTargetsDuration(group)).toBe(4100);
+		// spawnEnd=100, endTime=100+350+4000=4450
+		expect(calcTargetsDuration(group)).toBe(4450);
 	});
 });
 

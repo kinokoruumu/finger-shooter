@@ -3,6 +3,8 @@ import type { CreatorGroup } from "../types";
 const PADDING = 12;
 const SNAP_MS = 50;
 const BALLOON_VISIBLE_MS = 5000;
+/** 的のスポーンから実際に見えるまでの遅延(ms) */
+export const TARGET_APPEAR_DELAY_MS = 350;
 
 /** 時間(ms) → ピクセル位置 */
 export const timeToX = (
@@ -97,10 +99,15 @@ export const calcTargetStepBars = (
 			return Math.max(mv, (t?.visibleDuration ?? 2.5) * 1000);
 		}, 0);
 
+		// 各的は spawn 後 APPEAR_DELAY 待ってから表示開始
+		const appearDelay = count > 0 ? TARGET_APPEAR_DELAY_MS : 0;
+
 		return {
 			startTime: start,
-			endTime: spawnEndTime + (count > 0 ? maxVisible : 0),
-			spawnEndTime,
+			endTime:
+				spawnEndTime +
+				(count > 0 ? appearDelay + maxVisible : 0),
+			spawnEndTime: spawnEndTime + appearDelay,
 		};
 	});
 };
