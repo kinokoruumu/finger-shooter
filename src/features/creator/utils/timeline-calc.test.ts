@@ -90,8 +90,8 @@ describe("calcGroupDuration", () => {
 			train: { direction: 1, speed: 2, slotsOscillate: false, slots: [] },
 			trainStartTime: 1000,
 		});
-		// 1000 + trainSpeedToDuration(2) = 1000 + 1500 = 2500
-		expect(calcGroupDuration(group)).toBe(2500);
+		// 1000 + trainSpeedToDuration(2) = 1000 + 15000 = 16000
+		expect(calcGroupDuration(group)).toBe(16000);
 	});
 });
 
@@ -158,12 +158,12 @@ describe("calcResizeLeftTime", () => {
 });
 
 describe("trainDurationToSpeed / trainSpeedToDuration", () => {
-	it("speed=2 → duration=1500ms", () => {
-		expect(trainSpeedToDuration(2)).toBe(1500);
+	it("speed=2 → duration=15000ms", () => {
+		expect(trainSpeedToDuration(2)).toBe(15000);
 	});
 
-	it("duration=1500ms → speed=2", () => {
-		expect(trainDurationToSpeed(1500)).toBe(2);
+	it("duration=15000ms → speed=2", () => {
+		expect(trainDurationToSpeed(15000)).toBe(2);
 	});
 
 	it("往復変換で元に戻る", () => {
@@ -171,7 +171,7 @@ describe("trainDurationToSpeed / trainSpeedToDuration", () => {
 		expect(trainDurationToSpeed(trainSpeedToDuration(speed))).toBe(speed);
 	});
 
-	it("duration=0 は最大速度5", () => {
+	it("duration=0 は最大速度", () => {
 		expect(trainDurationToSpeed(0)).toBe(5);
 	});
 });

@@ -53,8 +53,13 @@ export const calcResizeLeftTime = (
 	return Math.min(newStart, endTime - minDuration);
 };
 
-/** 列車の走行時間(ms) → speed 変換 */
-const TRAIN_BASE_DURATION = 3000;
+/**
+ * 列車の走行時間(ms) → speed 変換。
+ * ゲーム本編: 実効速度 = 4 * data.speed units/sec
+ * 走行距離 ≈ 画面幅(50) + 列車全長(73.5) ≈ 123 units
+ * speed=1 → 123 / 4 ≈ 30秒
+ */
+const TRAIN_BASE_DURATION = 30000;
 
 export const trainDurationToSpeed = (durationMs: number): number => {
 	if (durationMs <= 0) return 5;

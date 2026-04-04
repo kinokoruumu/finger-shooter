@@ -1,7 +1,12 @@
 import { Canvas } from "@react-three/fiber";
+import { Rails } from "@/features/game/components/rails";
 import type { CreatorTarget } from "../../types";
 import { GridGuide } from "./internal/grid-guide";
 import { StaticTarget } from "./internal/static-target";
+
+const TRAIN_Y = -5;
+const RAILS_Y = TRAIN_Y - (1.1 + 0.35) * 4.5;
+const RAILS_Z = -22;
 
 type SceneProps = {
 	targets: CreatorTarget[];
@@ -30,6 +35,7 @@ export const EditorScene = ({
 		<group>
 			<ambientLight intensity={0.6} />
 			<directionalLight position={[5, 10, 5]} intensity={0.8} />
+			<Rails y={RAILS_Y} z={RAILS_Z} />
 			{showGrid && (
 				<GridGuide
 					onCellClick={onCellClick}
