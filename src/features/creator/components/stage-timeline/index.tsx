@@ -136,10 +136,11 @@ const TargetTrack = ({
 				const step = steps[i];
 				const rowOffset = i * TRACK_HEIGHT;
 				const totalDur = bar.endTime - bar.startTime;
-				const spawnDur = bar.spawnEndTime - bar.startTime;
-				// 出現期間の割合。最低10%を保証して視覚的に見えるようにする
+				const delayRatio = totalDur > 0
+					? (bar.delayEndTime - bar.startTime) / totalDur
+					: 0;
 				const spawnRatio = totalDur > 0
-					? Math.max(0.1, spawnDur / totalDur)
+					? (bar.spawnEndTime - bar.startTime) / totalDur
 					: 1;
 
 				return (
@@ -152,6 +153,7 @@ const TargetTrack = ({
 						label={`${count}個 出現間隔${(step?.interval ?? 100)}ms`}
 						fadeLabel={`表示${targets.find((t) => step?.targetIds.includes(t.id))?.visibleDuration ?? 2.5}秒`}
 						trackHeight={TRACK_HEIGHT}
+						delayRatio={delayRatio}
 						spawnRatio={spawnRatio}
 						onDragStart={() => {
 							dragInitialRef.current = {

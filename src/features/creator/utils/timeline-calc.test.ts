@@ -42,7 +42,9 @@ describe("calcTargetStepBars", () => {
 
 		expect(bars).toHaveLength(1);
 		expect(bars[0].startTime).toBe(500);
-		// spawnEndTime = 500 + 100 + 350(APPEAR_DELAY) = 950
+		// delayEndTime = 500 + 350 = 850
+		expect(bars[0].delayEndTime).toBe(850);
+		// spawnEndTime = 500 + 100 + 350 = 950
 		expect(bars[0].spawnEndTime).toBe(950);
 		// endTime = 600 + 350 + 3000 = 3950
 		expect(bars[0].endTime).toBe(3950);

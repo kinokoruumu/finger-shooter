@@ -81,7 +81,7 @@ export const getBalloonVisibleDuration = (): number => BALLOON_VISIBLE_MS;
 /** 的ステップの各バー情報（startTime〜endTime を visibleDuration 含む） */
 export const calcTargetStepBars = (
 	group: CreatorGroup,
-): { startTime: number; endTime: number; spawnEndTime: number }[] => {
+): { startTime: number; delayEndTime: number; spawnEndTime: number; endTime: number }[] => {
 	const steps = group.targetSteps ?? [];
 	const targets = group.targets ?? [];
 
@@ -104,10 +104,11 @@ export const calcTargetStepBars = (
 
 		return {
 			startTime: start,
+			delayEndTime: start + appearDelay,
+			spawnEndTime: spawnEndTime + appearDelay,
 			endTime:
 				spawnEndTime +
 				(count > 0 ? appearDelay + maxVisible : 0),
-			spawnEndTime: spawnEndTime + appearDelay,
 		};
 	});
 };
