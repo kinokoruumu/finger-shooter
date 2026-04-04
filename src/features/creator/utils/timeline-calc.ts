@@ -2,6 +2,7 @@ import type { CreatorGroup } from "../types";
 
 const PADDING = 12;
 const SNAP_MS = 50;
+const BALLOON_VISIBLE_MS = 5000;
 
 /** 時間(ms) → ピクセル位置 */
 export const timeToX = (
@@ -20,36 +21,39 @@ export const xToTime = (
 	return Math.max(0, Math.round(t / SNAP_MS) * SNAP_MS);
 };
 
-/**
- * 左端リサイズ: endTime 固定で startTime と interval を計算。
- * count が 1 の場合は startTime のみ変更。
- */
-export const calcResizeLeft = (
-	initialStartTime: number,
-	endTime: number,
-	count: number,
+/** ドラッグ移動後の新しい時間を計算 */
+export const calcDraggedTime = (
+	initialTime: number,
 	totalDeltaX: number,
 	duration: number,
 	width: number,
-): { startTime: number; interval: number } => {
-	const newStartTime = calcDraggedTime(
+): number => {
+	const initialX = timeToX(initialTime, duration, width);
+	return xToTime(initialX + totalDeltaX, duration, width);
+};
+
+/**
+ * 右端固定リサイズ: endTime 固定で新しい startTime を計算。
+ * startTime は endTime - minDuration 以下にクランプ。
+ */
+export const calcResizeLeftTime = (
+	initialStartTime: number,
+	endTime: number,
+	minDuration: number,
+	totalDeltaX: number,
+	duration: number,
+	width: number,
+): number => {
+	const newStart = calcDraggedTime(
 		initialStartTime,
 		totalDeltaX,
 		duration,
 		width,
 	);
-	const clamped = Math.min(newStartTime, endTime);
-	if (count <= 1) {
-		return { startTime: clamped, interval: 0 };
-	}
-	const newInterval = Math.max(
-		0,
-		Math.round((endTime - clamped) / (count - 1)),
-	);
-	return { startTime: clamped, interval: newInterval };
+	return Math.min(newStart, endTime - minDuration);
 };
 
-/** 列車の走行時間(ms) → speed 変換。speed = BASE / duration */
+/** 列車の走行時間(ms) → speed 変換 */
 const TRAIN_BASE_DURATION = 3000;
 
 export const trainDurationToSpeed = (durationMs: number): number => {
@@ -62,30 +66,25 @@ export const trainSpeedToDuration = (speed: number): number => {
 	return Math.round(TRAIN_BASE_DURATION / speed);
 };
 
-/** ドラッグ移動後の新しい時間を計算 */
-export const calcDraggedTime = (
-	initialTime: number,
-	totalDeltaX: number,
-	duration: number,
-	width: number,
-): number => {
-	const initialX = timeToX(initialTime, duration, width);
-	return xToTime(initialX + totalDeltaX, duration, width);
-};
+/** 風船の表示時間(ms)。速度依存の固定値 */
+export const getBalloonVisibleDuration = (): number => BALLOON_VISIBLE_MS;
 
-/** 的ステップの最大終了時刻(ms)を計算。visibleDuration を含む */
-export const calcTargetsDuration = (group: CreatorGroup): number => {
+// --- グループ時間計算 ---
+
+/** 的ステップの各バー情報（startTime〜endTime を visibleDuration 含む） */
+export const calcTargetStepBars = (
+	group: CreatorGroup,
+): { startTime: number; endTime: number; spawnEndTime: number }[] => {
 	const steps = group.targetSteps ?? [];
 	const targets = group.targets ?? [];
-	let max = 0;
 
-	for (const step of steps) {
+	return steps.map((step) => {
 		const interval = step.interval ?? 100;
 		const start = step.startTime ?? 0;
-		if (step.targetIds.length === 0) continue;
+		const count = step.targetIds.length;
 
-		// 最後の的が出現する時刻
-		const lastSpawnTime = start + (step.targetIds.length - 1) * interval;
+		const spawnDuration = count > 0 ? (count - 1) * interval : 0;
+		const spawnEndTime = start + spawnDuration;
 
 		// 最大の visibleDuration を取得
 		const maxVisible = step.targetIds.reduce((mv, tid) => {
@@ -93,46 +92,39 @@ export const calcTargetsDuration = (group: CreatorGroup): number => {
 			return Math.max(mv, (t?.visibleDuration ?? 2.5) * 1000);
 		}, 0);
 
-		const end = lastSpawnTime + maxVisible;
-		if (end > max) max = end;
-	}
-
-	return max;
+		return {
+			startTime: start,
+			endTime: spawnEndTime + (count > 0 ? maxVisible : 0),
+			spawnEndTime,
+		};
+	});
 };
 
-/** 風船エントリの最大終了時刻(ms)を計算 */
+/** 的ステップの最大終了時刻(ms) */
+export const calcTargetsDuration = (group: CreatorGroup): number => {
+	const bars = calcTargetStepBars(group);
+	return bars.reduce((max, b) => Math.max(max, b.endTime), 0);
+};
+
+/** 風船エントリの最大終了時刻(ms) */
 export const calcBalloonsDuration = (group: CreatorGroup): number => {
 	const entries = group.balloonEntries ?? [];
 	let max = 0;
 	for (const entry of entries) {
-		const end = entry.time + Math.max(0, entry.count - 1) * entry.interval;
+		const end = entry.time + BALLOON_VISIBLE_MS;
 		if (end > max) max = end;
 	}
 	return max;
 };
 
-/** グループの総所要時間(ms)を計算 */
+/** グループの総所要時間(ms) */
 export const calcGroupDuration = (group: CreatorGroup): number => {
 	const targetDur = calcTargetsDuration(group);
 	const balloonDur = calcBalloonsDuration(group);
-	const trainDur = group.trainStartTime ?? 0;
+	const trainDur =
+		group.trainStartTime != null && group.train
+			? group.trainStartTime + trainSpeedToDuration(group.train.speed)
+			: 0;
 
 	return Math.max(targetDur, balloonDur, trainDur, 1000);
-};
-
-/** 的の各ステップの開始/終了時刻(ms)を計算 */
-export const calcTargetStepTimes = (
-	group: CreatorGroup,
-): { startTime: number; endTime: number }[] => {
-	const steps = group.targetSteps ?? [];
-
-	return steps.map((step) => {
-		const interval = step.interval ?? 100;
-		const start = step.startTime ?? 0;
-		const duration =
-			step.targetIds.length > 0
-				? (step.targetIds.length - 1) * interval
-				: 0;
-		return { startTime: start, endTime: start + duration };
-	});
 };

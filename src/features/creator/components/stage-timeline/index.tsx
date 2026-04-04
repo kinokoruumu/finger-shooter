@@ -8,8 +8,9 @@ import type {
 import {
 	calcDraggedTime,
 	calcGroupDuration,
-	calcResizeLeft,
-	calcTargetStepTimes,
+	calcResizeLeftTime,
+	calcTargetStepBars,
+	getBalloonVisibleDuration,
 	timeToX,
 	trainDurationToSpeed,
 	trainSpeedToDuration,
@@ -92,10 +93,10 @@ const TargetTrack = ({
 	onClick: () => void;
 	onUpdateGroup: (group: CreatorGroup) => void;
 }) => {
-	const stepTimes = calcTargetStepTimes(group);
+	const stepBars = calcTargetStepBars(group);
 	const targets = group.targets ?? [];
 	const steps = group.targetSteps ?? [];
-	const dragInitialRef = useRef({ time: 0, interval: 0 });
+	const dragInitialRef = useRef({ startTime: 0, endTime: 0 });
 
 	return (
 		<div
@@ -108,9 +109,9 @@ const TargetTrack = ({
 				if (e.key === "Enter") onClick();
 			}}
 		>
-			{stepTimes.map((st, i) => {
-				const x = timeToX(st.startTime, duration, width);
-				const x2 = timeToX(st.endTime, duration, width);
+			{stepBars.map((bar, i) => {
+				const x = timeToX(bar.startTime, duration, width);
+				const x2 = timeToX(bar.endTime, duration, width);
 				const w = Math.max(x2 - x, 6);
 				const count = (steps[i]?.targetIds ?? []).length;
 				const step = steps[i];
@@ -122,82 +123,93 @@ const TargetTrack = ({
 						width={w}
 						color="bg-amber-500"
 						activeColor="bg-amber-700"
-						label={`${count}個`}
+						label={`${count}個 ${(step?.interval ?? 100)}ms`}
 						trackHeight={TRACK_HEIGHT}
 						onDragStart={() => {
 							dragInitialRef.current = {
-								time: step?.startTime ?? 0,
-								interval: step?.interval ?? 100,
+								startTime: bar.startTime,
+								endTime: bar.endTime,
 							};
 						}}
 						onDrag={(totalDx, mode) => {
+							const updateStep = (upd: Record<string, number>) =>
+								onUpdateGroup({
+									...group,
+									targetSteps: steps.map((s, si) =>
+										si === i ? { ...s, ...upd } : s,
+									),
+								});
+
 							if (mode === "move") {
 								const newTime = calcDraggedTime(
-									dragInitialRef.current.time,
+									dragInitialRef.current.startTime,
 									totalDx,
 									duration,
 									width,
 								);
-								onUpdateGroup({
-									...group,
-									targetSteps: steps.map((s, si) =>
-										si === i
-											? { ...s, startTime: newTime }
-											: s,
-									),
-								});
+								updateStep({ startTime: newTime });
 							} else if (mode === "resize-left") {
-								const endTime =
-									dragInitialRef.current.time +
-									(count > 1
-										? (count - 1) * dragInitialRef.current.interval
-										: 0);
-								const { startTime: newStart, interval: newInterval } =
-									calcResizeLeft(
-										dragInitialRef.current.time,
-										endTime,
-										count,
-										totalDx,
-										duration,
-										width,
-									);
-								onUpdateGroup({
-									...group,
-									targetSteps: steps.map((s, si) =>
-										si === i
-											? {
-													...s,
-													startTime: newStart,
-													interval: newInterval,
-												}
-											: s,
-									),
-								});
-							} else if (mode === "resize-right" && count > 1) {
-								// endTime = startTime + (count-1)*interval
-								// newEndTime = oldEndTime + deltaTime
-								const oldEndTime =
-									dragInitialRef.current.time +
-									(count - 1) * dragInitialRef.current.interval;
-								const newEndTime = calcDraggedTime(
-									oldEndTime,
+								// 右端固定で visibleDuration 変更
+								const newStart = calcResizeLeftTime(
+									dragInitialRef.current.startTime,
+									dragInitialRef.current.endTime,
+									100, // 最小 100ms
 									totalDx,
 									duration,
 									width,
 								);
-								const newInterval = Math.max(
-									0,
-									Math.round(
-										(newEndTime - (step?.startTime ?? 0)) /
-											(count - 1),
-									),
-								);
+								const newVisible =
+									(dragInitialRef.current.endTime -
+										newStart -
+										(count > 1
+											? (count - 1) * (step?.interval ?? 100)
+											: 0)) /
+									1000;
 								onUpdateGroup({
 									...group,
+									targets: targets.map((t) =>
+										step?.targetIds.includes(t.id)
+											? {
+													...t,
+													visibleDuration: Math.max(
+														0.5,
+														Math.round(newVisible * 10) / 10,
+													),
+												}
+											: t,
+									),
 									targetSteps: steps.map((s, si) =>
 										si === i
-											? { ...s, interval: newInterval }
+											? { ...s, startTime: newStart }
 											: s,
+									),
+								});
+							} else if (mode === "resize-right") {
+								// 左端固定で visibleDuration 変更
+								const newEndTime = calcDraggedTime(
+									dragInitialRef.current.endTime,
+									totalDx,
+									duration,
+									width,
+								);
+								const spawnEnd =
+									(step?.startTime ?? 0) +
+									(count > 1
+										? (count - 1) * (step?.interval ?? 100)
+										: 0);
+								const newVisible = (newEndTime - spawnEnd) / 1000;
+								onUpdateGroup({
+									...group,
+									targets: targets.map((t) =>
+										step?.targetIds.includes(t.id)
+											? {
+													...t,
+													visibleDuration: Math.max(
+														0.5,
+														Math.round(newVisible * 10) / 10,
+													),
+												}
+											: t,
 									),
 								});
 							}
@@ -206,7 +218,7 @@ const TargetTrack = ({
 					/>
 				);
 			})}
-			{targets.length === 0 && stepTimes.length === 0 && (
+			{targets.length === 0 && stepBars.length === 0 && (
 				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20 cursor-pointer">
 					クリックして的を編集
 				</span>
@@ -244,7 +256,6 @@ const BalloonTrack = ({
 				id: crypto.randomUUID(),
 				time,
 				count: 3,
-				interval: 300,
 				spread: "random",
 			};
 			onUpdateGroup({
@@ -265,13 +276,12 @@ const BalloonTrack = ({
 			onClick={handleTrackClick}
 		>
 			{entries.map((entry, idx) => {
+				const balloonVisible = getBalloonVisibleDuration();
 				const x = timeToX(entry.time, duration, width);
-				const endTime =
-					entry.time +
-					Math.max(0, entry.count - 1) * entry.interval;
-				const x2 = timeToX(endTime, duration, width);
+				const x2 = timeToX(entry.time + balloonVisible, duration, width);
 				const barW = Math.max(x2 - x, 8);
 				const rowOffset = idx * TRACK_HEIGHT;
+				const spreadLabel = { left: "左", center: "中", right: "右", random: "散" }[entry.spread];
 
 				return (
 					<DraggableBar
@@ -280,75 +290,29 @@ const BalloonTrack = ({
 						width={barW}
 						color="bg-sky-400"
 						activeColor="bg-sky-600"
-						label={`×${entry.count}`}
+						label={`×${entry.count} ${spreadLabel}`}
 						trackHeight={TRACK_HEIGHT}
 						onDragStart={() => {
 							dragInitialRef.current = {
 								time: entry.time,
-								interval: entry.interval,
+								interval: 0,
 							};
 						}}
-						onDrag={(totalDx, mode) => {
-							const update = (
-								upd: Partial<CreatorBalloonEntry>,
-							) =>
-								onUpdateGroup({
-									...group,
-									balloonEntries: entries.map((e) =>
-										e.id === entry.id
-											? { ...e, ...upd }
-											: e,
-									),
-								});
-
-							if (mode === "move") {
-								const newTime = calcDraggedTime(
-									dragInitialRef.current.time,
-									totalDx,
-									duration,
-									width,
-								);
-								update({ time: newTime });
-							} else if (mode === "resize-left") {
-								const endTime =
-									dragInitialRef.current.time +
-									(entry.count > 1
-										? (entry.count - 1) *
-											dragInitialRef.current.interval
-										: 0);
-								const { startTime: newStart, interval: newInterval } =
-									calcResizeLeft(
-										dragInitialRef.current.time,
-										endTime,
-										entry.count,
-										totalDx,
-										duration,
-										width,
-									);
-								update({ time: newStart, interval: newInterval });
-							} else if (
-								mode === "resize-right" &&
-								entry.count > 1
-							) {
-								const oldEndTime =
-									dragInitialRef.current.time +
-									(entry.count - 1) *
-										dragInitialRef.current.interval;
-								const newEndTime = calcDraggedTime(
-									oldEndTime,
-									totalDx,
-									duration,
-									width,
-								);
-								const newInterval = Math.max(
-									0,
-									Math.round(
-										(newEndTime - entry.time) /
-											(entry.count - 1),
-									),
-								);
-								update({ interval: newInterval });
-							}
+						onDrag={(totalDx) => {
+							const newTime = calcDraggedTime(
+								dragInitialRef.current.time,
+								totalDx,
+								duration,
+								width,
+							);
+							onUpdateGroup({
+								...group,
+								balloonEntries: entries.map((e) =>
+									e.id === entry.id
+										? { ...e, time: newTime }
+										: e,
+								),
+							});
 						}}
 						onClick={() => onEditEntry(entry.id)}
 						onDelete={() =>
@@ -432,7 +396,7 @@ const TrainTrack = ({
 					color="bg-violet-500"
 					activeColor="bg-violet-700"
 					label={
-						group.train?.direction === 1 ? "列車 →←" : "列車 ←→"
+						group.train?.direction === 1 ? "右から" : "左から"
 					}
 					trackHeight={TRACK_HEIGHT}
 					onDragStart={() => {

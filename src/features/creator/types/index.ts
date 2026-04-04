@@ -12,19 +12,17 @@ export type CreatorTarget = {
 export type CreatorTargetStep = {
 	targetIds: string[];
 	interval: number;
-	/** ステップの開始タイミング(ms)。タイムライン上でドラッグ移動可能 */
+	/** ステップの開始タイミング(ms) */
 	startTime: number;
 };
 
-/** 風船のタイムラインエントリ（1バッチ） */
+/** 風船のタイムラインエントリ。N個が同時出現 */
 export type CreatorBalloonEntry = {
 	id: string;
 	/** 出現タイミング(ms) */
 	time: number;
-	/** 個数 */
+	/** 同時出現する個数 */
 	count: number;
-	/** バッチ内の出現間隔(ms) */
-	interval: number;
 	/** 横位置パターン */
 	spread: "left" | "center" | "right" | "random";
 };

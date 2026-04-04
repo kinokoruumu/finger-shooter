@@ -24,9 +24,8 @@ const convertGroup = (
 ): SpawnEntry[] => {
 	const spawns: SpawnEntry[] = [];
 
-	// --- 的: ステップモデル（startTime ベース） ---
+	// --- 的 ---
 	const targetSteps = group.targetSteps ?? [];
-
 	for (const step of targetSteps) {
 		const interval = step.interval ?? 100;
 		const baseTime = step.startTime ?? 0;
@@ -47,12 +46,12 @@ const convertGroup = (
 		}
 	}
 
-	// --- 風船: タイムラインエントリ ---
+	// --- 風船: 同時出現 ---
 	const balloonEntries = group.balloonEntries ?? [];
 	for (const entry of balloonEntries) {
 		for (let i = 0; i < entry.count; i++) {
 			spawns.push({
-				time: entry.time + i * entry.interval,
+				time: entry.time,
 				group: groupIndex,
 				type: "balloon",
 				nx: spreadToNx(entry.spread, i, entry.count),
@@ -60,7 +59,7 @@ const convertGroup = (
 		}
 	}
 
-	// --- 列車: 出現タイミング ---
+	// --- 列車 ---
 	if (group.train && group.trainStartTime != null) {
 		spawns.push({
 			time: group.trainStartTime,

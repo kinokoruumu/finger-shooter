@@ -64,30 +64,6 @@ export const BalloonEntryDialog = ({
 						/>
 					</div>
 
-					{/* 出現間隔 */}
-					<div className="flex items-center gap-3">
-						<span className="w-20 shrink-0 text-amber-900/60 text-sm">
-							間隔
-						</span>
-						<Input
-							type="number"
-							value={entry.interval}
-							onChange={(e) =>
-								onUpdate({
-									...entry,
-									interval: Math.max(
-										0,
-										Number(e.target.value),
-									),
-								})
-							}
-							className="h-9 w-20 border-amber-900/15 text-center"
-							min={0}
-							step={50}
-						/>
-						<span className="text-amber-900/40 text-sm">ms</span>
-					</div>
-
 					{/* 出現位置 */}
 					<div className="space-y-2">
 						<span className="text-amber-900/60 text-sm">

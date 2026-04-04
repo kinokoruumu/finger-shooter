@@ -98,11 +98,11 @@ describe("convertStageToSpawns", () => {
 		});
 	});
 
-	describe("風船（タイムラインエントリ）", () => {
-		it("1エントリで指定した個数・間隔の風船が出現する", () => {
+	describe("風船（同時出現）", () => {
+		it("N個が同じ time で同時に出現する", () => {
 			const group = makeGroup({
 				balloonEntries: [
-					{ id: "b1", time: 0, count: 3, interval: 200, spread: "center" },
+					{ id: "b1", time: 0, count: 3, spread: "center" },
 				],
 			});
 
@@ -110,27 +110,27 @@ describe("convertStageToSpawns", () => {
 
 			expect(spawns).toHaveLength(3);
 			expect(spawns.every((s) => s.type === "balloon")).toBe(true);
-			expect(spawns.map((s) => s.time)).toEqual([0, 200, 400]);
+			expect(spawns.every((s) => s.time === 0)).toBe(true);
 		});
 
 		it("複数エントリが異なるタイミングで出現する", () => {
 			const group = makeGroup({
 				balloonEntries: [
-					{ id: "b1", time: 0, count: 2, interval: 100, spread: "left" },
-					{ id: "b2", time: 1000, count: 2, interval: 100, spread: "right" },
+					{ id: "b1", time: 0, count: 2, spread: "left" },
+					{ id: "b2", time: 1000, count: 2, spread: "right" },
 				],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
 
 			expect(spawns).toHaveLength(4);
-			expect(spawns.map((s) => s.time)).toEqual([0, 100, 1000, 1100]);
+			expect(spawns.map((s) => s.time)).toEqual([0, 0, 1000, 1000]);
 		});
 
 		it("count: 1 のエントリは1つの風船を出す", () => {
 			const group = makeGroup({
 				balloonEntries: [
-					{ id: "b1", time: 500, count: 1, interval: 0, spread: "random" },
+					{ id: "b1", time: 500, count: 1, spread: "random" },
 				],
 			});
 
@@ -197,7 +197,7 @@ describe("convertStageToSpawns", () => {
 				],
 				targetSteps: [{ targetIds: ["t1"], interval: 0, startTime: 0 }],
 				balloonEntries: [
-					{ id: "b1", time: 500, count: 2, interval: 300, spread: "center" },
+					{ id: "b1", time: 500, count: 2, spread: "center" },
 				],
 				train: { direction: -1, speed: 2, slotsOscillate: false, slots: [] },
 				trainStartTime: 1500,
@@ -206,13 +206,13 @@ describe("convertStageToSpawns", () => {
 			const spawns = convertStageToSpawns(makeStage([group]));
 
 			expect(spawns).toHaveLength(4);
-			// 的: 0ms, 風船: 500ms, 800ms, 列車: 1500ms
+			// 的: 0ms, 風船: 500ms, 500ms(同時), 列車: 1500ms
 			expect(
 				spawns.map((s) => ({ type: s.type, time: s.time })),
 			).toEqual([
 				{ type: "ground", time: 0 },
 				{ type: "balloon", time: 500 },
-				{ type: "balloon", time: 800 },
+				{ type: "balloon", time: 500 },
 				{ type: "train", time: 1500 },
 			]);
 		});
@@ -230,7 +230,7 @@ describe("convertStageToSpawns", () => {
 			const g1 = makeGroup({
 				id: "g1",
 				balloonEntries: [
-					{ id: "b1", time: 0, count: 1, interval: 0, spread: "random" },
+					{ id: "b1", time: 0, count: 1, spread: "random" },
 				],
 			});
 
