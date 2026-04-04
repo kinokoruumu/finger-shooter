@@ -154,6 +154,20 @@ const TargetTrack = ({
 
 					const setDragStartRef = { current: [] as number[] };
 
+					// セットのステップ範囲（背景幅用）
+					let setMinX = Number.POSITIVE_INFINITY;
+					let setMaxX = 0;
+					for (const bar of stepBars) {
+						const bx1 = timeToX(bar.startTime, duration, width);
+						const bx2 = timeToX(bar.endTime, duration, width);
+						if (bx1 < setMinX) setMinX = bx1;
+						if (bx2 > setMaxX) setMaxX = bx2;
+					}
+					if (stepBars.length === 0) {
+						setMinX = 0;
+						setMaxX = 48;
+					}
+
 					return (
 						<div key={set.id}>
 							{/* セット括り（左ボーダー + 背景、ドラッグで一括移動） */}
@@ -164,14 +178,13 @@ const TargetTrack = ({
 									colors.border,
 								)}
 								style={{
-									left: 0,
+									left: Math.max(0, setMinX - 4),
 									top: setStartY,
-									width: "100%",
+									width: setMaxX - setMinX + 8,
 									height: setHeight,
 								}}
 								onClick={(e) => {
 									e.stopPropagation();
-									onEditSet(set.id);
 								}}
 								onPointerDown={(e) => {
 									e.stopPropagation();
@@ -180,8 +193,10 @@ const TargetTrack = ({
 										(s) => s.startTime ?? 0,
 									);
 									const startX = e.clientX;
+									let didDrag = false;
 									const onMove = (ev: PointerEvent) => {
 										const totalDx = ev.clientX - startX;
+										if (Math.abs(totalDx) > 2) didDrag = true;
 										const newSteps = set.steps.map(
 											(s, si) => ({
 												...s,
@@ -212,6 +227,9 @@ const TargetTrack = ({
 											"pointerup",
 											onUp,
 										);
+										if (!didDrag) {
+											onEditSet(set.id);
+										}
 									};
 
 									window.addEventListener(
