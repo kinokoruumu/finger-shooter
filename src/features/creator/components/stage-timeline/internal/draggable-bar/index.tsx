@@ -124,7 +124,10 @@ export const DraggableBar = ({
 						}}
 					>
 						{fadeLabel && (
-							<span className="truncate px-1 text-[8px] text-white/80">
+							<span
+								className="truncate px-1 text-[8px] text-white/90"
+								style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+							>
 								{fadeLabel}
 							</span>
 						)}
@@ -146,7 +149,12 @@ export const DraggableBar = ({
 				/>
 			)}
 
-			<span className="relative z-10 truncate px-3">{label}</span>
+			<span
+				className="relative z-10 truncate px-3"
+				style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+			>
+				{label}
+			</span>
 
 			{/* 右端リサイズハンドル（常時表示） */}
 			{hasResize && (
