@@ -92,7 +92,7 @@ const TargetTrack = ({
 	const stepTimes = calcTargetStepTimes(group);
 	const targets = group.targets ?? [];
 	const steps = group.targetSteps ?? [];
-	const dragInitialTimeRef = useRef(0);
+	const dragInitialRef = useRef({ time: 0, interval: 0 });
 
 	return (
 		<div
@@ -110,6 +110,7 @@ const TargetTrack = ({
 				const x2 = timeToX(st.endTime, duration, width);
 				const w = Math.max(x2 - x, 6);
 				const count = (steps[i]?.targetIds ?? []).length;
+				const step = steps[i];
 
 				return (
 					<DraggableBar
@@ -121,24 +122,70 @@ const TargetTrack = ({
 						label={`${count}個`}
 						trackHeight={TRACK_HEIGHT}
 						onDragStart={() => {
-							dragInitialTimeRef.current =
-								steps[i]?.startTime ?? 0;
+							dragInitialRef.current = {
+								time: step?.startTime ?? 0,
+								interval: step?.interval ?? 100,
+							};
 						}}
-						onDrag={(totalDx) => {
-							const newTime = calcDraggedTime(
-								dragInitialTimeRef.current,
-								totalDx,
-								duration,
-								width,
-							);
-							onUpdateGroup({
-								...group,
-								targetSteps: steps.map((s, si) =>
-									si === i
-										? { ...s, startTime: newTime }
-										: s,
-								),
-							});
+						onDrag={(totalDx, mode) => {
+							if (mode === "move") {
+								const newTime = calcDraggedTime(
+									dragInitialRef.current.time,
+									totalDx,
+									duration,
+									width,
+								);
+								onUpdateGroup({
+									...group,
+									targetSteps: steps.map((s, si) =>
+										si === i
+											? { ...s, startTime: newTime }
+											: s,
+									),
+								});
+							} else if (mode === "resize-left") {
+								const newTime = calcDraggedTime(
+									dragInitialRef.current.time,
+									totalDx,
+									duration,
+									width,
+								);
+								onUpdateGroup({
+									...group,
+									targetSteps: steps.map((s, si) =>
+										si === i
+											? { ...s, startTime: newTime }
+											: s,
+									),
+								});
+							} else if (mode === "resize-right" && count > 1) {
+								// endTime = startTime + (count-1)*interval
+								// newEndTime = oldEndTime + deltaTime
+								const oldEndTime =
+									dragInitialRef.current.time +
+									(count - 1) * dragInitialRef.current.interval;
+								const newEndTime = calcDraggedTime(
+									oldEndTime,
+									totalDx,
+									duration,
+									width,
+								);
+								const newInterval = Math.max(
+									0,
+									Math.round(
+										(newEndTime - (step?.startTime ?? 0)) /
+											(count - 1),
+									),
+								);
+								onUpdateGroup({
+									...group,
+									targetSteps: steps.map((s, si) =>
+										si === i
+											? { ...s, interval: newInterval }
+											: s,
+									),
+								});
+							}
 						}}
 						onClick={onClick}
 					/>
@@ -168,7 +215,7 @@ const BalloonTrack = ({
 	onEditEntry: (id: string) => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
-	const dragInitialTimeRef = useRef(0);
+	const dragInitialRef = useRef({ time: 0, interval: 0 });
 	const entries = group.balloonEntries ?? [];
 
 	const handleTrackClick = useCallback(
@@ -221,23 +268,55 @@ const BalloonTrack = ({
 						label={`×${entry.count}`}
 						trackHeight={TRACK_HEIGHT}
 						onDragStart={() => {
-							dragInitialTimeRef.current = entry.time;
+							dragInitialRef.current = {
+								time: entry.time,
+								interval: entry.interval,
+							};
 						}}
-						onDrag={(totalDx) => {
-							const newTime = calcDraggedTime(
-								dragInitialTimeRef.current,
-								totalDx,
-								duration,
-								width,
-							);
-							onUpdateGroup({
-								...group,
-								balloonEntries: entries.map((e) =>
-									e.id === entry.id
-										? { ...e, time: newTime }
-										: e,
-								),
-							});
+						onDrag={(totalDx, mode) => {
+							const update = (
+								upd: Partial<CreatorBalloonEntry>,
+							) =>
+								onUpdateGroup({
+									...group,
+									balloonEntries: entries.map((e) =>
+										e.id === entry.id
+											? { ...e, ...upd }
+											: e,
+									),
+								});
+
+							if (mode === "move" || mode === "resize-left") {
+								const newTime = calcDraggedTime(
+									dragInitialRef.current.time,
+									totalDx,
+									duration,
+									width,
+								);
+								update({ time: newTime });
+							} else if (
+								mode === "resize-right" &&
+								entry.count > 1
+							) {
+								const oldEndTime =
+									dragInitialRef.current.time +
+									(entry.count - 1) *
+										dragInitialRef.current.interval;
+								const newEndTime = calcDraggedTime(
+									oldEndTime,
+									totalDx,
+									duration,
+									width,
+								);
+								const newInterval = Math.max(
+									0,
+									Math.round(
+										(newEndTime - entry.time) /
+											(entry.count - 1),
+									),
+								);
+								update({ interval: newInterval });
+							}
 						}}
 						onClick={() => onEditEntry(entry.id)}
 						onDelete={() =>

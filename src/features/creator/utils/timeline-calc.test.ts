@@ -25,22 +25,35 @@ describe("calcTargetsDuration", () => {
 		expect(calcTargetsDuration(makeGroup())).toBe(0);
 	});
 
-	it("1ステップ3的は startTime + (3-1)*interval", () => {
+	it("1ステップ3的は lastSpawn + visibleDuration", () => {
 		const group = makeGroup({
+			targets: [
+				{ id: "a", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+				{ id: "b", gx: 1, gy: 0, type: "ground", visibleDuration: 4 },
+				{ id: "c", gx: 2, gy: 0, type: "ground", visibleDuration: 4 },
+			],
 			targetSteps: [{ targetIds: ["a", "b", "c"], interval: 100, startTime: 0 }],
 		});
-		expect(calcTargetsDuration(group)).toBe(200);
+		// lastSpawn=200 + visibleDuration=4000ms = 4200
+		expect(calcTargetsDuration(group)).toBe(4200);
 	});
 
-	it("2ステップは各 startTime ベースで最大終了時刻", () => {
+	it("2ステップは各 startTime ベースで最大終了時刻（visibleDuration含む）", () => {
 		const group = makeGroup({
+			targets: [
+				{ id: "a", gx: 0, gy: 0, type: "ground", visibleDuration: 2 },
+				{ id: "b", gx: 1, gy: 0, type: "ground", visibleDuration: 2 },
+				{ id: "c", gx: 2, gy: 0, type: "ground", visibleDuration: 3 },
+				{ id: "d", gx: 3, gy: 0, type: "ground", visibleDuration: 3 },
+			],
 			targetSteps: [
 				{ targetIds: ["a", "b"], interval: 100, startTime: 0 },
 				{ targetIds: ["c", "d"], interval: 100, startTime: 600 },
 			],
 		});
-		// ステップ2: 600 + (2-1)*100 = 700
-		expect(calcTargetsDuration(group)).toBe(700);
+		// ステップ1: 100 + 2000 = 2100
+		// ステップ2: 700 + 3000 = 3700
+		expect(calcTargetsDuration(group)).toBe(3700);
 	});
 });
 
@@ -77,13 +90,20 @@ describe("calcGroupDuration", () => {
 
 	it("3種類の最大値を返す", () => {
 		const group = makeGroup({
+			targets: [
+				{ id: "a", gx: 0, gy: 0, type: "ground", visibleDuration: 1 },
+				{ id: "b", gx: 1, gy: 0, type: "ground", visibleDuration: 1 },
+				{ id: "c", gx: 2, gy: 0, type: "ground", visibleDuration: 1 },
+				{ id: "d", gx: 3, gy: 0, type: "ground", visibleDuration: 1 },
+				{ id: "e", gx: 4, gy: 0, type: "ground", visibleDuration: 1 },
+			],
 			targetSteps: [{ targetIds: ["a", "b", "c", "d", "e"], interval: 100, startTime: 0 }],
 			balloonEntries: [
 				{ id: "b1", time: 0, count: 1, interval: 0, spread: "random" },
 			],
 			trainStartTime: 2000,
 		});
-		// 的: (5-1)*100 = 400, 風船: 0, 列車: 2000
+		// 的: 400+1000=1400, 風船: 0, 列車: 2000
 		expect(calcGroupDuration(group)).toBe(2000);
 	});
 });

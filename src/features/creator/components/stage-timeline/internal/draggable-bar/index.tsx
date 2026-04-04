@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
+type DragMode = "move" | "resize-left" | "resize-right";
+
 type Props = {
 	x: number;
 	width: number;
@@ -9,7 +11,7 @@ type Props = {
 	label: string;
 	trackHeight: number;
 	onDragStart?: () => void;
-	onDrag?: (totalDeltaX: number, mode: "move" | "resize") => void;
+	onDrag?: (totalDeltaX: number, mode: DragMode) => void;
 	onDragEnd?: () => void;
 	onClick?: () => void;
 	onDelete?: () => void;
@@ -30,12 +32,12 @@ export const DraggableBar = ({
 	onDelete,
 	style: extraStyle,
 }: Props) => {
-	const [dragging, setDragging] = useState<"move" | "resize" | null>(null);
+	const [dragging, setDragging] = useState<DragMode | null>(null);
 	const dragStartXRef = useRef(0);
 	const didDragRef = useRef(false);
 
 	const handlePointerDown = useCallback(
-		(e: React.PointerEvent, mode: "move" | "resize") => {
+		(e: React.PointerEvent, mode: DragMode) => {
 			e.stopPropagation();
 			e.preventDefault();
 			setDragging(mode);
@@ -71,31 +73,49 @@ export const DraggableBar = ({
 		[onClick],
 	);
 
+	const cursorForDrag =
+		dragging === "move"
+			? "grabbing"
+			: dragging
+				? "ew-resize"
+				: "grab";
+
 	return (
 		<div
 			data-testid="draggable-bar"
 			className={cn(
-				"group absolute top-1 flex items-center rounded-md text-[10px] font-bold text-white transition-colors",
+				"group absolute flex items-center rounded-md text-[10px] font-bold text-white transition-colors",
 				dragging ? activeColor : color,
 			)}
 			style={{
 				left: x,
 				width: Math.max(barWidth, 8),
 				height: trackHeight - 8,
-				cursor: dragging === "move" ? "grabbing" : "grab",
+				cursor: cursorForDrag,
 				...extraStyle,
 			}}
 			onPointerDown={(e) => handlePointerDown(e, "move")}
 			onClick={handleClick}
 		>
-			<span className="truncate px-1.5">{label}</span>
+			{/* 左端リサイズハンドル */}
+			{onDrag && (
+				<div
+					data-testid="resize-left-handle"
+					className="absolute top-0 bottom-0 left-0 w-2 cursor-ew-resize rounded-l-md hover:bg-white/20"
+					onPointerDown={(e) => handlePointerDown(e, "resize-left")}
+				/>
+			)}
+
+			<span className="truncate px-2">{label}</span>
 
 			{/* 右端リサイズハンドル */}
 			{onDrag && (
 				<div
-					data-testid="resize-handle"
+					data-testid="resize-right-handle"
 					className="absolute top-0 right-0 bottom-0 w-2 cursor-ew-resize rounded-r-md hover:bg-white/20"
-					onPointerDown={(e) => handlePointerDown(e, "resize")}
+					onPointerDown={(e) =>
+						handlePointerDown(e, "resize-right")
+					}
 				/>
 			)}
 

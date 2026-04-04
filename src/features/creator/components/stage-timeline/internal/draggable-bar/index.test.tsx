@@ -110,11 +110,11 @@ describe("DraggableBar", () => {
 	});
 
 	describe("リサイズ", () => {
-		it("リサイズハンドルのドラッグで mode=resize が渡される", () => {
+		it("右端ハンドルのドラッグで mode=resize-right が渡される", () => {
 			const onDrag = vi.fn();
 			render(<DraggableBar {...defaultProps} onDrag={onDrag} />);
 
-			const handle = screen.getByTestId("resize-handle");
+			const handle = screen.getByTestId("resize-right-handle");
 
 			fireEvent.pointerDown(handle, { clientX: 160 });
 			fireEvent(
@@ -122,7 +122,22 @@ describe("DraggableBar", () => {
 				new PointerEvent("pointermove", { clientX: 190 }),
 			);
 
-			expect(onDrag).toHaveBeenCalledWith(30, "resize");
+			expect(onDrag).toHaveBeenCalledWith(30, "resize-right");
+		});
+
+		it("左端ハンドルのドラッグで mode=resize-left が渡される", () => {
+			const onDrag = vi.fn();
+			render(<DraggableBar {...defaultProps} onDrag={onDrag} />);
+
+			const handle = screen.getByTestId("resize-left-handle");
+
+			fireEvent.pointerDown(handle, { clientX: 100 });
+			fireEvent(
+				window,
+				new PointerEvent("pointermove", { clientX: 80 }),
+			);
+
+			expect(onDrag).toHaveBeenCalledWith(-20, "resize-left");
 		});
 	});
 

@@ -31,18 +31,27 @@ export const calcDraggedTime = (
 	return xToTime(initialX + totalDeltaX, duration, width);
 };
 
-/** 的ステップの最大終了時刻(ms)を計算 */
+/** 的ステップの最大終了時刻(ms)を計算。visibleDuration を含む */
 export const calcTargetsDuration = (group: CreatorGroup): number => {
 	const steps = group.targetSteps ?? [];
+	const targets = group.targets ?? [];
 	let max = 0;
 
 	for (const step of steps) {
 		const interval = step.interval ?? 100;
 		const start = step.startTime ?? 0;
-		const end =
-			step.targetIds.length > 0
-				? start + (step.targetIds.length - 1) * interval
-				: start;
+		if (step.targetIds.length === 0) continue;
+
+		// 最後の的が出現する時刻
+		const lastSpawnTime = start + (step.targetIds.length - 1) * interval;
+
+		// 最大の visibleDuration を取得
+		const maxVisible = step.targetIds.reduce((mv, tid) => {
+			const t = targets.find((tgt) => tgt.id === tid);
+			return Math.max(mv, (t?.visibleDuration ?? 2.5) * 1000);
+		}, 0);
+
+		const end = lastSpawnTime + maxVisible;
 		if (end > max) max = end;
 	}
 
