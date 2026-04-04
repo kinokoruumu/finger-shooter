@@ -7,19 +7,25 @@ const UICatalog = lazy(() =>
 	import("./pages/ui-catalog.tsx").then((m) => ({ default: m.UICatalog })),
 );
 
-const isUICatalog = window.location.pathname === "/ui";
+const CreatorPage = lazy(() =>
+	import("./pages/creator.tsx").then((m) => ({ default: m.CreatorPage })),
+);
+
+const path = window.location.pathname;
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
 
+const PageComponent = () => {
+	if (path === "/ui") return <UICatalog />;
+	if (path.startsWith("/creator")) return <CreatorPage />;
+	return <App />;
+};
+
 createRoot(rootElement).render(
 	<StrictMode>
-		{isUICatalog ? (
-			<Suspense fallback={null}>
-				<UICatalog />
-			</Suspense>
-		) : (
-			<App />
-		)}
+		<Suspense fallback={null}>
+			<PageComponent />
+		</Suspense>
 	</StrictMode>,
 );
