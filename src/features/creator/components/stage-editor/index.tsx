@@ -1,9 +1,11 @@
 import { useCallback, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { getStage, saveStage } from "../../stores/creator-store";
-import type { CreatorGroup, CreatorGroupType, CreatorStage } from "../../types";
-import { TargetGrid } from "../target-grid";
+import type { CreatorGroup, CreatorStage, TargetSlotType } from "../../types";
+import { AnimationEditor } from "../animation-editor";
+import { EditorCanvas } from "../editor-canvas";
+import { EditorToolbar } from "../editor-toolbar";
 import { Timeline } from "../timeline";
 
 type Props = {
@@ -11,13 +13,41 @@ type Props = {
 	onBack: () => void;
 };
 
+type EditorTab = "placement" | "animation";
+
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
+const TAB_ITEMS: { key: EditorTab; label: string }[] = [
+	{ key: "placement", label: "配置" },
+	{ key: "animation", label: "アニメーション" },
+];
+
 export const StageEditor = ({ stageId, onBack }: Props) => {
-	const [stage, setStage] = useState<CreatorStage | null>(
-		() => getStage(stageId) ?? null,
+	const [stage, setStage] = useState<CreatorStage | null>(() => {
+		const loaded = getStage(stageId) ?? null;
+		if (loaded && loaded.groups.length === 0) {
+			const initialGroup: CreatorGroup = {
+				id: crypto.randomUUID(),
+				type: "targets",
+				targets: [],
+				steps: [{ targetIds: [], interval: 100 }],
+				stepDelay: 300,
+			};
+			const updated = { ...loaded, groups: [initialGroup] };
+			saveStage(updated);
+			return updated;
+		}
+		return loaded;
+	});
+	const [selectedGroupIdx, setSelectedGroupIdx] = useState<number | null>(
+		() => {
+			const loaded = getStage(stageId);
+			return loaded && loaded.groups.length > 0 ? 0 : null;
+		},
 	);
-	const [selectedGroupIdx, setSelectedGroupIdx] = useState<number | null>(null);
+	const [activeTab, setActiveTab] = useState<EditorTab>("placement");
+	const [currentTargetType, setCurrentTargetType] =
+		useState<TargetSlotType>("ground");
 
 	const updateStage = useCallback(
 		(updater: (s: CreatorStage) => CreatorStage) => {
@@ -32,28 +62,43 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 	);
 
 	const addGroup = useCallback(
-		(type: CreatorGroupType) => {
-			updateStage((s) => ({
-				...s,
-				groups: [
-					...s.groups,
-					{
-						id: crypto.randomUUID(),
-						type,
-						targets: type === "targets" ? [] : undefined,
-						balloons: type === "balloons" ? [] : undefined,
-						train:
-							type === "train"
-								? {
+		(type: CreatorGroup["type"]) => {
+			let newIndex = 0;
+			updateStage((s) => {
+				const newGroup: CreatorGroup =
+					type === "targets"
+						? {
+								id: crypto.randomUUID(),
+								type: "targets",
+								targets: [],
+								steps: [{ targetIds: [], interval: 100 }],
+								stepDelay: 300,
+							}
+						: type === "balloons"
+							? {
+									id: crypto.randomUUID(),
+									type: "balloons",
+									balloons: [],
+									steps: [{ targetIds: [], interval: 100 }],
+									stepDelay: 300,
+								}
+							: {
+									id: crypto.randomUUID(),
+									type: "train",
+									train: {
 										direction: 1,
 										speed: 2.0,
 										slotsOscillate: false,
 										slots: [],
-									}
-								: undefined,
-					},
-				],
-			}));
+									},
+								};
+
+				const newGroups = [...s.groups, newGroup];
+				newIndex = newGroups.length - 1;
+				return { ...s, groups: newGroups };
+			});
+			setSelectedGroupIdx(newIndex);
+			setActiveTab("placement");
 		},
 		[updateStage],
 	);
@@ -84,6 +129,72 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			updateStage((s) => ({ ...s, name }));
 		},
 		[updateStage],
+	);
+
+	const handleCellClick = useCallback(
+		(gx: number, gy: number) => {
+			if (selectedGroupIdx === null || activeTab !== "placement") return;
+			const group = stage?.groups[selectedGroupIdx];
+			if (!group || group.type !== "targets") return;
+
+			const existing = group.targets.find((t) => t.gx === gx && t.gy === gy);
+			if (existing) return;
+
+			const newTarget = {
+				id: crypto.randomUUID(),
+				gx,
+				gy,
+				type: currentTargetType,
+				visibleDuration: 4.0,
+			};
+			updateGroup(selectedGroupIdx, {
+				...group,
+				targets: [...group.targets, newTarget],
+			});
+		},
+		[selectedGroupIdx, activeTab, stage, currentTargetType, updateGroup],
+	);
+
+	const handleCellRightClick = useCallback(
+		(gx: number, gy: number) => {
+			if (selectedGroupIdx === null || activeTab !== "placement") return;
+			const group = stage?.groups[selectedGroupIdx];
+			if (!group || group.type !== "targets") return;
+
+			const existing = group.targets.find((t) => t.gx === gx && t.gy === gy);
+			if (!existing) return;
+
+			const cycle: TargetSlotType[] = [
+				"ground",
+				"ground-gold",
+				"ground-penalty",
+			];
+			const currentIdx = cycle.indexOf(existing.type);
+			const nextIdx = currentIdx + 1;
+
+			if (nextIdx >= cycle.length) {
+				const newTargets = group.targets.filter(
+					(t) => !(t.gx === gx && t.gy === gy),
+				);
+				const newSteps = group.steps.map((s) => ({
+					...s,
+					targetIds: s.targetIds.filter((id) => id !== existing.id),
+				}));
+				updateGroup(selectedGroupIdx, {
+					...group,
+					targets: newTargets,
+					steps: newSteps,
+				});
+			} else {
+				updateGroup(selectedGroupIdx, {
+					...group,
+					targets: group.targets.map((t) =>
+						t.id === existing.id ? { ...t, type: cycle[nextIdx] } : t,
+					),
+				});
+			}
+		},
+		[selectedGroupIdx, activeTab, stage, updateGroup],
 	);
 
 	if (!stage) {
@@ -122,49 +233,68 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			</div>
 
 			<div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-4">
-				{/* タイムライン */}
-				<Timeline
-					groups={stage.groups}
-					selectedIdx={selectedGroupIdx}
-					onSelect={setSelectedGroupIdx}
-					onDelete={deleteGroup}
-					onAdd={addGroup}
-				/>
-
 				{/* エディター領域 */}
 				{selectedGroup ? (
-					<div className="flex-1 rounded-2xl border-2 border-amber-900/10 bg-white p-4">
-						<Tabs value={selectedGroup.type}>
-							<TabsList>
-								<TabsTrigger value="targets">的</TabsTrigger>
-								<TabsTrigger value="balloons">風船</TabsTrigger>
-								<TabsTrigger value="train">列車</TabsTrigger>
-							</TabsList>
-							<TabsContent value="targets">
-								{selectedGroup.type === "targets" &&
-									selectedGroupIdx !== null && (
-										<TargetGrid
-											targets={selectedGroup.targets ?? []}
-											onChange={(targets) =>
-												updateGroup(selectedGroupIdx, {
-													...selectedGroup,
-													targets,
-												})
-											}
-										/>
-									)}
-							</TabsContent>
-							<TabsContent value="balloons">
-								<p className="py-8 text-center text-amber-900/40">
-									風船エディター（Phase 4 で実装）
-								</p>
-							</TabsContent>
-							<TabsContent value="train">
-								<p className="py-8 text-center text-amber-900/40">
-									列車エディター（Phase 4 で実装）
-								</p>
-							</TabsContent>
-						</Tabs>
+					<div className="space-y-4">
+						{/* タブ切り替え */}
+						{selectedGroup.type === "targets" && (
+							<div className="flex gap-1 rounded-lg bg-amber-100/50 p-1">
+								{TAB_ITEMS.map((tab) => (
+									<button
+										key={tab.key}
+										type="button"
+										className={cn(
+											"flex-1 rounded-md px-4 py-1.5 text-sm font-bold transition-all",
+											activeTab === tab.key
+												? "bg-white text-amber-900 shadow-sm"
+												: "text-amber-900/40 hover:text-amber-900/60",
+										)}
+										style={rf}
+										onClick={() => setActiveTab(tab.key)}
+									>
+										{tab.label}
+									</button>
+								))}
+							</div>
+						)}
+
+						{/* 配置タブ */}
+						{activeTab === "placement" && selectedGroup.type === "targets" && (
+							<div className="space-y-3">
+								<EditorCanvas
+									targets={selectedGroup.targets}
+									onCellClick={handleCellClick}
+									onCellRightClick={handleCellRightClick}
+								/>
+								<EditorToolbar
+									currentType={currentTargetType}
+									onTypeChange={setCurrentTargetType}
+									targetCount={selectedGroup.targets.length}
+								/>
+							</div>
+						)}
+
+						{/* アニメーションタブ（プレビュー統合） */}
+						{activeTab === "animation" &&
+							selectedGroup.type === "targets" &&
+							selectedGroupIdx !== null && (
+								<AnimationEditor
+									group={selectedGroup}
+									onUpdateGroup={(g) => updateGroup(selectedGroupIdx, g)}
+								/>
+							)}
+
+						{/* 風船・列車は未実装表示 */}
+						{selectedGroup.type === "balloons" && (
+							<p className="py-16 text-center text-amber-900/40" style={rf}>
+								風船エデ��ター（Phase D で実装）
+							</p>
+						)}
+						{selectedGroup.type === "train" && (
+							<p className="py-16 text-center text-amber-900/40" style={rf}>
+								列車エディター（Phase D で実装）
+							</p>
+						)}
 					</div>
 				) : (
 					<div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-amber-900/10">
@@ -173,6 +303,15 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 						</p>
 					</div>
 				)}
+
+				{/* タイムライン（下部） */}
+				<Timeline
+					groups={stage.groups}
+					selectedIdx={selectedGroupIdx}
+					onSelect={setSelectedGroupIdx}
+					onDelete={deleteGroup}
+					onAdd={addGroup}
+				/>
 			</div>
 		</div>
 	);

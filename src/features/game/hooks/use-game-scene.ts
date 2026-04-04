@@ -15,6 +15,7 @@ import type { BulletData } from "../components/bullet-effect";
 import type { GroundTargetData } from "../components/ground-target";
 import type { TrainTargetData } from "../components/train-target";
 import { checkHit3D } from "../utils/check-hit";
+import { gridToNormalized } from "../utils/grid-to-normalized";
 import { createScreenToWorld } from "../utils/screen-to-world";
 
 let nextId = 0;
@@ -77,16 +78,6 @@ export const useGameScene = (
 			waitFrames.current = 0;
 		}
 	}, [phase, currentStage]);
-
-	// グリッド座標(gx: 0-7, gy: 0-3)→正規化座標に変換
-	const gridToNormalized = useCallback(
-		(gx: number, gy: number): [number, number] => {
-			const nx = 0.2 + (gx / 7) * 0.6;
-			const ny = 0.2 + (gy / 3) * 0.55;
-			return [nx, ny];
-		},
-		[],
-	);
 
 	// 画面幅に応じた的のスケールを計算
 	const targetScale = useRef(1.8);

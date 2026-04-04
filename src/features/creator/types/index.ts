@@ -1,16 +1,21 @@
 export type TargetSlotType = "ground" | "ground-gold" | "ground-penalty";
 
 export type CreatorTarget = {
+	id: string;
 	gx: number;
 	gy: number;
 	type: TargetSlotType;
-	delay: number;
 	visibleDuration: number;
 };
 
+export type CreatorAnimationStep = {
+	targetIds: string[];
+	interval: number;
+};
+
 export type CreatorBalloon = {
+	id: string;
 	nx: number;
-	delay: number;
 	speed: number;
 };
 
@@ -28,15 +33,32 @@ export type CreatorTrain = {
 	slots: CreatorTrainSlot[];
 };
 
-export type CreatorGroupType = "targets" | "balloons" | "train";
-
-export type CreatorGroup = {
+export type CreatorTargetGroup = {
 	id: string;
-	type: CreatorGroupType;
-	targets?: CreatorTarget[];
-	balloons?: CreatorBalloon[];
-	train?: CreatorTrain;
+	type: "targets";
+	targets: CreatorTarget[];
+	steps: CreatorAnimationStep[];
+	stepDelay: number;
 };
+
+export type CreatorBalloonGroup = {
+	id: string;
+	type: "balloons";
+	balloons: CreatorBalloon[];
+	steps: CreatorAnimationStep[];
+	stepDelay: number;
+};
+
+export type CreatorTrainGroup = {
+	id: string;
+	type: "train";
+	train: CreatorTrain;
+};
+
+export type CreatorGroup =
+	| CreatorTargetGroup
+	| CreatorBalloonGroup
+	| CreatorTrainGroup;
 
 export type CreatorStage = {
 	id: string;

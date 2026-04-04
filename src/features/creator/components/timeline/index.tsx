@@ -1,26 +1,37 @@
 import { cn } from "@/lib/utils";
-import type { CreatorGroup, CreatorGroupType } from "../../types";
+import type { CreatorGroup } from "../../types";
 
 type Props = {
 	groups: CreatorGroup[];
 	selectedIdx: number | null;
 	onSelect: (idx: number) => void;
 	onDelete: (idx: number) => void;
-	onAdd: (type: CreatorGroupType) => void;
+	onAdd: (type: CreatorGroup["type"]) => void;
 };
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
-const GROUP_COLORS: Record<CreatorGroupType, string> = {
+const GROUP_COLORS: Record<CreatorGroup["type"], string> = {
 	targets: "bg-amber-500",
 	balloons: "bg-sky-400",
 	train: "bg-violet-500",
 };
 
-const GROUP_LABELS: Record<CreatorGroupType, string> = {
+const GROUP_LABELS: Record<CreatorGroup["type"], string> = {
 	targets: "的",
 	balloons: "風船",
 	train: "列車",
+};
+
+const getGroupCount = (group: CreatorGroup): string => {
+	switch (group.type) {
+		case "targets":
+			return `${group.targets.length}個`;
+		case "balloons":
+			return `${group.balloons.length}個`;
+		case "train":
+			return "列車";
+	}
 };
 
 export const Timeline = ({
@@ -37,32 +48,39 @@ export const Timeline = ({
 					className="font-bold text-amber-900/60 text-xs uppercase tracking-widest"
 					style={rf}
 				>
-					タイムライン
+					グループ
 				</p>
 				<div className="flex gap-1">
-					<AddButton label="+ 的" onClick={() => onAdd("targets")} />
-					<AddButton label="+ 風船" onClick={() => onAdd("balloons")} />
-					<AddButton label="+ 列車" onClick={() => onAdd("train")} />
+					<AddButton label="+ 的グループ" onClick={() => onAdd("targets")} />
+					<AddButton label="+ 風船グループ" onClick={() => onAdd("balloons")} />
+					<AddButton label="+ 列車グループ" onClick={() => onAdd("train")} />
 				</div>
 			</div>
 
 			{groups.length === 0 ? (
 				<p className="py-4 text-center text-amber-900/30 text-sm" style={rf}>
-					グループを追加してください
+					上のボタンからグループを追加してください
 				</p>
 			) : (
-				<div className="flex gap-1.5 overflow-x-auto pb-1">
+				<div className="flex gap-1.5 overflow-x-auto p-1">
 					{groups.map((group, i) => (
-						<button
+						<div
 							key={group.id}
-							type="button"
 							className={cn(
-								"flex shrink-0 flex-col items-center gap-1 rounded-lg px-4 py-2 transition-all",
+								"flex shrink-0 cursor-pointer flex-col items-center gap-1 rounded-lg border-2 px-4 py-2 transition-all",
 								selectedIdx === i
-									? "ring-2 ring-amber-800 ring-offset-1"
-									: "hover:bg-amber-50",
+									? "border-amber-800 bg-amber-50"
+									: "border-transparent hover:bg-amber-50",
 							)}
+							role="button"
+							tabIndex={0}
 							onClick={() => onSelect(i)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									onSelect(i);
+								}
+							}}
 						>
 							<div
 								className={cn(
@@ -74,11 +92,7 @@ export const Timeline = ({
 								G{i + 1} {GROUP_LABELS[group.type]}
 							</span>
 							<span className="text-amber-900/30 text-[10px]">
-								{group.type === "targets"
-									? `${group.targets?.length ?? 0}個`
-									: group.type === "balloons"
-										? `${group.balloons?.length ?? 0}個`
-										: "列車"}
+								{getGroupCount(group)}
 							</span>
 							<button
 								type="button"
@@ -90,7 +104,7 @@ export const Timeline = ({
 							>
 								削除
 							</button>
-						</button>
+						</div>
 					))}
 				</div>
 			)}

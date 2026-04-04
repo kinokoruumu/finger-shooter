@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardDescription,
@@ -12,8 +13,13 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import {
 	createNewStage,
 	deleteStage,
@@ -106,11 +112,13 @@ export const StageList = ({ onEdit }: Props) => {
 				{/* アクションバー */}
 				<div className="mb-6 flex gap-2">
 					<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-						<DialogTrigger
-							className="rounded-xl bg-amber-800 px-6 py-2.5 font-bold text-amber-50 text-sm shadow-md transition-all hover:bg-amber-700 active:scale-[0.98]"
-							style={rf}
-						>
-							新規作成
+						<DialogTrigger asChild>
+							<Button
+								className="rounded-xl bg-amber-900 px-6 py-2.5 font-bold text-white shadow-md hover:bg-amber-800"
+								style={rf}
+							>
+								新規作成
+							</Button>
 						</DialogTrigger>
 						<DialogContent>
 							<DialogHeader>
@@ -123,26 +131,25 @@ export const StageList = ({ onEdit }: Props) => {
 									onChange={(e) => setNewName(e.target.value)}
 									onKeyDown={(e) => e.key === "Enter" && handleCreate()}
 								/>
-								<button
-									type="button"
-									className="rounded-xl bg-amber-800 px-6 py-2.5 font-bold text-amber-50 text-sm transition-all hover:bg-amber-700"
+								<Button
+									className="rounded-xl bg-amber-900 px-6 py-2.5 font-bold text-white hover:bg-amber-800"
 									style={rf}
 									onClick={handleCreate}
 								>
 									作成
-								</button>
+								</Button>
 							</div>
 						</DialogContent>
 					</Dialog>
 
-					<button
-						type="button"
-						className="rounded-xl border-2 border-amber-900/15 bg-white px-6 py-2.5 font-bold text-amber-900/70 text-sm transition-all hover:bg-amber-50"
+					<Button
+						variant="outline"
+						className="rounded-xl border-2 border-amber-900/30 px-6 py-2.5 font-bold text-amber-900 hover:bg-amber-100"
 						style={rf}
 						onClick={handleImport}
 					>
 						インポート
-					</button>
+					</Button>
 					<input
 						ref={fileRef}
 						type="file"
@@ -162,8 +169,7 @@ export const StageList = ({ onEdit }: Props) => {
 						{stages.map((stage) => (
 							<Card
 								key={stage.id}
-								className="cursor-pointer border-amber-900/10 transition-all hover:border-amber-900/25 hover:shadow-md"
-								onClick={() => onEdit(stage.id)}
+								className="border-amber-900/10 transition-all hover:border-amber-900/25 hover:shadow-md"
 							>
 								<CardHeader className="flex flex-row items-center justify-between py-4">
 									<div>
@@ -174,24 +180,42 @@ export const StageList = ({ onEdit }: Props) => {
 											{stage.groups.length} グループ
 										</CardDescription>
 									</div>
-									<div
-										role="toolbar"
-										className="flex gap-1"
-										onClick={(e) => e.stopPropagation()}
-										onKeyDown={(e) => e.stopPropagation()}
-									>
-										<ActionButton onClick={() => handleDuplicate(stage.id)}>
-											複製
-										</ActionButton>
-										<ActionButton onClick={() => handleExport(stage)}>
-											書出
-										</ActionButton>
-										<ActionButton
-											variant="danger"
-											onClick={() => handleDelete(stage.id)}
+									<div className="flex items-center gap-2">
+										<Button
+											size="sm"
+											className="bg-amber-900 font-bold text-white hover:bg-amber-800"
+											style={rf}
+											onClick={() => onEdit(stage.id)}
 										>
-											削除
-										</ActionButton>
+											編集
+										</Button>
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button
+													variant="outline"
+													size="icon-sm"
+													className="border-amber-900/20 text-amber-900/60 hover:bg-amber-50"
+												>
+													...
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												<DropdownMenuItem
+													onClick={() => handleDuplicate(stage.id)}
+												>
+													複製
+												</DropdownMenuItem>
+												<DropdownMenuItem onClick={() => handleExport(stage)}>
+													JSONエクスポート
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													className="text-red-600 focus:text-red-600"
+													onClick={() => handleDelete(stage.id)}
+												>
+													削除
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
 									</div>
 								</CardHeader>
 							</Card>
@@ -202,26 +226,3 @@ export const StageList = ({ onEdit }: Props) => {
 		</div>
 	);
 };
-
-const ActionButton = ({
-	children,
-	onClick,
-	variant = "default",
-}: {
-	children: React.ReactNode;
-	onClick: () => void;
-	variant?: "default" | "danger";
-}) => (
-	<button
-		type="button"
-		className={cn(
-			"rounded-lg px-3 py-1 text-xs font-medium transition-colors",
-			variant === "danger"
-				? "text-red-600 hover:bg-red-50"
-				: "text-amber-900/60 hover:bg-amber-50",
-		)}
-		onClick={onClick}
-	>
-		{children}
-	</button>
-);
