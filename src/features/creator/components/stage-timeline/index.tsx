@@ -328,25 +328,82 @@ const BalloonTrack = ({
 						onDragStart={() => {
 							dragInitialRef.current = {
 								time: entry.time,
-								interval: 0,
+								interval: entry.interval ?? 0,
 							};
 						}}
-						onDrag={(totalDx, _mode) => {
-							// 風船は visibleDuration 固定なので全操作が移動
-							const newTime = calcDraggedTime(
-								dragInitialRef.current.time,
-								totalDx,
-								duration,
-								width,
-							);
-							onUpdateGroup({
-								...group,
-								balloonEntries: entries.map((e) =>
-									e.id === entry.id
-										? { ...e, time: newTime }
-										: e,
-								),
-							});
+						onDrag={(totalDx, mode) => {
+							const update = (
+								upd: Partial<CreatorBalloonEntry>,
+							) =>
+								onUpdateGroup({
+									...group,
+									balloonEntries: entries.map((e) =>
+										e.id === entry.id
+											? { ...e, ...upd }
+											: e,
+									),
+								});
+
+							if (mode === "move") {
+								update({
+									time: calcDraggedTime(
+										dragInitialRef.current.time,
+										totalDx,
+										duration,
+										width,
+									),
+								});
+							} else if (mode === "resize-right" && entry.count > 1) {
+								// 左端固定、interval 変更
+								const oldEndTime =
+									dragInitialRef.current.time +
+									(entry.count - 1) * dragInitialRef.current.interval;
+								const newEndTime = calcDraggedTime(
+									oldEndTime,
+									totalDx,
+									duration,
+									width,
+								);
+								const newInterval = Math.max(
+									0,
+									Math.round(
+										(newEndTime - entry.time) /
+											(entry.count - 1),
+									),
+								);
+								update({ interval: newInterval });
+							} else if (mode === "resize-left" && entry.count > 1) {
+								// 右端固定、time + interval 変更
+								const oldEndTime =
+									dragInitialRef.current.time +
+									(entry.count - 1) * dragInitialRef.current.interval;
+								const newStart = calcResizeLeftTime(
+									dragInitialRef.current.time,
+									oldEndTime,
+									50,
+									totalDx,
+									duration,
+									width,
+								);
+								const newInterval = Math.max(
+									0,
+									Math.round(
+										(oldEndTime - newStart) /
+											(entry.count - 1),
+									),
+								);
+								update({ time: newStart, interval: newInterval });
+							} else {
+								// count=1 の場合は移動のみ
+								update({
+									time: calcDraggedTime(
+										dragInitialRef.current.time,
+										totalDx,
+										duration,
+										width,
+									),
+								});
+							}
 						}}
 						onClick={() => onEditEntry(entry.id)}
 						style={{ top: rowOffset + 4 }}
