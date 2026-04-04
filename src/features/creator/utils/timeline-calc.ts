@@ -31,24 +31,22 @@ export const calcDraggedTime = (
 	return xToTime(initialX + totalDeltaX, duration, width);
 };
 
-/** 的ステップの総所要時間(ms)を計算 */
+/** 的ステップの最大終了時刻(ms)を計算 */
 export const calcTargetsDuration = (group: CreatorGroup): number => {
 	const steps = group.targetSteps ?? [];
-	const delay = group.targetStepDelay ?? 300;
-	let time = 0;
+	let max = 0;
 
 	for (const step of steps) {
 		const interval = step.interval ?? 100;
-		if (step.targetIds.length > 0) {
-			time += (step.targetIds.length - 1) * interval + delay;
-		}
-	}
-	// 最後のステップの delay は不要なので引く
-	if (steps.length > 0 && steps[steps.length - 1].targetIds.length > 0) {
-		time -= delay;
+		const start = step.startTime ?? 0;
+		const end =
+			step.targetIds.length > 0
+				? start + (step.targetIds.length - 1) * interval
+				: start;
+		if (end > max) max = end;
 	}
 
-	return Math.max(0, time);
+	return max;
 };
 
 /** 風船エントリの最大終了時刻(ms)を計算 */
@@ -71,26 +69,19 @@ export const calcGroupDuration = (group: CreatorGroup): number => {
 	return Math.max(targetDur, balloonDur, trainDur, 1000);
 };
 
-/** 的の各ステップの開始時刻(ms)を計算 */
+/** 的の各ステップの開始/終了時刻(ms)を計算 */
 export const calcTargetStepTimes = (
 	group: CreatorGroup,
 ): { startTime: number; endTime: number }[] => {
 	const steps = group.targetSteps ?? [];
-	const delay = group.targetStepDelay ?? 300;
-	const result: { startTime: number; endTime: number }[] = [];
-	let time = 0;
 
-	for (const step of steps) {
+	return steps.map((step) => {
 		const interval = step.interval ?? 100;
+		const start = step.startTime ?? 0;
 		const duration =
 			step.targetIds.length > 0
 				? (step.targetIds.length - 1) * interval
 				: 0;
-		result.push({ startTime: time, endTime: time + duration });
-		if (step.targetIds.length > 0) {
-			time += duration + delay;
-		}
-	}
-
-	return result;
+		return { startTime: start, endTime: start + duration };
+	});
 };

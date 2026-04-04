@@ -13,6 +13,7 @@ type Props = {
 	onDragEnd?: () => void;
 	onClick?: () => void;
 	onDelete?: () => void;
+	style?: React.CSSProperties;
 };
 
 export const DraggableBar = ({
@@ -27,6 +28,7 @@ export const DraggableBar = ({
 	onDragEnd,
 	onClick,
 	onDelete,
+	style: extraStyle,
 }: Props) => {
 	const [dragging, setDragging] = useState<"move" | "resize" | null>(null);
 	const dragStartXRef = useRef(0);
@@ -81,6 +83,7 @@ export const DraggableBar = ({
 				width: Math.max(barWidth, 8),
 				height: trackHeight - 8,
 				cursor: dragging === "move" ? "grabbing" : "grab",
+				...extraStyle,
 			}}
 			onPointerDown={(e) => handlePointerDown(e, "move")}
 			onClick={handleClick}

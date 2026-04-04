@@ -14,7 +14,6 @@ const makeGroup = (partial: Partial<CreatorGroup> = {}): CreatorGroup => ({
 	id: "g1",
 	targets: [],
 	targetSteps: [],
-	targetStepDelay: 300,
 	balloonEntries: [],
 	train: null,
 	trainStartTime: null,
@@ -26,25 +25,21 @@ describe("calcTargetsDuration", () => {
 		expect(calcTargetsDuration(makeGroup())).toBe(0);
 	});
 
-	it("1ステップ3的は (3-1)*interval", () => {
+	it("1ステップ3的は startTime + (3-1)*interval", () => {
 		const group = makeGroup({
-			targetSteps: [{ targetIds: ["a", "b", "c"], interval: 100 }],
+			targetSteps: [{ targetIds: ["a", "b", "c"], interval: 100, startTime: 0 }],
 		});
 		expect(calcTargetsDuration(group)).toBe(200);
 	});
 
-	it("2ステップは delay を含む", () => {
+	it("2ステップは各 startTime ベースで最大終了時刻", () => {
 		const group = makeGroup({
 			targetSteps: [
-				{ targetIds: ["a", "b"], interval: 100 },
-				{ targetIds: ["c", "d"], interval: 100 },
+				{ targetIds: ["a", "b"], interval: 100, startTime: 0 },
+				{ targetIds: ["c", "d"], interval: 100, startTime: 600 },
 			],
-			targetStepDelay: 500,
 		});
-		// ステップ1: (2-1)*100 = 100
-		// + delay 500
-		// ステップ2: (2-1)*100 = 100
-		// 合計: 100 + 500 + 100 = 700
+		// ステップ2: 600 + (2-1)*100 = 700
 		expect(calcTargetsDuration(group)).toBe(700);
 	});
 });
@@ -82,7 +77,7 @@ describe("calcGroupDuration", () => {
 
 	it("3種類の最大値を返す", () => {
 		const group = makeGroup({
-			targetSteps: [{ targetIds: ["a", "b", "c", "d", "e"], interval: 100 }],
+			targetSteps: [{ targetIds: ["a", "b", "c", "d", "e"], interval: 100, startTime: 0 }],
 			balloonEntries: [
 				{ id: "b1", time: 0, count: 1, interval: 0, spread: "random" },
 			],
@@ -94,13 +89,12 @@ describe("calcGroupDuration", () => {
 });
 
 describe("calcTargetStepTimes", () => {
-	it("各ステップの開始/終了時刻を返す", () => {
+	it("各ステップの startTime ベースで開始/終了時刻を返す", () => {
 		const group = makeGroup({
 			targetSteps: [
-				{ targetIds: ["a", "b"], interval: 100 },
-				{ targetIds: ["c", "d", "e"], interval: 50 },
+				{ targetIds: ["a", "b"], interval: 100, startTime: 0 },
+				{ targetIds: ["c", "d", "e"], interval: 50, startTime: 400 },
 			],
-			targetStepDelay: 300,
 		});
 
 		const times = calcTargetStepTimes(group);

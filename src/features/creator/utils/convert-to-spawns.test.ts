@@ -6,7 +6,6 @@ const makeGroup = (partial: Partial<CreatorGroup> = {}): CreatorGroup => ({
 	id: "g1",
 	targets: [],
 	targetSteps: [],
-	targetStepDelay: 300,
 	balloonEntries: [],
 	train: null,
 	trainStartTime: null,
@@ -38,7 +37,7 @@ describe("convertStageToSpawns", () => {
 					{ id: "t2", gx: 1, gy: 0, type: "ground-gold", visibleDuration: 4 },
 					{ id: "t3", gx: 2, gy: 0, type: "ground-penalty", visibleDuration: 4 },
 				],
-				targetSteps: [{ targetIds: ["t1", "t2", "t3"], interval: 100 }],
+				targetSteps: [{ targetIds: ["t1", "t2", "t3"], interval: 100, startTime: 0 }],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
@@ -60,16 +59,14 @@ describe("convertStageToSpawns", () => {
 					{ id: "t4", gx: 3, gy: 0, type: "ground", visibleDuration: 4 },
 				],
 				targetSteps: [
-					{ targetIds: ["t1", "t2"], interval: 100 },
-					{ targetIds: ["t3", "t4"], interval: 100 },
+					{ targetIds: ["t1", "t2"], interval: 100, startTime: 0 },
+					{ targetIds: ["t3", "t4"], interval: 100, startTime: 600 },
 				],
-				targetStepDelay: 500,
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
 
 			// ステップ1: 0, 100
-			// ステップ2開始: (2-1)*100 + 500 = 600
 			// ステップ2: 600, 700
 			expect(spawns.map((s) => s.time)).toEqual([0, 100, 600, 700]);
 		});
@@ -89,7 +86,7 @@ describe("convertStageToSpawns", () => {
 
 			const group = makeGroup({
 				targets,
-				targetSteps: [{ targetIds: ids, interval: 100 }],
+				targetSteps: [{ targetIds: ids, interval: 100, startTime: 0 }],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
@@ -198,7 +195,7 @@ describe("convertStageToSpawns", () => {
 				targets: [
 					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
 				],
-				targetSteps: [{ targetIds: ["t1"], interval: 0 }],
+				targetSteps: [{ targetIds: ["t1"], interval: 0, startTime: 0 }],
 				balloonEntries: [
 					{ id: "b1", time: 500, count: 2, interval: 300, spread: "center" },
 				],
@@ -228,7 +225,7 @@ describe("convertStageToSpawns", () => {
 				targets: [
 					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
 				],
-				targetSteps: [{ targetIds: ["t1"], interval: 0 }],
+				targetSteps: [{ targetIds: ["t1"], interval: 0, startTime: 0 }],
 			});
 			const g1 = makeGroup({
 				id: "g1",
@@ -251,7 +248,7 @@ describe("convertStageToSpawns", () => {
 				targets: [
 					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
 				],
-				targetSteps: [{ targetIds: ["t1", "nonexistent"], interval: 100 }],
+				targetSteps: [{ targetIds: ["t1", "nonexistent"], interval: 100, startTime: 0 }],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));

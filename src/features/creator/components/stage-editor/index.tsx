@@ -25,8 +25,7 @@ const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 const createEmptyGroup = (): CreatorGroup => ({
 	id: crypto.randomUUID(),
 	targets: [],
-	targetSteps: [{ targetIds: [], interval: 100 }],
-	targetStepDelay: 300,
+	targetSteps: [{ targetIds: [], interval: 100, startTime: 0 }],
 	balloonEntries: [],
 	train: null,
 	trainStartTime: null,

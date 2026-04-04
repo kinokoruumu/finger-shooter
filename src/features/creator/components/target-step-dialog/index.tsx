@@ -174,7 +174,17 @@ export const TargetStepDialog = ({
 	);
 
 	const handleAddStep = useCallback(() => {
-		const newStep: CreatorTargetStep = { targetIds: [], interval: 100 };
+		// 最後のステップの終了時刻 + 300ms に配置
+		const lastStep = steps[steps.length - 1];
+		const lastEnd = lastStep
+			? (lastStep.startTime ?? 0) +
+				Math.max(0, lastStep.targetIds.length - 1) * (lastStep.interval ?? 100)
+			: 0;
+		const newStep: CreatorTargetStep = {
+			targetIds: [],
+			interval: 100,
+			startTime: lastEnd + 300,
+		};
 		const newSteps = [...steps, newStep];
 		onUpdateGroup({ ...group, targetSteps: newSteps });
 		setActiveStepIndex(newSteps.length - 1);
@@ -263,31 +273,9 @@ export const TargetStepDialog = ({
 				{/* アニメーションタブUI */}
 				{tab === "animation" && (
 					<div className="space-y-3" style={rf}>
-						{/* ステップ間delay */}
-						<div className="flex items-center gap-2">
-							<span className="text-amber-900/50 text-xs">
-								ステップ間隔
-							</span>
-							<Input
-								type="number"
-								value={group.targetStepDelay ?? 300}
-								onChange={(e) =>
-									onUpdateGroup({
-										...group,
-										targetStepDelay: Math.max(
-											0,
-											Number(e.target.value),
-										),
-									})
-								}
-								className="h-7 w-20 border-amber-900/15 text-center text-xs"
-								min={0}
-								step={50}
-							/>
-							<span className="text-amber-900/40 text-xs">
-								ms
-							</span>
-						</div>
+						<p className="text-amber-900/40 text-xs">
+							各ステップの開始タイミングはタイムラインでドラッグ移動できます
+						</p>
 
 						{/* ステップリスト */}
 						<div className="space-y-1.5">

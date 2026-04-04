@@ -24,20 +24,19 @@ const convertGroup = (
 ): SpawnEntry[] => {
 	const spawns: SpawnEntry[] = [];
 
-	// --- 的: ステップモデル ---
+	// --- 的: ステップモデル（startTime ベース） ---
 	const targetSteps = group.targetSteps ?? [];
-	const targetStepDelay = group.targetStepDelay ?? 300;
-	let targetTime = 0;
 
 	for (const step of targetSteps) {
 		const interval = step.interval ?? 100;
+		const baseTime = step.startTime ?? 0;
 		for (let i = 0; i < step.targetIds.length; i++) {
 			const target = group.targets.find(
 				(t) => t.id === step.targetIds[i],
 			);
 			if (!target) continue;
 			spawns.push({
-				time: targetTime + i * interval,
+				time: baseTime + i * interval,
 				group: groupIndex,
 				type: target.type,
 				nx: 0,
@@ -45,10 +44,6 @@ const convertGroup = (
 				gy: target.gy,
 				visibleDuration: target.visibleDuration,
 			});
-		}
-		if (step.targetIds.length > 0) {
-			targetTime +=
-				(step.targetIds.length - 1) * interval + targetStepDelay;
 		}
 	}
 

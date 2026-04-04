@@ -12,6 +12,8 @@ export type CreatorTarget = {
 export type CreatorTargetStep = {
 	targetIds: string[];
 	interval: number;
+	/** ステップの開始タイミング(ms)。タイムライン上でドラッグ移動可能 */
+	startTime: number;
 };
 
 /** 風船のタイムラインエントリ（1バッチ） */
@@ -47,7 +49,6 @@ export type CreatorGroup = {
 	/** 的 */
 	targets: CreatorTarget[];
 	targetSteps: CreatorTargetStep[];
-	targetStepDelay: number;
 	/** 風船 */
 	balloonEntries: CreatorBalloonEntry[];
 	/** 列車 */

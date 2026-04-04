@@ -75,18 +75,22 @@ const TargetTrack = ({
 	duration,
 	width,
 	onClick,
+	onUpdateGroup,
 }: {
 	group: CreatorGroup;
 	duration: number;
 	width: number;
 	onClick: () => void;
+	onUpdateGroup: (group: CreatorGroup) => void;
 }) => {
 	const stepTimes = calcTargetStepTimes(group);
 	const targets = group.targets ?? [];
+	const steps = group.targetSteps ?? [];
+	const dragInitialTimeRef = useRef(0);
 
 	return (
 		<div
-			className="relative cursor-pointer hover:bg-amber-900/[0.03]"
+			className="relative hover:bg-amber-900/[0.03]"
 			style={{ height: TRACK_HEIGHT, width }}
 			onClick={onClick}
 			role="button"
@@ -99,26 +103,43 @@ const TargetTrack = ({
 				const x = timeToX(st.startTime, duration, width);
 				const x2 = timeToX(st.endTime, duration, width);
 				const w = Math.max(x2 - x, 6);
-				const count =
-					(group.targetSteps?.[i]?.targetIds ?? []).length;
+				const count = (steps[i]?.targetIds ?? []).length;
+
 				return (
-					<div
+					<DraggableBar
 						key={`step-${i}`}
-						className="absolute top-1 flex items-center rounded-md bg-amber-500 text-[10px] font-bold text-white"
-						style={{
-							left: x,
-							width: w,
-							height: TRACK_HEIGHT - 8,
+						x={x}
+						width={w}
+						color="bg-amber-500"
+						activeColor="bg-amber-700"
+						label={`${count}個`}
+						trackHeight={TRACK_HEIGHT}
+						onDragStart={() => {
+							dragInitialTimeRef.current =
+								steps[i]?.startTime ?? 0;
 						}}
-					>
-						<span className="truncate px-1.5">
-							{count}個
-						</span>
-					</div>
+						onDrag={(totalDx) => {
+							const newTime = calcDraggedTime(
+								dragInitialTimeRef.current,
+								totalDx,
+								duration,
+								width,
+							);
+							onUpdateGroup({
+								...group,
+								targetSteps: steps.map((s, si) =>
+									si === i
+										? { ...s, startTime: newTime }
+										: s,
+								),
+							});
+						}}
+						onClick={onClick}
+					/>
 				);
 			})}
 			{targets.length === 0 && stepTimes.length === 0 && (
-				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20">
+				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20 cursor-pointer">
 					クリックして的を編集
 				</span>
 			)}
@@ -166,20 +187,23 @@ const BalloonTrack = ({
 		[group, entries, duration, width, onUpdateGroup],
 	);
 
+	const rowCount = Math.max(1, entries.length);
+
 	return (
 		<div
 			ref={trackRef}
 			className="relative cursor-crosshair"
-			style={{ height: TRACK_HEIGHT, width }}
+			style={{ height: TRACK_HEIGHT * rowCount, width }}
 			onClick={handleTrackClick}
 		>
-			{entries.map((entry) => {
+			{entries.map((entry, idx) => {
 				const x = timeToX(entry.time, duration, width);
 				const endTime =
 					entry.time +
 					Math.max(0, entry.count - 1) * entry.interval;
 				const x2 = timeToX(endTime, duration, width);
 				const barW = Math.max(x2 - x, 8);
+				const rowOffset = idx * TRACK_HEIGHT;
 
 				return (
 					<DraggableBar
@@ -218,6 +242,7 @@ const BalloonTrack = ({
 								),
 							})
 						}
+						style={{ top: rowOffset + 4 }}
 					/>
 				);
 			})}
@@ -369,6 +394,7 @@ export const StageTimeline = ({
 					duration={duration}
 					width={timelineWidth}
 					onClick={onEditTargets}
+					onUpdateGroup={onUpdateGroup}
 				/>
 			),
 		},
