@@ -273,6 +273,7 @@ export const TargetStepDialog = ({
 				</div>
 
 				{/* Canvas */}
+				<div className="max-h-[40vh]">
 				<EditorCanvasWrapper>
 					<EditorScene
 						targets={targets}
@@ -299,6 +300,7 @@ export const TargetStepDialog = ({
 						}
 					/>
 				</EditorCanvasWrapper>
+				</div>
 
 				{/* 配置タブ */}
 				{tab === "placement" && (
