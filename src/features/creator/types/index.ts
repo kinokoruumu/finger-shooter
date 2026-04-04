@@ -8,21 +8,22 @@ export type CreatorTarget = {
 	visibleDuration: number;
 };
 
-export type CreatorAnimationStep = {
-	/** 的ID（出現順） */
+/** 的のステップ（配置+出現順序） */
+export type CreatorTargetStep = {
 	targetIds: string[];
-	/** 的の出現間隔(ms) */
-	targetInterval: number;
-	/** このステップで出現する風船の数 */
-	balloonCount: number;
-	/** 風船の出現間隔(ms) */
-	balloonInterval: number;
-	/** このステップで列車を出現させるか */
-	trainStart: boolean;
+	interval: number;
 };
 
-export type CreatorBalloon = {
-	/** 横位置の範囲: left/center/right/random */
+/** 風船のタイムラインエントリ（1バッチ） */
+export type CreatorBalloonEntry = {
+	id: string;
+	/** 出現タイミング(ms) */
+	time: number;
+	/** 個数 */
+	count: number;
+	/** バッチ内の出現間隔(ms) */
+	interval: number;
+	/** 横位置パターン */
 	spread: "left" | "center" | "right" | "random";
 };
 
@@ -40,14 +41,19 @@ export type CreatorTrain = {
 	slots: CreatorTrainSlot[];
 };
 
-/** 1グループ = 順次実行される1つのまとまり。的・風船・列車を自由に混在可能 */
+/** 1グループ = 順次実行される1つのまとまり */
 export type CreatorGroup = {
 	id: string;
+	/** 的 */
 	targets: CreatorTarget[];
-	balloon: CreatorBalloon | null;
+	targetSteps: CreatorTargetStep[];
+	targetStepDelay: number;
+	/** 風船 */
+	balloonEntries: CreatorBalloonEntry[];
+	/** 列車 */
 	train: CreatorTrain | null;
-	steps: CreatorAnimationStep[];
-	stepDelay: number;
+	/** 列車の出現タイミング(ms)。null = 出現しない */
+	trainStartTime: number | null;
 };
 
 export type CreatorStage = {

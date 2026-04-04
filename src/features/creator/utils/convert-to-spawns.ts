@@ -1,8 +1,8 @@
 import type { SpawnEntry } from "@/features/game/constants/stage-definitions";
-import type { CreatorBalloon, CreatorGroup, CreatorStage } from "../types";
+import type { CreatorGroup, CreatorStage } from "../types";
 
 const spreadToNx = (
-	spread: CreatorBalloon["spread"],
+	spread: string,
 	index: number,
 	total: number,
 ): number => {
@@ -13,7 +13,7 @@ const spreadToNx = (
 			return 0.35 + (index / Math.max(total - 1, 1)) * 0.3;
 		case "right":
 			return 0.6 + (index / Math.max(total - 1, 1)) * 0.25;
-		case "random":
+		default:
 			return 0.15 + Math.random() * 0.7;
 	}
 };
@@ -23,25 +23,21 @@ const convertGroup = (
 	groupIndex: number,
 ): SpawnEntry[] => {
 	const spawns: SpawnEntry[] = [];
-	let time = 0;
 
-	for (const step of group.steps) {
-		const balloonCount = step.balloonCount ?? 0;
-		const balloonInterval = step.balloonInterval ?? 500;
-		const trainStart = step.trainStart ?? false;
-		const targetInterval =
-			step.targetInterval ??
-			(step as unknown as { interval?: number }).interval ??
-			100;
+	// --- 的: ステップモデル ---
+	const targetSteps = group.targetSteps ?? [];
+	const targetStepDelay = group.targetStepDelay ?? 300;
+	let targetTime = 0;
 
-		// 的
+	for (const step of targetSteps) {
+		const interval = step.interval ?? 100;
 		for (let i = 0; i < step.targetIds.length; i++) {
 			const target = group.targets.find(
 				(t) => t.id === step.targetIds[i],
 			);
 			if (!target) continue;
 			spawns.push({
-				time: time + i * targetInterval,
+				time: targetTime + i * interval,
 				group: groupIndex,
 				type: target.type,
 				nx: 0,
@@ -50,47 +46,41 @@ const convertGroup = (
 				visibleDuration: target.visibleDuration,
 			});
 		}
+		if (step.targetIds.length > 0) {
+			targetTime +=
+				(step.targetIds.length - 1) * interval + targetStepDelay;
+		}
+	}
 
-		// 風船
-		const spread = group.balloon?.spread ?? "random";
-		for (let i = 0; i < balloonCount; i++) {
+	// --- 風船: タイムラインエントリ ---
+	const balloonEntries = group.balloonEntries ?? [];
+	for (const entry of balloonEntries) {
+		for (let i = 0; i < entry.count; i++) {
 			spawns.push({
-				time: time + i * balloonInterval,
+				time: entry.time + i * entry.interval,
 				group: groupIndex,
 				type: "balloon",
-				nx: spreadToNx(spread, i, balloonCount),
+				nx: spreadToNx(entry.spread, i, entry.count),
 			});
 		}
+	}
 
-		// 列車
-		if (trainStart && group.train) {
-			spawns.push({
-				time,
-				group: groupIndex,
-				type: "train",
-				nx: 0,
-				direction: group.train.direction,
-				trainSpeed: group.train.speed,
-				slotsOscillate: group.train.slotsOscillate,
-				goldSlots: group.train.slots.filter((s) => s.type === "gold")
-					.length,
-				penaltySlots: group.train.slots.filter(
-					(s) => s.type === "penalty",
-				).length,
-			});
-		}
-
-		// 次ステップの開始時刻
-		const targetEnd =
-			step.targetIds.length > 0
-				? (step.targetIds.length - 1) * targetInterval
-				: 0;
-		const balloonEnd =
-			balloonCount > 0 ? (balloonCount - 1) * balloonInterval : 0;
-		const stepDuration = Math.max(targetEnd, balloonEnd);
-		if (step.targetIds.length > 0 || balloonCount > 0 || trainStart) {
-			time += stepDuration + group.stepDelay;
-		}
+	// --- 列車: 出現タイミング ---
+	if (group.train && group.trainStartTime != null) {
+		spawns.push({
+			time: group.trainStartTime,
+			group: groupIndex,
+			type: "train",
+			nx: 0,
+			direction: group.train.direction,
+			trainSpeed: group.train.speed,
+			slotsOscillate: group.train.slotsOscillate,
+			goldSlots: group.train.slots.filter((s) => s.type === "gold")
+				.length,
+			penaltySlots: group.train.slots.filter(
+				(s) => s.type === "penalty",
+			).length,
+		});
 	}
 
 	return spawns;
