@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import type { CreatorGroup } from "../../types";
-import { useAnimationEditor } from "./hooks";
+import type { useAnimationEditor } from "./hooks";
 import { StepPanel } from "./internal/step-panel";
 
 type Props = {
 	group: CreatorGroup;
-	onUpdateGroup: (group: CreatorGroup) => void;
+	animEditor: ReturnType<typeof useAnimationEditor>;
 	isPreviewPlaying: boolean;
 	onPlay: () => void;
 	onStop: () => void;
@@ -16,25 +16,14 @@ const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
 export const AnimationEditor = ({
 	group,
-	onUpdateGroup,
+	animEditor,
 	isPreviewPlaying,
 	onPlay,
 	onStop,
 	spawnCount,
 }: Props) => {
-	const {
-		activeStepIndex,
-		setActiveStepIndex,
-		handleAddStep,
-		handleDeleteStep,
-		handleIntervalChange,
-		handleStepDelayChange,
-		handleRemoveTarget,
-	} = useAnimationEditor(group, onUpdateGroup);
-
 	return (
 		<div className="space-y-4">
-			{/* プレビューコントロール */}
 			<div className="flex items-center gap-3" style={rf}>
 				{!isPreviewPlaying ? (
 					<Button
@@ -55,20 +44,19 @@ export const AnimationEditor = ({
 				</span>
 			</div>
 
-			{/* ステップ管理（プレビュー中は非表示） */}
 			{!isPreviewPlaying && (
 				<StepPanel
 					steps={group.steps}
 					stepDelay={group.stepDelay}
 					targets={group.targets}
 					balloons={group.balloons ?? []}
-					activeStepIndex={activeStepIndex}
-					onActiveStepChange={setActiveStepIndex}
-					onAddStep={handleAddStep}
-					onDeleteStep={handleDeleteStep}
-					onIntervalChange={handleIntervalChange}
-					onStepDelayChange={handleStepDelayChange}
-					onRemoveTarget={handleRemoveTarget}
+					activeStepIndex={animEditor.activeStepIndex}
+					onActiveStepChange={animEditor.setActiveStepIndex}
+					onAddStep={animEditor.handleAddStep}
+					onDeleteStep={animEditor.handleDeleteStep}
+					onIntervalChange={animEditor.handleIntervalChange}
+					onStepDelayChange={animEditor.handleStepDelayChange}
+					onRemoveTarget={animEditor.handleRemoveTarget}
 				/>
 			)}
 		</div>

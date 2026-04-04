@@ -9,6 +9,7 @@ import { createScreenToWorld } from "@/features/game/utils/screen-to-world";
 type Props = {
 	target: CreatorTarget;
 	ghost?: boolean;
+	disabled?: boolean;
 	label?: string;
 };
 
@@ -120,7 +121,7 @@ const TargetVisual = ({ type }: { type: CreatorTarget["type"] }) => {
 const APPEAR_DURATION = 0.25;
 
 /** 出現アニメーション付きの静的ターゲット */
-export const StaticTarget = ({ target, ghost, label }: Props) => {
+export const StaticTarget = ({ target, ghost, disabled, label }: Props) => {
 	const { camera } = useThree();
 	const groupRef = useRef<THREE.Group>(null);
 	const elapsed = useRef(0);
@@ -167,13 +168,18 @@ export const StaticTarget = ({ target, ghost, label }: Props) => {
 		}
 	});
 
+	const visualScale = disabled ? 0.6 : 1;
+
 	return (
 		<group
 			ref={groupRef}
 			position={position}
 			scale={0.3}
 		>
-			<group scale={targetScale / 1.8} renderOrder={ghost ? -1 : 0}>
+			<group
+				scale={(targetScale / 1.8) * visualScale}
+				renderOrder={ghost || disabled ? -1 : 0}
+			>
 				<TargetVisual type={target.type} />
 			</group>
 			{label && (

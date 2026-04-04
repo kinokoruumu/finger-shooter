@@ -246,6 +246,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 					onCellClick={() => {}}
 					onCellRightClick={() => {}}
 					ghostTargetIds={animEditor.ghostTargetIds}
+					disabledTargetIds={animEditor.disabledTargetIds}
 					targetLabels={animEditor.targetLabels}
 					onTargetClick={animEditor.handleTargetClick}
 					showGrid={false}
@@ -266,7 +267,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		<div className="flex min-h-screen flex-col bg-[#f5f0e8]">
 			{/* ヘッダー */}
 			<div className="border-b border-amber-900/10 bg-white/80 px-4 py-3">
-				<div className="mx-auto flex max-w-4xl items-center gap-4">
+				<div className="mx-auto flex max-w-6xl items-center gap-4">
 					<button
 						type="button"
 						className="font-medium text-amber-900/60 text-sm hover:text-amber-900"
@@ -311,7 +312,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 				</div>
 			</div>
 
-			<div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-4">
+			<div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-4">
 				{/* Canvas — 常に1つだけ存在 */}
 				{selectedGroup && (
 					<EditorCanvasWrapper>
@@ -319,14 +320,27 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 					</EditorCanvasWrapper>
 				)}
 
-				{/* プレビュー中はCanvasのみ */}
 				{isAnyPreviewPlaying ? (
-					<p
-						className="text-center text-amber-900/40 text-xs"
-						style={rf}
-					>
-						{(activePreviewSpawns ?? []).length}個のスポーン
-					</p>
+					<div className="flex items-center justify-center gap-3">
+						<Button
+							onClick={
+								isStagePreviewPlaying
+									? stagePreview.stop
+									: groupPreview.stop
+							}
+							size="sm"
+							variant="outline"
+							style={rf}
+						>
+							■ 停止
+						</Button>
+						<span
+							className="text-amber-900/40 text-xs"
+							style={rf}
+						>
+							{(activePreviewSpawns ?? []).length}個のスポーン
+						</span>
+					</div>
 				) : selectedGroup ? (
 					<div className="space-y-4">
 						{/* タブ切り替え */}
@@ -363,9 +377,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 							selectedGroupIdx !== null && (
 								<AnimationEditor
 									group={selectedGroup}
-									onUpdateGroup={(g) =>
-										updateGroup(selectedGroupIdx, g)
-									}
+									animEditor={animEditor}
 									isPreviewPlaying={isGroupPreviewPlaying}
 									onPlay={groupPreview.play}
 									onStop={groupPreview.stop}

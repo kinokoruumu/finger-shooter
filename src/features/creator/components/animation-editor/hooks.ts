@@ -24,17 +24,21 @@ export const useAnimationEditor = (
 		return ids;
 	}, [group.steps]);
 
-	// 未登録 or 他ステップの的/風船 → 半透明表示
+	// 未登録の的/風船 → 半透明表示（クリックで追加可能）
 	const ghostTargetIds = useMemo(() => {
 		const ids = new Set<string>();
-		// 未登録
 		for (const t of group.targets) {
 			if (!registeredIds.has(t.id)) ids.add(t.id);
 		}
 		for (const b of group.balloons) {
 			if (!registeredIds.has(b.id)) ids.add(b.id);
 		}
-		// 他ステップに属するもの
+		return ids;
+	}, [group.targets, group.balloons, registeredIds]);
+
+	// 他ステップに属する的/風船 → disabled 表示
+	const disabledTargetIds = useMemo(() => {
+		const ids = new Set<string>();
 		for (let i = 0; i < group.steps.length; i++) {
 			if (i === activeStepIndex) continue;
 			for (const tid of group.steps[i].targetIds) {
@@ -42,7 +46,7 @@ export const useAnimationEditor = (
 			}
 		}
 		return ids;
-	}, [group.targets, group.balloons, group.steps, registeredIds, activeStepIndex]);
+	}, [group.steps, activeStepIndex]);
 
 	// アクティブステップ内の的/風船に番号ラベル
 	const targetLabels = useMemo(() => {
@@ -140,6 +144,7 @@ export const useAnimationEditor = (
 		activeStepIndex,
 		setActiveStepIndex,
 		ghostTargetIds,
+		disabledTargetIds,
 		targetLabels,
 		handleTargetClick,
 		handleAddStep,

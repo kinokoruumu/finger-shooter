@@ -8,6 +8,7 @@ type SceneProps = {
 	onCellClick: (gx: number, gy: number) => void;
 	onCellRightClick: (gx: number, gy: number) => void;
 	ghostTargetIds?: Set<string>;
+	disabledTargetIds?: Set<string>;
 	targetLabels?: Map<string, string>;
 	onTargetClick?: (targetId: string) => void;
 	showGrid?: boolean;
@@ -20,6 +21,7 @@ export const EditorScene = ({
 	onCellClick,
 	onCellRightClick,
 	ghostTargetIds,
+	disabledTargetIds,
 	targetLabels,
 	onTargetClick,
 	showGrid = true,
@@ -37,6 +39,7 @@ export const EditorScene = ({
 			)}
 			{targets.map((t) => {
 				const isGhost = ghostTargetIds?.has(t.id) ?? false;
+				const isDisabled = disabledTargetIds?.has(t.id) ?? false;
 				const label = targetLabels?.get(t.id);
 				return (
 					<group
@@ -48,7 +51,7 @@ export const EditorScene = ({
 							}
 						}}
 					>
-						<StaticTarget target={t} ghost={isGhost} label={label} />
+						<StaticTarget target={t} ghost={isGhost} disabled={isDisabled} label={label} />
 					</group>
 				);
 			})}
