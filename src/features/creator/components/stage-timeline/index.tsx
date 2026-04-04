@@ -267,6 +267,7 @@ const BalloonTrack = ({
 				id: crypto.randomUUID(),
 				time,
 				count: 3,
+				interval: 500,
 				spread: "random",
 			};
 			onUpdateGroup({
@@ -288,10 +289,13 @@ const BalloonTrack = ({
 		>
 			{entries.map((entry, idx) => {
 				const balloonVisible = getBalloonVisibleDuration();
+				const spawnDur = Math.max(0, entry.count - 1) * (entry.interval ?? 0);
+				const totalDur = spawnDur + balloonVisible;
 				const x = timeToX(entry.time, duration, width);
-				const x2 = timeToX(entry.time + balloonVisible, duration, width);
+				const x2 = timeToX(entry.time + totalDur, duration, width);
 				const barW = Math.max(x2 - x, 8);
 				const rowOffset = idx * TRACK_HEIGHT;
+				const spawnRatio = totalDur > 0 ? Math.max(0.05, spawnDur / totalDur) : 0;
 				const spreadLabel = { left: "左寄り", center: "中央", right: "右寄り", random: "ランダム" }[entry.spread];
 
 				return (
@@ -301,7 +305,8 @@ const BalloonTrack = ({
 						width={barW}
 						color="bg-sky-400"
 						activeColor="bg-sky-600"
-						label={`×${entry.count} ${spreadLabel}`}
+						label={`×${entry.count} ${spreadLabel}${(entry.interval ?? 0) > 0 ? ` ${entry.interval}ms` : ""}`}
+						spawnRatio={spawnRatio > 0.05 ? spawnRatio : undefined}
 						trackHeight={TRACK_HEIGHT}
 						onDragStart={() => {
 							dragInitialRef.current = {

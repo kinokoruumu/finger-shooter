@@ -46,12 +46,13 @@ const convertGroup = (
 		}
 	}
 
-	// --- 風船: 同時出現 ---
+	// --- 風船 ---
 	const balloonEntries = group.balloonEntries ?? [];
 	for (const entry of balloonEntries) {
+		const interval = entry.interval ?? 0;
 		for (let i = 0; i < entry.count; i++) {
 			spawns.push({
-				time: entry.time,
+				time: entry.time + i * interval,
 				group: groupIndex,
 				type: "balloon",
 				nx: spreadToNx(entry.spread, i, entry.count),

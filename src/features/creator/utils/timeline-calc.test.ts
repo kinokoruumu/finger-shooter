@@ -70,13 +70,23 @@ describe("calcBalloonsDuration", () => {
 		expect(calcBalloonsDuration(makeGroup())).toBe(0);
 	});
 
-	it("time + visibleDuration(5000ms) を返す", () => {
+	it("time + visibleDuration(5000ms) を返す（同時出現）", () => {
 		const group = makeGroup({
 			balloonEntries: [
-				{ id: "b1", time: 1000, count: 3, spread: "center" },
+				{ id: "b1", time: 1000, count: 3, interval: 0, spread: "center" },
 			],
 		});
 		expect(calcBalloonsDuration(group)).toBe(6000); // 1000 + 5000
+	});
+
+	it("interval ありの場合、最後の風船の出現 + visibleDuration", () => {
+		const group = makeGroup({
+			balloonEntries: [
+				{ id: "b1", time: 0, count: 3, interval: 500, spread: "center" },
+			],
+		});
+		// lastSpawn = 0 + 2*500 = 1000, end = 1000 + 5000 = 6000
+		expect(calcBalloonsDuration(group)).toBe(6000);
 	});
 });
 

@@ -16,13 +16,15 @@ export type CreatorTargetStep = {
 	startTime: number;
 };
 
-/** 風船のタイムラインエントリ。N個が同時出現 */
+/** 風船のタイムラインエントリ */
 export type CreatorBalloonEntry = {
 	id: string;
-	/** 出現タイミング(ms) */
+	/** 出現開始タイミング(ms) */
 	time: number;
-	/** 同時出現する個数 */
+	/** 個数 */
 	count: number;
+	/** バッチ内の出現間隔(ms)。0なら同時出現 */
+	interval: number;
 	/** 横位置パターン */
 	spread: "left" | "center" | "right" | "random";
 };

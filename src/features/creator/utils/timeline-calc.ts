@@ -116,7 +116,9 @@ export const calcBalloonsDuration = (group: CreatorGroup): number => {
 	const entries = group.balloonEntries ?? [];
 	let max = 0;
 	for (const entry of entries) {
-		const end = entry.time + BALLOON_VISIBLE_MS;
+		const lastSpawnTime =
+			entry.time + Math.max(0, entry.count - 1) * (entry.interval ?? 0);
+		const end = lastSpawnTime + BALLOON_VISIBLE_MS;
 		if (end > max) max = end;
 	}
 	return max;

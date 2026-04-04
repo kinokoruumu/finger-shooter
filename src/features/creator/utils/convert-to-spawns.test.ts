@@ -98,11 +98,11 @@ describe("convertStageToSpawns", () => {
 		});
 	});
 
-	describe("風船（同時出現）", () => {
-		it("N個が同じ time で同時に出現する", () => {
+	describe("風船", () => {
+		it("interval=0 なら N個が同時に出現する", () => {
 			const group = makeGroup({
 				balloonEntries: [
-					{ id: "b1", time: 0, count: 3, spread: "center" },
+					{ id: "b1", time: 0, count: 3, interval: 0, spread: "center" },
 				],
 			});
 
@@ -113,24 +113,37 @@ describe("convertStageToSpawns", () => {
 			expect(spawns.every((s) => s.time === 0)).toBe(true);
 		});
 
+		it("interval ありなら間隔を空けて出現する", () => {
+			const group = makeGroup({
+				balloonEntries: [
+					{ id: "b1", time: 0, count: 3, interval: 500, spread: "center" },
+				],
+			});
+
+			const spawns = convertStageToSpawns(makeStage([group]));
+
+			expect(spawns).toHaveLength(3);
+			expect(spawns.map((s) => s.time)).toEqual([0, 500, 1000]);
+		});
+
 		it("複数エントリが異なるタイミングで出現する", () => {
 			const group = makeGroup({
 				balloonEntries: [
-					{ id: "b1", time: 0, count: 2, spread: "left" },
-					{ id: "b2", time: 1000, count: 2, spread: "right" },
+					{ id: "b1", time: 0, count: 2, interval: 100, spread: "left" },
+					{ id: "b2", time: 1000, count: 2, interval: 100, spread: "right" },
 				],
 			});
 
 			const spawns = convertStageToSpawns(makeStage([group]));
 
 			expect(spawns).toHaveLength(4);
-			expect(spawns.map((s) => s.time)).toEqual([0, 0, 1000, 1000]);
+			expect(spawns.map((s) => s.time)).toEqual([0, 100, 1000, 1100]);
 		});
 
 		it("count: 1 のエントリは1つの風船を出す", () => {
 			const group = makeGroup({
 				balloonEntries: [
-					{ id: "b1", time: 500, count: 1, spread: "random" },
+					{ id: "b1", time: 500, count: 1, interval: 0, spread: "random" },
 				],
 			});
 
@@ -197,7 +210,7 @@ describe("convertStageToSpawns", () => {
 				],
 				targetSteps: [{ targetIds: ["t1"], interval: 0, startTime: 0 }],
 				balloonEntries: [
-					{ id: "b1", time: 500, count: 2, spread: "center" },
+					{ id: "b1", time: 500, count: 2, interval: 0, spread: "center" },
 				],
 				train: { direction: -1, speed: 2, slotsOscillate: false, slots: [] },
 				trainStartTime: 1500,
@@ -230,7 +243,7 @@ describe("convertStageToSpawns", () => {
 			const g1 = makeGroup({
 				id: "g1",
 				balloonEntries: [
-					{ id: "b1", time: 0, count: 1, spread: "random" },
+					{ id: "b1", time: 0, count: 1, interval: 0, spread: "random" },
 				],
 			});
 
