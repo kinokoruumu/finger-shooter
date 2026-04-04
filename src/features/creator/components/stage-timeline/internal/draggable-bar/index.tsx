@@ -10,7 +10,6 @@ type Props = {
 	activeColor: string;
 	label: string;
 	trackHeight: number;
-	/** バー内の出現期間の割合 (0-1)。指定するとバーが2色に分かれる */
 	spawnRatio?: number;
 	onDragStart?: () => void;
 	onDrag?: (totalDeltaX: number, mode: DragMode) => void;
@@ -82,12 +81,13 @@ export const DraggableBar = ({
 				: "grab";
 
 	const actualWidth = Math.max(barWidth, 48);
+	const hasResize = !!onDrag;
 
 	return (
 		<div
 			data-testid="draggable-bar"
 			className={cn(
-				"group absolute flex items-center overflow-hidden rounded-md text-[10px] font-bold text-white transition-colors",
+				"group absolute flex items-center rounded-md text-[10px] font-bold text-white transition-colors",
 				spawnRatio == null && (dragging ? activeColor : color),
 			)}
 			style={{
@@ -100,7 +100,7 @@ export const DraggableBar = ({
 			onPointerDown={(e) => handlePointerDown(e, "move")}
 			onClick={handleClick}
 		>
-			{/* 2色表示: 出現期間(濃) + 表示残り(薄) */}
+			{/* 2色表示 */}
 			{spawnRatio != null && (
 				<>
 					<div
@@ -122,28 +122,37 @@ export const DraggableBar = ({
 				</>
 			)}
 
-			{/* 左端リサイズハンドル */}
-			{onDrag && (
+			{/* 左端リサイズハンドル（常時表示） */}
+			{hasResize && (
 				<div
 					data-testid="resize-left-handle"
-					className="absolute top-0 bottom-0 left-0 z-10 w-2 cursor-ew-resize rounded-l-md hover:bg-white/20"
+					className={cn(
+						"absolute top-0 bottom-0 left-0 z-20 w-3 cursor-ew-resize rounded-l-md",
+						dragging === "resize-left"
+							? "bg-white/30"
+							: "bg-white/10",
+					)}
 					onPointerDown={(e) => handlePointerDown(e, "resize-left")}
 				/>
 			)}
 
-			<span className="relative z-10 truncate px-2">{label}</span>
+			<span className="relative z-10 truncate px-3">{label}</span>
 
-			{/* 右端リサイズハンドル */}
-			{onDrag && (
+			{/* 右端リサイズハンドル（常時表示） */}
+			{hasResize && (
 				<div
 					data-testid="resize-right-handle"
-					className="absolute top-0 right-0 bottom-0 w-2 cursor-ew-resize rounded-r-md hover:bg-white/20"
+					className={cn(
+						"absolute top-0 right-0 bottom-0 z-20 w-3 cursor-ew-resize rounded-r-md",
+						dragging === "resize-right"
+							? "bg-white/30"
+							: "bg-white/10",
+					)}
 					onPointerDown={(e) =>
 						handlePointerDown(e, "resize-right")
 					}
 				/>
 			)}
-
-			</div>
+		</div>
 	);
 };

@@ -345,7 +345,7 @@ export const TargetStepDialog = ({
 													onClick={(e) =>
 														e.stopPropagation()
 													}
-													className="h-6 w-14 border-amber-900/15 text-center text-[10px]"
+													className="h-6 w-20 border-amber-900/15 text-center text-[10px]"
 													min={0}
 													step={10}
 												/>

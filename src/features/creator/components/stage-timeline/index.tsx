@@ -331,7 +331,8 @@ const BalloonTrack = ({
 								interval: 0,
 							};
 						}}
-						onDrag={(totalDx) => {
+						onDrag={(totalDx, _mode) => {
+							// 風船は visibleDuration 固定なので全操作が移動
 							const newTime = calcDraggedTime(
 								dragInitialRef.current.time,
 								totalDx,
