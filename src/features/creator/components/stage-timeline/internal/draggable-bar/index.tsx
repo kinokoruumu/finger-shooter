@@ -135,7 +135,7 @@ export const DraggableBar = ({
 							}}
 						/>
 						{/* 境界B: 出現→表示残りの境界ドラッグハンドル */}
-						{sR > dR && sR < 1 && onDrag && (
+						{delayRatio != null && sR > dR && sR < 1 && onDrag && (
 							<div
 								data-testid="resize-spawn-handle"
 								className={cn(
