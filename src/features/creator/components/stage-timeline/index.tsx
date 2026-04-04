@@ -65,12 +65,12 @@ const TimeRuler = ({
 						className={cn(
 							"w-px",
 							tick.major
-								? "h-3 bg-amber-900/25"
-								: "h-2 bg-amber-900/10",
+								? "h-3 bg-white/20"
+								: "h-2 bg-white/10",
 						)}
 					/>
 					{tick.major && (
-						<span className="absolute top-3 -translate-x-1/2 text-[9px] text-amber-900/30">
+						<span className="absolute top-3 -translate-x-1/2 text-[9px] text-white/40">
 							{tick.label}
 						</span>
 					)}
@@ -80,13 +80,12 @@ const TimeRuler = ({
 	);
 };
 
-/** 的セットの色 */
-const SET_COLORS = [
-	{ bg: "bg-amber-100/40", border: "border-amber-400/30", bar: "bg-amber-500", barActive: "bg-amber-700" },
-	{ bg: "bg-orange-100/40", border: "border-orange-400/30", bar: "bg-orange-500", barActive: "bg-orange-700" },
-	{ bg: "bg-rose-100/40", border: "border-rose-400/30", bar: "bg-rose-500", barActive: "bg-rose-700" },
-	{ bg: "bg-lime-100/40", border: "border-lime-400/30", bar: "bg-lime-500", barActive: "bg-lime-700" },
-];
+/** 的セットのスタイル */
+const SET_STYLE = {
+	bg: "bg-white/[0.06]",
+	bar: "bg-amber-500",
+	barActive: "bg-amber-600",
+};
 
 /** 的トラック */
 const TargetTrack = ({
@@ -144,9 +143,9 @@ const TargetTrack = ({
 		>
 			{(() => {
 				let yOffset = 0;
-				return sets.map((set, setIdx) => {
+				return sets.map((set) => {
 					const stepBars = calcTargetStepBarsForSet(set);
-					const colors = SET_COLORS[setIdx % SET_COLORS.length];
+					const colors = SET_STYLE;
 					const setStartY = yOffset;
 					const stepCount = Math.max(1, stepBars.length);
 					const setHeight = stepCount * TRACK_HEIGHT;
@@ -173,9 +172,8 @@ const TargetTrack = ({
 							{/* セット括り（左ボーダー + 背景、ドラッグで一括移動） */}
 							<div
 								className={cn(
-									"absolute cursor-grab rounded-r-lg border-l-4",
+									"absolute cursor-grab rounded-lg",
 									colors.bg,
-									colors.border,
 								)}
 								style={{
 									left: Math.max(0, setMinX - 4),
@@ -411,7 +409,7 @@ const TargetTrack = ({
 				});
 			})()}
 			{sets.length === 0 && (
-				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20 cursor-pointer">
+				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-white/20 cursor-pointer">
 					クリックで的セットを追加
 				</span>
 			)}
@@ -576,7 +574,7 @@ const BalloonTrack = ({
 				);
 			})}
 			{entries.length === 0 && (
-				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20">
+				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-white/20">
 					クリックで風船を追加
 				</span>
 			)}
@@ -717,12 +715,12 @@ const TrainTrack = ({
 				/>
 			)}
 			{!group.train && (
-				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20">
+				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-white/20">
 					列車設定で列車を追加
 				</span>
 			)}
 			{group.train && !hasBlock && (
-				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20">
+				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-white/20">
 					クリックで出現位置を設定
 				</span>
 			)}
@@ -819,34 +817,38 @@ export const StageTimeline = ({
 	return (
 		<div
 			ref={measureRef}
-			className="relative overflow-hidden rounded-xl border-2 border-amber-900/10 bg-white"
+			className="relative overflow-hidden rounded-xl bg-[#1a1d21]"
 			style={rf}
 		>
 			{/* コントロールバー */}
-			<div className="flex items-center gap-2 border-b border-amber-900/5 bg-amber-50/50 px-3 py-1.5">
+			<div className="flex items-center gap-2 border-b border-white/5 bg-white/[0.03] px-3 py-1.5">
 				{!isPlaying ? (
 					<Button
 						onClick={onPlay}
 						size="xs"
-						className="bg-amber-900 font-bold text-white hover:bg-amber-800"
+						className="bg-white/10 font-bold text-white hover:bg-white/20"
 						disabled={spawnCount === 0}
 					>
 						▶
 					</Button>
 				) : (
-					<Button onClick={onStop} size="xs" variant="outline">
+					<Button
+						onClick={onStop}
+						size="xs"
+						className="bg-white/10 text-white hover:bg-white/20"
+					>
 						■
 					</Button>
 				)}
-				<span className="text-amber-900/40 text-[10px]">
+				<span className="text-white/30 text-[10px]">
 					{spawnCount}個のスポーン
 				</span>
 			</div>
 
 			{/* ルーラー */}
-			<div className="flex border-b border-amber-900/5 bg-amber-50/30">
+			<div className="flex border-b border-white/5 bg-[#1e2227]">
 				<div
-					className="shrink-0 border-r border-amber-900/5"
+					className="shrink-0 border-r border-white/5"
 					style={{ width: LABEL_WIDTH }}
 				/>
 				<TimeRuler duration={duration} width={timelineWidth} />
@@ -856,11 +858,11 @@ export const StageTimeline = ({
 			{tracks.map((track) => (
 				<div
 					key={track.label}
-					className="flex border-b border-amber-900/5 last:border-b-0"
+					className="flex border-b border-white/5 last:border-b-0"
 				>
 					<div
 						className={cn(
-							"flex shrink-0 items-center justify-center border-r border-amber-900/5 border-l-3 text-xs font-bold text-amber-900/50",
+							"flex shrink-0 items-center justify-center border-r border-white/5 border-l-3 text-xs font-bold text-white/50",
 							track.color,
 						)}
 						style={{ width: LABEL_WIDTH }}
