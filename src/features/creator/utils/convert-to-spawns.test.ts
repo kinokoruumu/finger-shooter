@@ -368,6 +368,41 @@ describe("convertStageToSpawns", () => {
 		});
 	});
 
+	describe("旧データ互換", () => {
+		it("balloonIds が undefined のステップでもクラッシュしない", () => {
+			const group = makeGroup({
+				targets: [
+					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+				],
+				steps: [
+					{
+						targetIds: ["t1"],
+						targetInterval: 100,
+						// balloonIds, balloonInterval, trainStart が欠落
+					} as CreatorAnimationStep,
+				],
+			});
+
+			const spawns = convertStageToSpawns(makeStage([group]));
+			expect(spawns).toHaveLength(1);
+			expect(spawns[0].type).toBe("ground");
+		});
+
+		it("旧形式（interval のみ）のステップでもクラッシュしない", () => {
+			const group = makeGroup({
+				targets: [
+					{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+				],
+				steps: [
+					{ targetIds: ["t1"], interval: 100 } as unknown as CreatorAnimationStep,
+				],
+			});
+
+			const spawns = convertStageToSpawns(makeStage([group]));
+			expect(spawns).toHaveLength(1);
+		});
+	});
+
 	describe("エッジケース", () => {
 		it("存在しないIDが含まれていてもクラッシュしない", () => {
 			const group = makeGroup({

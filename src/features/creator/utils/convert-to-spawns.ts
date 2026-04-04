@@ -9,6 +9,11 @@ const convertGroup = (
 	let time = 0;
 
 	for (const step of group.steps) {
+		const balloonIds = step.balloonIds ?? [];
+		const balloonInterval = step.balloonInterval ?? 100;
+		const trainStart = step.trainStart ?? false;
+		const targetInterval = step.targetInterval ?? (step as unknown as { interval?: number }).interval ?? 100;
+
 		// 的
 		for (let i = 0; i < step.targetIds.length; i++) {
 			const target = group.targets.find(
@@ -16,7 +21,7 @@ const convertGroup = (
 			);
 			if (!target) continue;
 			spawns.push({
-				time: time + i * step.targetInterval,
+				time: time + i * targetInterval,
 				group: groupIndex,
 				type: target.type,
 				nx: 0,
@@ -27,13 +32,13 @@ const convertGroup = (
 		}
 
 		// 風船
-		for (let i = 0; i < step.balloonIds.length; i++) {
+		for (let i = 0; i < balloonIds.length; i++) {
 			const balloon = group.balloons.find(
-				(b) => b.id === step.balloonIds[i],
+				(b) => b.id === balloonIds[i],
 			);
 			if (!balloon) continue;
 			spawns.push({
-				time: time + i * step.balloonInterval,
+				time: time + i * balloonInterval,
 				group: groupIndex,
 				type: "balloon",
 				nx: balloon.nx,
@@ -41,7 +46,7 @@ const convertGroup = (
 		}
 
 		// 列車
-		if (step.trainStart && group.train) {
+		if (trainStart && group.train) {
 			spawns.push({
 				time,
 				group: groupIndex,
@@ -61,17 +66,17 @@ const convertGroup = (
 		// 次ステップの開始時刻
 		const targetEnd =
 			step.targetIds.length > 0
-				? (step.targetIds.length - 1) * step.targetInterval
+				? (step.targetIds.length - 1) * targetInterval
 				: 0;
 		const balloonEnd =
-			step.balloonIds.length > 0
-				? (step.balloonIds.length - 1) * step.balloonInterval
+			balloonIds.length > 0
+				? (balloonIds.length - 1) * balloonInterval
 				: 0;
 		const stepDuration = Math.max(targetEnd, balloonEnd);
 		if (
 			step.targetIds.length > 0 ||
-			step.balloonIds.length > 0 ||
-			step.trainStart
+			balloonIds.length > 0 ||
+			trainStart
 		) {
 			time += stepDuration + group.stepDelay;
 		}
