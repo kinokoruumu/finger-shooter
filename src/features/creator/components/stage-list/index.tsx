@@ -120,7 +120,7 @@ export const StageList = ({ onEdit }: Props) => {
 								新規作成
 							</Button>
 						</DialogTrigger>
-						<DialogContent>
+						<DialogContent className="max-w-sm">
 							<DialogHeader>
 								<DialogTitle style={rf}>新しいステージ</DialogTitle>
 							</DialogHeader>
