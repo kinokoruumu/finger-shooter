@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type {
 	CreatorAnimationStep,
-	CreatorBalloon,
 	CreatorTarget,
 	CreatorTrain,
 } from "@/features/creator/types";
@@ -12,7 +11,6 @@ type Props = {
 	steps: CreatorAnimationStep[];
 	stepDelay: number;
 	targets: CreatorTarget[];
-	balloons: CreatorBalloon[];
 	train: CreatorTrain | null;
 	activeStepIndex: number;
 	onActiveStepChange: (index: number) => void;
@@ -23,11 +21,7 @@ type Props = {
 		update: Partial<CreatorAnimationStep>,
 	) => void;
 	onStepDelayChange: (delay: number) => void;
-	onRemoveItem: (
-		stepIndex: number,
-		itemId: string,
-		field: "targetIds" | "balloonIds",
-	) => void;
+	onRemoveTarget: (stepIndex: number, targetId: string) => void;
 };
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
@@ -44,41 +38,10 @@ const TARGET_HOVER: Record<string, string> = {
 	"ground-penalty": "hover:bg-stone-700",
 };
 
-const ItemBadge = ({
-	label,
-	colorClass,
-	hoverClass,
-	onRemove,
-}: {
-	label: string;
-	colorClass: string;
-	hoverClass: string;
-	onRemove: () => void;
-}) => (
-	<button
-		type="button"
-		className={cn(
-			"group/badge flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition-colors",
-			colorClass,
-			hoverClass,
-		)}
-		onClick={(e) => {
-			e.stopPropagation();
-			onRemove();
-		}}
-	>
-		<span>{label}</span>
-		<span className="opacity-0 transition-opacity group-hover/badge:opacity-70">
-			x
-		</span>
-	</button>
-);
-
 export const StepPanel = ({
 	steps,
 	stepDelay,
 	targets,
-	balloons,
 	train,
 	activeStepIndex,
 	onActiveStepChange,
@@ -86,18 +49,13 @@ export const StepPanel = ({
 	onDeleteStep,
 	onStepUpdate,
 	onStepDelayChange,
-	onRemoveItem,
+	onRemoveTarget,
 }: Props) => {
 	return (
 		<div className="space-y-2" style={rf}>
 			{steps.map((step, i) => {
 				const isActive = i === activeStepIndex;
-				const stepTargets = step.targetIds
-					.map((tid) => targets.find((t) => t.id === tid))
-					.filter(Boolean);
-				const stepBalloons = step.balloonIds
-					.map((bid) => balloons.find((b) => b.id === bid))
-					.filter(Boolean);
+				const balloonCount = step.balloonCount ?? 0;
 
 				return (
 					<div key={`step-${i}`}>
@@ -112,10 +70,7 @@ export const StepPanel = ({
 									value={stepDelay}
 									onChange={(e) =>
 										onStepDelayChange(
-											Math.max(
-												0,
-												Number(e.target.value),
-											),
+											Math.max(0, Number(e.target.value)),
 										)
 									}
 									className="h-7 w-24 border-amber-900/15 text-center text-xs"
@@ -131,23 +86,18 @@ export const StepPanel = ({
 						{/* ステップカード */}
 						<div
 							className={cn(
-								"cursor-pointer rounded-xl border-2 p-4 transition-all",
+								"rounded-xl border-2 transition-all",
 								isActive
 									? "border-amber-800 bg-amber-50"
 									: "border-amber-900/10 bg-white hover:border-amber-900/20",
 							)}
-							onClick={() => onActiveStepChange(i)}
-							role="button"
-							tabIndex={0}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" || e.key === " ") {
-									e.preventDefault();
-									onActiveStepChange(i);
-								}
-							}}
 						>
-							{/* ヘッダー */}
-							<div className="mb-3 flex items-center justify-between">
+							{/* ヘッダー: クリック可能 */}
+							<button
+								type="button"
+								className="flex w-full items-center justify-between p-4 pb-0 text-left"
+								onClick={() => onActiveStepChange(i)}
+							>
 								<span
 									className={cn(
 										"font-bold text-sm",
@@ -159,25 +109,30 @@ export const StepPanel = ({
 									ステップ {i + 1}
 								</span>
 								{steps.length > 1 && (
-									<button
-										type="button"
+									<span
 										className="text-[11px] text-amber-900/20 transition-colors hover:text-red-500"
 										onClick={(e) => {
 											e.stopPropagation();
 											onDeleteStep(i);
 										}}
+										role="button"
+										tabIndex={0}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												e.stopPropagation();
+												onDeleteStep(i);
+											}
+										}}
 									>
 										削除
-									</button>
+									</span>
 								)}
-							</div>
+							</button>
 
-							{/* 的タイムライン */}
-							<div className="space-y-3">
-								<div
-									className="space-y-1.5"
-									onClick={(e) => e.stopPropagation()}
-								>
+							{/* コンテンツ */}
+							<div className="space-y-3 p-4">
+								{/* 的 */}
+								<div className="space-y-1.5">
 									<div className="flex items-center gap-2">
 										<span className="w-8 shrink-0 text-xs font-bold text-amber-900/50">
 											的
@@ -188,7 +143,9 @@ export const StepPanel = ({
 											</span>
 											<Input
 												type="number"
-												value={step.targetInterval}
+												value={
+													step.targetInterval ?? 100
+												}
 												onChange={(e) =>
 													onStepUpdate(i, {
 														targetInterval:
@@ -210,7 +167,7 @@ export const StepPanel = ({
 											</span>
 										</div>
 									</div>
-									{stepTargets.length === 0 ? (
+									{step.targetIds.length === 0 ? (
 										<p className="pl-8 text-amber-900/25 text-xs">
 											{isActive
 												? "Canvas上の的をクリック"
@@ -224,49 +181,71 @@ export const StepPanel = ({
 												);
 												if (!t) return null;
 												return (
-													<ItemBadge
+													<button
 														key={`${tid}-${ti}`}
-														label={`${ti + 1} (${t.gx},${t.gy})`}
-														colorClass={
+														type="button"
+														className={cn(
+															"group/badge flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition-colors",
 															TARGET_COLORS[
 																t.type
-															]
-														}
-														hoverClass={
+															],
 															TARGET_HOVER[
 																t.type
-															]
-														}
-														onRemove={() =>
-															onRemoveItem(
+															],
+														)}
+														onClick={() =>
+															onRemoveTarget(
 																i,
 																tid,
-																"targetIds",
 															)
 														}
-													/>
+													>
+														<span>
+															{ti + 1} ({t.gx},
+															{t.gy})
+														</span>
+														<span className="opacity-0 transition-opacity group-hover/badge:opacity-70">
+															x
+														</span>
+													</button>
 												);
 											})}
 										</div>
 									)}
 								</div>
 
-								{/* 風船タイムライン */}
-								<div
-									className="space-y-1.5"
-									onClick={(e) => e.stopPropagation()}
-								>
-									<div className="flex items-center gap-2">
-										<span className="w-8 shrink-0 text-xs font-bold text-sky-500/70">
-											風船
-										</span>
-										<div className="flex items-center gap-1">
+								{/* 風船 */}
+								<div className="flex items-center gap-2">
+									<span className="w-8 shrink-0 text-xs font-bold text-sky-500/70">
+										風船
+									</span>
+									<Input
+										type="number"
+										value={balloonCount}
+										onChange={(e) =>
+											onStepUpdate(i, {
+												balloonCount: Math.max(
+													0,
+													Number(e.target.value),
+												),
+											})
+										}
+										className="h-6 w-14 border-amber-900/15 text-center text-[10px]"
+										min={0}
+									/>
+									<span className="text-amber-900/30 text-[10px]">
+										個
+									</span>
+									{balloonCount > 0 && (
+										<>
 											<span className="text-amber-900/30 text-[10px]">
 												間隔
 											</span>
 											<Input
 												type="number"
-												value={step.balloonInterval}
+												value={
+													step.balloonInterval ?? 500
+												}
 												onChange={(e) =>
 													onStepUpdate(i, {
 														balloonInterval:
@@ -281,54 +260,18 @@ export const StepPanel = ({
 												}
 												className="h-6 w-16 border-amber-900/15 text-center text-[10px]"
 												min={0}
-												step={10}
+												step={50}
 											/>
 											<span className="text-amber-900/30 text-[10px]">
 												ms
 											</span>
-										</div>
-									</div>
-									{stepBalloons.length === 0 ? (
-										<p className="pl-8 text-amber-900/25 text-xs">
-											{isActive
-												? "Canvas上の風船をクリック"
-												: "—"}
-										</p>
-									) : (
-										<div className="flex flex-wrap gap-1 pl-8">
-											{step.balloonIds.map(
-												(bid, bi) => {
-													const b = balloons.find(
-														(bl) => bl.id === bid,
-													);
-													if (!b) return null;
-													return (
-														<ItemBadge
-															key={`${bid}-${bi}`}
-															label={`${bi + 1}`}
-															colorClass="bg-sky-400 text-white"
-															hoverClass="hover:bg-sky-300"
-															onRemove={() =>
-																onRemoveItem(
-																	i,
-																	bid,
-																	"balloonIds",
-																)
-															}
-														/>
-													);
-												},
-											)}
-										</div>
+										</>
 									)}
 								</div>
 
 								{/* 列車 */}
 								{train && (
-									<div
-										className="flex items-center gap-2"
-										onClick={(e) => e.stopPropagation()}
-									>
+									<div className="flex items-center gap-2">
 										<span className="w-8 shrink-0 text-xs font-bold text-violet-500/70">
 											列車
 										</span>

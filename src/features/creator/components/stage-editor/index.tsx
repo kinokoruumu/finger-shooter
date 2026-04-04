@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { randomBalloonColor } from "@/features/game/components/balloon-target/utils";
 import { cn } from "@/lib/utils";
 import { getStage, saveStage } from "../../stores/creator-store";
 import type { CreatorGroup, CreatorStage } from "../../types";
@@ -34,9 +33,9 @@ const TAB_ITEMS: { key: EditorTab; label: string }[] = [
 const createEmptyGroup = (): CreatorGroup => ({
 	id: crypto.randomUUID(),
 	targets: [],
-	balloons: [],
+	balloon: null,
 	train: null,
-	steps: [{ targetIds: [], targetInterval: 100, balloonIds: [], balloonInterval: 100, trainStart: false }],
+	steps: [{ targetIds: [], targetInterval: 100, balloonCount: 0, balloonInterval: 500, trainStart: false }],
 	stepDelay: 300,
 });
 
@@ -150,7 +149,6 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 	const handleCellClick = useCallback(
 		(gx: number, gy: number) => {
 			if (selectedGroupIdx === null || activeTab !== "placement") return;
-			if (editorMode === "balloon") return; // 風船はグリッドクリックで配置しない
 			const group = stage?.groups[selectedGroupIdx];
 			if (!group) return;
 
@@ -204,48 +202,6 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		[selectedGroupIdx, activeTab, stage, editorMode, updateGroup],
 	);
 
-	// 風船エリアクリック
-	const handleBalloonAreaClick = useCallback(
-		(nx: number) => {
-			if (selectedGroupIdx === null || activeTab !== "placement") return;
-			if (editorMode !== "balloon") return;
-			const group = stage?.groups[selectedGroupIdx];
-			if (!group) return;
-
-			const newBalloon = {
-				id: crypto.randomUUID(),
-				nx: Math.round(nx * 100) / 100,
-				speed: 3,
-				color: randomBalloonColor(),
-			};
-			updateGroup(selectedGroupIdx, {
-				...group,
-				balloons: [...(group.balloons ?? []), newBalloon],
-			});
-		},
-		[selectedGroupIdx, activeTab, editorMode, stage, updateGroup],
-	);
-
-	// 風船クリック（削除モード）
-	const handleBalloonClick = useCallback(
-		(id: string) => {
-			if (selectedGroupIdx === null || activeTab !== "placement") return;
-			if (editorMode !== "delete") return;
-			const group = stage?.groups[selectedGroupIdx];
-			if (!group) return;
-
-			updateGroup(selectedGroupIdx, {
-				...group,
-				balloons: (group.balloons ?? []).filter((b) => b.id !== id),
-				steps: group.steps.map((s) => ({
-					...s,
-					targetIds: s.targetIds.filter((tid) => tid !== id),
-				})),
-			});
-		},
-		[selectedGroupIdx, activeTab, editorMode, stage, updateGroup],
-	);
-
 	if (!stage) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-[#f5f0e8]">
@@ -288,7 +244,6 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			return (
 				<EditorScene
 					targets={selectedGroup.targets}
-					balloons={selectedGroup.balloons ?? []}
 					onCellClick={() => {}}
 					onCellRightClick={() => {}}
 					ghostTargetIds={animEditor.ghostTargetIds}
@@ -303,12 +258,8 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		return (
 			<EditorScene
 				targets={selectedGroup.targets}
-				balloons={selectedGroup.balloons ?? []}
 				onCellClick={handleCellClick}
 				onCellRightClick={() => {}}
-				onBalloonAreaClick={handleBalloonAreaClick}
-				onBalloonClick={handleBalloonClick}
-				showBalloonArea={editorMode === "balloon"}
 			/>
 		);
 	};
@@ -414,28 +365,87 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 						</div>
 
 						{/* 配置タブ */}
-						{activeTab === "placement" && (
-							<div className="space-y-6">
-								<EditorToolbar
-									currentMode={editorMode}
-									onModeChange={setEditorMode}
-									targetCount={
-										selectedGroup.targets.length
-									}
-									balloonCount={
-										(selectedGroup.balloons ?? []).length
-									}
-									hasTrain={!!selectedGroup.train}
-								/>
-								<TrainEditor
-									group={selectedGroup}
-									onUpdateGroup={(g) =>
-										selectedGroupIdx !== null &&
-										updateGroup(selectedGroupIdx, g)
-									}
-								/>
-							</div>
-						)}
+						{activeTab === "placement" &&
+							selectedGroupIdx !== null && (
+								<div className="space-y-6">
+									<EditorToolbar
+										currentMode={editorMode}
+										onModeChange={setEditorMode}
+										targetCount={
+											selectedGroup.targets.length
+										}
+									/>
+
+									{/* 風船設定 */}
+									<div className="space-y-2" style={rf}>
+										<span className="font-bold text-amber-900 text-sm">
+											風船
+										</span>
+										<div className="flex items-center gap-2">
+											<span className="text-amber-900/50 text-xs">
+												出現位置
+											</span>
+											{(
+												[
+													{
+														value: "random",
+														label: "ランダム",
+													},
+													{
+														value: "left",
+														label: "左寄り",
+													},
+													{
+														value: "center",
+														label: "中央",
+													},
+													{
+														value: "right",
+														label: "右寄り",
+													},
+												] as const
+											).map((opt) => (
+												<button
+													key={opt.value}
+													type="button"
+													className={cn(
+														"rounded-lg border-2 px-2 py-1 text-xs font-bold transition-all",
+														(selectedGroup.balloon
+															?.spread ??
+															"random") ===
+															opt.value
+															? "border-sky-500 bg-sky-50 text-sky-700"
+															: "border-amber-900/15 bg-white text-amber-900/50 hover:border-amber-900/30",
+													)}
+													onClick={() =>
+														updateGroup(
+															selectedGroupIdx,
+															{
+																...selectedGroup,
+																balloon: {
+																	spread: opt.value,
+																},
+															},
+														)
+													}
+												>
+													{opt.label}
+												</button>
+											))}
+										</div>
+										<p className="text-amber-900/30 text-[10px]">
+											風船の個数はアニメーションタブのステップで設定
+										</p>
+									</div>
+
+									<TrainEditor
+										group={selectedGroup}
+										onUpdateGroup={(g) =>
+											updateGroup(selectedGroupIdx, g)
+										}
+									/>
+								</div>
+							)}
 
 						{/* アニメーションタブ */}
 						{activeTab === "animation" &&

@@ -7,54 +7,41 @@ export const useAnimationEditor = (
 ) => {
 	const [activeStepIndex, setActiveStepIndex] = useState(0);
 
-	// 全ステップに登録済みの的/風船ID
+	// 全ステップに登録済みの的ID
 	const registeredIds = useMemo(() => {
 		const ids = new Set<string>();
 		for (const step of group.steps) {
 			for (const tid of step.targetIds) ids.add(tid);
-			for (const bid of step.balloonIds) ids.add(bid);
 		}
 		return ids;
 	}, [group.steps]);
 
-	// 未登録の的/風船 → 半透明表示
+	// 未登録の的 → 半透明表示
 	const ghostTargetIds = useMemo(() => {
 		const ids = new Set<string>();
 		for (const t of group.targets) {
 			if (!registeredIds.has(t.id)) ids.add(t.id);
 		}
-		for (const b of group.balloons) {
-			if (!registeredIds.has(b.id)) ids.add(b.id);
-		}
 		return ids;
-	}, [group.targets, group.balloons, registeredIds]);
+	}, [group.targets, registeredIds]);
 
-	// 他ステップに属する的/風船 → disabled 表示
+	// 他ステップに属する的 → disabled 表示
 	const disabledTargetIds = useMemo(() => {
 		const ids = new Set<string>();
 		for (let i = 0; i < group.steps.length; i++) {
 			if (i === activeStepIndex) continue;
 			for (const tid of group.steps[i].targetIds) ids.add(tid);
-			for (const bid of group.steps[i].balloonIds) ids.add(bid);
 		}
 		return ids;
 	}, [group.steps, activeStepIndex]);
 
-	// アクティブステップ内の的/風船に番号ラベル
+	// アクティブステップ内の的に番号ラベル
 	const targetLabels = useMemo(() => {
 		const labels = new Map<string, string>();
 		const activeStep = group.steps[activeStepIndex];
 		if (!activeStep) return labels;
-
-		let counter = 1;
-		for (const tid of activeStep.targetIds) {
-			labels.set(tid, `的${counter}`);
-			counter++;
-		}
-		counter = 1;
-		for (const bid of activeStep.balloonIds) {
-			labels.set(bid, `風${counter}`);
-			counter++;
+		for (let i = 0; i < activeStep.targetIds.length; i++) {
+			labels.set(activeStep.targetIds[i], String(i + 1));
 		}
 		return labels;
 	}, [group.steps, activeStepIndex]);
@@ -65,23 +52,15 @@ export const useAnimationEditor = (
 			const steps = [...group.steps];
 			if (activeStepIndex >= steps.length) return;
 
-			const isTarget = group.targets.some((t) => t.id === targetId);
-			const isBalloon = group.balloons.some((b) => b.id === targetId);
-			const field = isTarget
-				? "targetIds"
-				: isBalloon
-					? "balloonIds"
-					: null;
-			if (!field) return;
-
 			const step = steps[activeStepIndex];
-			const ids = step[field] as string[];
 
-			if (ids.includes(targetId)) {
+			if (step.targetIds.includes(targetId)) {
 				// このステップから除外
 				steps[activeStepIndex] = {
 					...step,
-					[field]: ids.filter((id) => id !== targetId),
+					targetIds: step.targetIds.filter(
+						(id) => id !== targetId,
+					),
 				};
 			} else {
 				// 他のステップから除外してからこのステップに追加
@@ -89,15 +68,15 @@ export const useAnimationEditor = (
 					if (i === activeStepIndex) return s;
 					return {
 						...s,
-						[field]: (s[field] as string[]).filter(
+						targetIds: s.targetIds.filter(
 							(id) => id !== targetId,
 						),
 					};
 				});
 				newSteps[activeStepIndex] = {
 					...newSteps[activeStepIndex],
-					[field]: [
-						...(newSteps[activeStepIndex][field] as string[]),
+					targetIds: [
+						...newSteps[activeStepIndex].targetIds,
 						targetId,
 					],
 				};
@@ -113,8 +92,8 @@ export const useAnimationEditor = (
 		const newStep: CreatorAnimationStep = {
 			targetIds: [],
 			targetInterval: 100,
-			balloonIds: [],
-			balloonInterval: 100,
+			balloonCount: 0,
+			balloonInterval: 500,
 			trainStart: false,
 		};
 		const steps = [...group.steps, newStep];
@@ -135,6 +114,16 @@ export const useAnimationEditor = (
 
 	const handleStepUpdate = useCallback(
 		(stepIndex: number, update: Partial<CreatorAnimationStep>) => {
+			// trainStart を true にする場合、他のステップは false に
+			if (update.trainStart) {
+				const steps = group.steps.map((s, i) => ({
+					...s,
+					trainStart: false,
+					...(i === stepIndex ? update : {}),
+				}));
+				onUpdateGroup({ ...group, steps });
+				return;
+			}
 			const steps = group.steps.map((s, i) =>
 				i === stepIndex ? { ...s, ...update } : s,
 			);
@@ -150,18 +139,14 @@ export const useAnimationEditor = (
 		[group, onUpdateGroup],
 	);
 
-	const handleRemoveItem = useCallback(
-		(
-			stepIndex: number,
-			itemId: string,
-			field: "targetIds" | "balloonIds",
-		) => {
+	const handleRemoveTarget = useCallback(
+		(stepIndex: number, targetId: string) => {
 			const steps = group.steps.map((s, i) =>
 				i === stepIndex
 					? {
 							...s,
-							[field]: (s[field] as string[]).filter(
-								(id) => id !== itemId,
+							targetIds: s.targetIds.filter(
+								(id) => id !== targetId,
 							),
 						}
 					: s,
@@ -182,6 +167,6 @@ export const useAnimationEditor = (
 		handleDeleteStep,
 		handleStepUpdate,
 		handleStepDelayChange,
-		handleRemoveItem,
+		handleRemoveTarget,
 	};
 };

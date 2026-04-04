@@ -13,8 +13,8 @@ export type CreatorAnimationStep = {
 	targetIds: string[];
 	/** 的の出現間隔(ms) */
 	targetInterval: number;
-	/** 風船ID（出現順） */
-	balloonIds: string[];
+	/** このステップで出現する風船の数 */
+	balloonCount: number;
 	/** 風船の出現間隔(ms) */
 	balloonInterval: number;
 	/** このステップで列車を出現させるか */
@@ -22,10 +22,8 @@ export type CreatorAnimationStep = {
 };
 
 export type CreatorBalloon = {
-	id: string;
-	nx: number;
-	speed: number;
-	color: string;
+	/** 横位置の範囲: left/center/right/random */
+	spread: "left" | "center" | "right" | "random";
 };
 
 export type TrainSlotType = "normal" | "gold" | "penalty";
@@ -46,7 +44,7 @@ export type CreatorTrain = {
 export type CreatorGroup = {
 	id: string;
 	targets: CreatorTarget[];
-	balloons: CreatorBalloon[];
+	balloon: CreatorBalloon | null;
 	train: CreatorTrain | null;
 	steps: CreatorAnimationStep[];
 	stepDelay: number;

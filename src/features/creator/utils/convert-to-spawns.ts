@@ -1,5 +1,22 @@
 import type { SpawnEntry } from "@/features/game/constants/stage-definitions";
-import type { CreatorGroup, CreatorStage } from "../types";
+import type { CreatorBalloon, CreatorGroup, CreatorStage } from "../types";
+
+const spreadToNx = (
+	spread: CreatorBalloon["spread"],
+	index: number,
+	total: number,
+): number => {
+	switch (spread) {
+		case "left":
+			return 0.15 + (index / Math.max(total - 1, 1)) * 0.25;
+		case "center":
+			return 0.35 + (index / Math.max(total - 1, 1)) * 0.3;
+		case "right":
+			return 0.6 + (index / Math.max(total - 1, 1)) * 0.25;
+		case "random":
+			return 0.15 + Math.random() * 0.7;
+	}
+};
 
 const convertGroup = (
 	group: CreatorGroup,
@@ -9,10 +26,13 @@ const convertGroup = (
 	let time = 0;
 
 	for (const step of group.steps) {
-		const balloonIds = step.balloonIds ?? [];
-		const balloonInterval = step.balloonInterval ?? 100;
+		const balloonCount = step.balloonCount ?? 0;
+		const balloonInterval = step.balloonInterval ?? 500;
 		const trainStart = step.trainStart ?? false;
-		const targetInterval = step.targetInterval ?? (step as unknown as { interval?: number }).interval ?? 100;
+		const targetInterval =
+			step.targetInterval ??
+			(step as unknown as { interval?: number }).interval ??
+			100;
 
 		// 的
 		for (let i = 0; i < step.targetIds.length; i++) {
@@ -32,16 +52,13 @@ const convertGroup = (
 		}
 
 		// 風船
-		for (let i = 0; i < balloonIds.length; i++) {
-			const balloon = group.balloons.find(
-				(b) => b.id === balloonIds[i],
-			);
-			if (!balloon) continue;
+		const spread = group.balloon?.spread ?? "random";
+		for (let i = 0; i < balloonCount; i++) {
 			spawns.push({
 				time: time + i * balloonInterval,
 				group: groupIndex,
 				type: "balloon",
-				nx: balloon.nx,
+				nx: spreadToNx(spread, i, balloonCount),
 			});
 		}
 
@@ -69,15 +86,9 @@ const convertGroup = (
 				? (step.targetIds.length - 1) * targetInterval
 				: 0;
 		const balloonEnd =
-			balloonIds.length > 0
-				? (balloonIds.length - 1) * balloonInterval
-				: 0;
+			balloonCount > 0 ? (balloonCount - 1) * balloonInterval : 0;
 		const stepDuration = Math.max(targetEnd, balloonEnd);
-		if (
-			step.targetIds.length > 0 ||
-			balloonIds.length > 0 ||
-			trainStart
-		) {
+		if (step.targetIds.length > 0 || balloonCount > 0 || trainStart) {
 			time += stepDuration + group.stepDelay;
 		}
 	}

@@ -49,7 +49,6 @@ export const AnimationEditor = ({
 					steps={group.steps}
 					stepDelay={group.stepDelay}
 					targets={group.targets}
-					balloons={group.balloons ?? []}
 					train={group.train}
 					activeStepIndex={animEditor.activeStepIndex}
 					onActiveStepChange={animEditor.setActiveStepIndex}
@@ -57,7 +56,7 @@ export const AnimationEditor = ({
 					onDeleteStep={animEditor.handleDeleteStep}
 					onStepUpdate={animEditor.handleStepUpdate}
 					onStepDelayChange={animEditor.handleStepDelayChange}
-					onRemoveItem={animEditor.handleRemoveItem}
+					onRemoveTarget={animEditor.handleRemoveTarget}
 				/>
 			)}
 		</div>
