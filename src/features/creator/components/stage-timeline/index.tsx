@@ -202,12 +202,37 @@ const TargetTrack = ({
 									const setId = set.id;
 									const startX = e.clientX;
 									let didDrag = false;
+									const minInitialTime = Math.min(...initialStartTimes);
 									const onMove = (ev: PointerEvent) => {
 										const totalDx = ev.clientX - startX;
 										if (Math.abs(totalDx) > 2) didDrag = true;
-										const newStartTimes = initialStartTimes.map(
-											(t) => calcDraggedTime(t, totalDx, duration, width),
-										);
+										// 最も左のステップが 0 を下回らないよう delta をクランプ
+										const clampedDelta = (() => {
+											const minNewTime = calcDraggedTime(
+												minInitialTime,
+												totalDx,
+												duration,
+												width,
+											);
+											if (minNewTime <= 0 && totalDx < 0) {
+												// 左端到達: 全ステップを同じ offset で移動
+												const offset = 0 - minInitialTime;
+												return initialStartTimes.map(
+													(t) => t + offset,
+												);
+											}
+											return null;
+										})();
+										const newStartTimes =
+											clampedDelta ??
+											initialStartTimes.map((t) =>
+												calcDraggedTime(
+													t,
+													totalDx,
+													duration,
+													width,
+												),
+											);
 										// updater パターンで最新の group を使う
 										onUpdateGroupFn((g) => ({
 											...g,
