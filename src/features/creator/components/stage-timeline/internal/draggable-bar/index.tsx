@@ -90,7 +90,7 @@ export const DraggableBar = ({
 		<div
 			data-testid="draggable-bar"
 			className={cn(
-				"group absolute flex items-center rounded-md text-[10px] font-bold text-white transition-colors",
+				"group absolute flex items-center overflow-hidden rounded-md text-[10px] font-bold text-white transition-colors",
 				spawnRatio == null && (dragging ? activeColor : color),
 			)}
 			style={{
@@ -124,7 +124,10 @@ export const DraggableBar = ({
 						}}
 					>
 						{fadeLabel && (
-							<span className="truncate px-1.5 text-[9px] font-bold text-black/40">
+							<span
+								className="truncate px-1.5 text-[9px] font-bold text-white"
+								style={{ textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}
+							>
 								{fadeLabel}
 							</span>
 						)}

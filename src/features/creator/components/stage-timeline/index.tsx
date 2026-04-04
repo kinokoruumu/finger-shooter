@@ -53,7 +53,7 @@ const TimeRuler = ({
 	}
 
 	return (
-		<div className="relative h-6" style={{ width }}>
+		<div className="relative h-8" style={{ width }}>
 			{ticks.map((tick) => (
 				<div
 					key={tick.x}
@@ -64,12 +64,12 @@ const TimeRuler = ({
 						className={cn(
 							"w-px",
 							tick.major
-								? "h-4 bg-amber-900/25"
-								: "h-2.5 bg-amber-900/10",
+								? "h-3 bg-amber-900/25"
+								: "h-2 bg-amber-900/10",
 						)}
 					/>
 					{tick.major && (
-						<span className="absolute top-4 -translate-x-1/2 text-[9px] text-amber-900/30">
+						<span className="absolute top-3 -translate-x-1/2 text-[9px] text-amber-900/30">
 							{tick.label}
 						</span>
 					)}
