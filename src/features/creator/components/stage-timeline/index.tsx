@@ -5,8 +5,11 @@ import type {
 	CreatorGroup,
 } from "../../types";
 import {
+	calcDraggedTime,
 	calcGroupDuration,
 	calcTargetStepTimes,
+	timeToX,
+	xToTime,
 } from "../../utils/timeline-calc";
 
 type Props = {
@@ -21,16 +24,6 @@ const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
 const TRACK_HEIGHT = 44;
 const LABEL_WIDTH = 56;
-const PADDING = 12;
-const SNAP_MS = 50;
-
-const timeToX = (time: number, duration: number, width: number): number =>
-	PADDING + (time / duration) * (width - PADDING * 2);
-
-const xToTime = (x: number, duration: number, width: number): number => {
-	const t = ((x - PADDING) / (width - PADDING * 2)) * duration;
-	return Math.max(0, Math.round(t / SNAP_MS) * SNAP_MS);
-};
 
 /** 時間ルーラー */
 const TimeRuler = ({
@@ -75,7 +68,7 @@ const TimeRuler = ({
 	);
 };
 
-/** ドラッグ可能なバー */
+/** ドラッグ可能なバー。onMove/onResize にはドラッグ開始からの累積 deltaX(px) を渡す */
 const DraggableBar = ({
 	x,
 	width: barWidth,
@@ -83,8 +76,9 @@ const DraggableBar = ({
 	activeColor,
 	label,
 	trackHeight,
-	onMove,
-	onResize,
+	onDragStart,
+	onDrag,
+	onDragEnd,
 	onClick,
 	onDelete,
 }: {
@@ -94,13 +88,14 @@ const DraggableBar = ({
 	activeColor: string;
 	label: string;
 	trackHeight: number;
-	onMove?: (deltaX: number) => void;
-	onResize?: (deltaX: number) => void;
+	onDragStart?: () => void;
+	onDrag?: (totalDeltaX: number, mode: "move" | "resize") => void;
+	onDragEnd?: () => void;
 	onClick?: () => void;
 	onDelete?: () => void;
 }) => {
 	const [dragging, setDragging] = useState<"move" | "resize" | null>(null);
-	const startXRef = useRef(0);
+	const dragStartXRef = useRef(0);
 	const didDragRef = useRef(false);
 
 	const handlePointerDown = useCallback(
@@ -108,21 +103,19 @@ const DraggableBar = ({
 			e.stopPropagation();
 			e.preventDefault();
 			setDragging(mode);
-			startXRef.current = e.clientX;
+			dragStartXRef.current = e.clientX;
 			didDragRef.current = false;
-
-			const handler = mode === "move" ? onMove : onResize;
-			if (!handler) return;
+			onDragStart?.();
 
 			const onPointerMove = (ev: PointerEvent) => {
-				const delta = ev.clientX - startXRef.current;
-				if (Math.abs(delta) > 2) didDragRef.current = true;
-				handler(delta);
-				startXRef.current = ev.clientX;
+				const totalDelta = ev.clientX - dragStartXRef.current;
+				if (Math.abs(totalDelta) > 2) didDragRef.current = true;
+				onDrag?.(totalDelta, mode);
 			};
 
 			const onPointerUp = () => {
 				setDragging(null);
+				onDragEnd?.();
 				window.removeEventListener("pointermove", onPointerMove);
 				window.removeEventListener("pointerup", onPointerUp);
 			};
@@ -130,7 +123,7 @@ const DraggableBar = ({
 			window.addEventListener("pointermove", onPointerMove);
 			window.addEventListener("pointerup", onPointerUp);
 		},
-		[onMove, onResize],
+		[onDragStart, onDrag, onDragEnd],
 	);
 
 	const handleClick = useCallback(
@@ -160,7 +153,7 @@ const DraggableBar = ({
 			<span className="truncate px-1.5">{label}</span>
 
 			{/* 右端リサイズハンドル */}
-			{onResize && (
+			{onDrag && (
 				<div
 					className="absolute top-0 right-0 bottom-0 w-2 cursor-ew-resize rounded-r-md hover:bg-white/20"
 					onPointerDown={(e) => handlePointerDown(e, "resize")}
@@ -256,6 +249,7 @@ const BalloonTrack = ({
 	onEditEntry: (id: string) => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
+	const dragInitialTimeRef = useRef(0);
 	const entries = group.balloonEntries ?? [];
 
 	const handleTrackClick = useCallback(
@@ -304,9 +298,13 @@ const BalloonTrack = ({
 						activeColor="bg-sky-600"
 						label={`×${entry.count}`}
 						trackHeight={TRACK_HEIGHT}
-						onMove={(dx) => {
-							const newTime = xToTime(
-								timeToX(entry.time, duration, width) + dx,
+						onDragStart={() => {
+							dragInitialTimeRef.current = entry.time;
+						}}
+						onDrag={(totalDx) => {
+							const newTime = calcDraggedTime(
+								dragInitialTimeRef.current,
+								totalDx,
 								duration,
 								width,
 							);
@@ -355,6 +353,7 @@ const TrainTrack = ({
 	onEdit: () => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
+	const dragInitialTimeRef = useRef(0);
 
 	const handleTrackClick = useCallback(
 		(e: React.MouseEvent) => {
@@ -406,13 +405,14 @@ const TrainTrack = ({
 						group.train?.direction === 1 ? "列車 →←" : "列車 ←→"
 					}
 					trackHeight={TRACK_HEIGHT}
-					onMove={(dx) => {
-						const newTime = xToTime(
-							timeToX(
-								group.trainStartTime ?? 0,
-								duration,
-								width,
-							) + dx,
+					onDragStart={() => {
+						dragInitialTimeRef.current =
+							group.trainStartTime ?? 0;
+					}}
+					onDrag={(totalDx) => {
+						const newTime = calcDraggedTime(
+							dragInitialTimeRef.current,
+							totalDx,
 							duration,
 							width,
 						);

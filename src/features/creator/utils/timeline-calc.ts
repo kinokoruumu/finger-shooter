@@ -1,5 +1,36 @@
 import type { CreatorGroup } from "../types";
 
+const PADDING = 12;
+const SNAP_MS = 50;
+
+/** 時間(ms) → ピクセル位置 */
+export const timeToX = (
+	time: number,
+	duration: number,
+	width: number,
+): number => PADDING + (time / duration) * (width - PADDING * 2);
+
+/** ピクセル位置 → 時間(ms)、SNAP_MS 単位にスナップ */
+export const xToTime = (
+	x: number,
+	duration: number,
+	width: number,
+): number => {
+	const t = ((x - PADDING) / (width - PADDING * 2)) * duration;
+	return Math.max(0, Math.round(t / SNAP_MS) * SNAP_MS);
+};
+
+/** ドラッグ移動後の新しい時間を計算 */
+export const calcDraggedTime = (
+	initialTime: number,
+	totalDeltaX: number,
+	duration: number,
+	width: number,
+): number => {
+	const initialX = timeToX(initialTime, duration, width);
+	return xToTime(initialX + totalDeltaX, duration, width);
+};
+
 /** 的ステップの総所要時間(ms)を計算 */
 export const calcTargetsDuration = (group: CreatorGroup): number => {
 	const steps = group.targetSteps ?? [];

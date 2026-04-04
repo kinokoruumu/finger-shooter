@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { CreatorGroup } from "../types";
 import {
 	calcBalloonsDuration,
+	calcDraggedTime,
 	calcGroupDuration,
 	calcTargetStepTimes,
 	calcTargetsDuration,
+	timeToX,
+	xToTime,
 } from "./timeline-calc";
 
 const makeGroup = (partial: Partial<CreatorGroup> = {}): CreatorGroup => ({
@@ -106,5 +109,73 @@ describe("calcTargetStepTimes", () => {
 			{ startTime: 0, endTime: 100 },
 			{ startTime: 400, endTime: 500 },
 		]);
+	});
+});
+
+describe("timeToX / xToTime 変換", () => {
+	const DURATION = 2000;
+	const WIDTH = 600;
+
+	it("time=0 は左端パディング位置", () => {
+		const x = timeToX(0, DURATION, WIDTH);
+		expect(x).toBe(12); // PADDING=12
+	});
+
+	it("time=duration は右端パディング位置", () => {
+		const x = timeToX(DURATION, DURATION, WIDTH);
+		expect(x).toBe(WIDTH - 12);
+	});
+
+	it("time=duration/2 は中央", () => {
+		const x = timeToX(1000, DURATION, WIDTH);
+		expect(x).toBe(12 + (600 - 24) / 2); // 300
+	});
+
+	it("xToTime は timeToX の逆変換", () => {
+		const time = 500;
+		const x = timeToX(time, DURATION, WIDTH);
+		const recovered = xToTime(x, DURATION, WIDTH);
+		expect(recovered).toBe(time);
+	});
+
+	it("xToTime は 50ms 単位にスナップする", () => {
+		// 51ms 相当の位置 → 50ms にスナップ
+		const x = timeToX(51, DURATION, WIDTH);
+		expect(xToTime(x, DURATION, WIDTH)).toBe(50);
+	});
+
+	it("xToTime は 0 未満にならない", () => {
+		expect(xToTime(-100, DURATION, WIDTH)).toBe(0);
+	});
+});
+
+describe("calcDraggedTime", () => {
+	const DURATION = 2000;
+	const WIDTH = 600;
+
+	it("deltaX=0 なら元の時間のまま", () => {
+		expect(calcDraggedTime(500, 0, DURATION, WIDTH)).toBe(500);
+	});
+
+	it("右にドラッグすると時間が増える", () => {
+		const result = calcDraggedTime(0, 100, DURATION, WIDTH);
+		expect(result).toBeGreaterThan(0);
+	});
+
+	it("左にドラッグすると時間が減る", () => {
+		const result = calcDraggedTime(1000, -100, DURATION, WIDTH);
+		expect(result).toBeLessThan(1000);
+	});
+
+	it("結果は 0 未満にならない", () => {
+		const result = calcDraggedTime(100, -9999, DURATION, WIDTH);
+		expect(result).toBe(0);
+	});
+
+	it("往復ドラッグで元に戻る", () => {
+		const delta = 150;
+		const after = calcDraggedTime(500, delta, DURATION, WIDTH);
+		const back = calcDraggedTime(after, -delta, DURATION, WIDTH);
+		expect(back).toBe(500);
 	});
 });
