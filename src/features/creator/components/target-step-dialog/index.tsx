@@ -53,7 +53,9 @@ export const TargetStepDialog = ({
 	onUpdateGroup,
 }: Props) => {
 	const [tab, setTab] = useState<Tab>(
-		initialStepIndex != null ? "animation" : "placement",
+		initialStepIndex != null && (targetSet.targets ?? []).length > 0
+			? "animation"
+			: "placement",
 	);
 	const [editorMode, setEditorMode] = useState<EditorMode>("ground");
 	const [activeStepIndex, setActiveStepIndex] = useState(

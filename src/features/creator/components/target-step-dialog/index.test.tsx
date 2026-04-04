@@ -76,10 +76,13 @@ describe("TargetStepDialog", () => {
 		expect(screen.getByText("+ ステップ追加")).toBeTruthy();
 	});
 
-	it("initialStepIndex が指定されたらアニメーションタブで開く", () => {
+	it("initialStepIndex + 的ありならアニメーションタブで開く", () => {
 		const set = makeSet({
+			targets: [
+				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+			],
 			steps: [
-				{ targetIds: [], interval: 100, startTime: 0 },
+				{ targetIds: ["t1"], interval: 100, startTime: 0 },
 				{ targetIds: [], interval: 100, startTime: 500 },
 			],
 		});
@@ -92,10 +95,26 @@ describe("TargetStepDialog", () => {
 			/>,
 		);
 
-		// アニメーションタブが表示されている
 		expect(screen.getByText("+ ステップ追加")).toBeTruthy();
-		// ステップ2が存在する
 		expect(screen.getByText("ステップ 2")).toBeTruthy();
+	});
+
+	it("的が0個ならinitialStepIndex指定でも配置タブで開く", () => {
+		const set = makeSet({
+			steps: [
+				{ targetIds: [], interval: 100, startTime: 0 },
+			],
+		});
+		render(
+			<TargetStepDialog
+				{...defaultProps}
+				group={makeGroup([set])}
+				targetSet={set}
+				initialStepIndex={0}
+			/>,
+		);
+
+		expect(screen.getByTestId("editor-toolbar")).toBeTruthy();
 	});
 
 	it("ステップ追加で onUpdateGroup が呼ばれる", () => {
@@ -147,8 +166,11 @@ describe("TargetStepDialog", () => {
 
 	it("ステップカード全体がクリック可能（アクティブ切替）", () => {
 		const set = makeSet({
+			targets: [
+				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+			],
 			steps: [
-				{ targetIds: [], interval: 100, startTime: 0 },
+				{ targetIds: ["t1"], interval: 100, startTime: 0 },
 				{ targetIds: [], interval: 100, startTime: 500 },
 			],
 		});
@@ -174,8 +196,11 @@ describe("TargetStepDialog", () => {
 
 	it("アニメーションタブのステップリストがスクロール可能", () => {
 		const set = makeSet({
+			targets: [
+				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+			],
 			steps: Array.from({ length: 10 }, (_, i) => ({
-				targetIds: [],
+				targetIds: i === 0 ? ["t1"] : [],
 				interval: 100,
 				startTime: i * 500,
 			})),
