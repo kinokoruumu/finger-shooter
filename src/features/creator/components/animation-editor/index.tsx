@@ -31,7 +31,6 @@ export const AnimationEditor = ({ group, onUpdateGroup }: Props) => {
 		state: previewState,
 		elapsedMs,
 		spawns,
-		totalDuration,
 		play,
 		stop,
 	} = usePreviewPlayer(group);
@@ -74,23 +73,11 @@ export const AnimationEditor = ({ group, onUpdateGroup }: Props) => {
 						■ 停止
 					</Button>
 				)}
-				{isPreviewPlaying && totalDuration > 0 && (
-					<div className="flex-1">
-						<div className="h-1.5 overflow-hidden rounded-full bg-amber-900/10">
-							<div
-								className="h-full rounded-full bg-amber-500 transition-all"
-								style={{
-									width: `${Math.min(100, (elapsedMs / totalDuration) * 100)}%`,
-								}}
-							/>
-						</div>
-					</div>
-				)}
-				{!isPreviewPlaying && (
-					<span className="text-amber-900/40 text-xs">
-						{spawns.length}個のスポーン
-					</span>
-				)}
+				<span className="text-amber-900/40 text-xs">
+					{spawns.length}個のスポーン
+					{isPreviewPlaying &&
+						` / ${(elapsedMs / 1000).toFixed(1)}s`}
+				</span>
 			</div>
 
 			{/* ステップ管理（プレビュー中は非表示） */}

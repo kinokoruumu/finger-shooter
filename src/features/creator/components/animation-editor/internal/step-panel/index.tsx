@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import type {
 	CreatorAnimationStep,
 	CreatorTarget,
@@ -28,6 +27,12 @@ const TYPE_COLORS: Record<string, string> = {
 	"ground-penalty": "bg-stone-900 text-red-400",
 };
 
+const TYPE_HOVER_COLORS: Record<string, string> = {
+	ground: "hover:bg-stone-600",
+	"ground-gold": "hover:bg-yellow-400",
+	"ground-penalty": "hover:bg-stone-800",
+};
+
 export const StepPanel = ({
 	steps,
 	stepDelay,
@@ -49,12 +54,16 @@ export const StepPanel = ({
 						{/* ステップ間delay（2つ目以降のみ） */}
 						{i > 0 && (
 							<div className="my-2 flex items-center gap-2 rounded-lg border border-dashed border-amber-900/15 bg-amber-50/50 px-3 py-2">
-								<span className="shrink-0 text-amber-900/40 text-xs">間隔</span>
+								<span className="shrink-0 text-amber-900/40 text-xs">
+									間隔
+								</span>
 								<Input
 									type="number"
 									value={stepDelay}
 									onChange={(e) =>
-										onStepDelayChange(Math.max(0, Number(e.target.value)))
+										onStepDelayChange(
+											Math.max(0, Number(e.target.value)),
+										)
 									}
 									className="h-7 w-24 border-amber-900/15 text-center text-xs"
 									min={0}
@@ -67,38 +76,57 @@ export const StepPanel = ({
 						{/* ステップカード */}
 						<div
 							className={cn(
-								"rounded-xl border-2 p-3 transition-all",
+								"cursor-pointer rounded-xl border-2 p-3 transition-all",
 								isActive
 									? "border-amber-800 bg-amber-50"
 									: "border-amber-900/10 bg-white hover:border-amber-900/20",
 							)}
+							onClick={() => onActiveStepChange(i)}
+							role="button"
+							tabIndex={0}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									onActiveStepChange(i);
+								}
+							}}
 						>
 							<div className="mb-2 flex items-center justify-between">
-								<button
-									type="button"
+								<span
 									className={cn(
 										"font-bold text-sm",
-										isActive ? "text-amber-900" : "text-amber-900/60",
+										isActive
+											? "text-amber-900"
+											: "text-amber-900/60",
 									)}
-									onClick={() => onActiveStepChange(i)}
 								>
 									ステップ {i + 1}
-								</button>
-								<div className="flex items-center gap-2">
-									<span className="text-amber-900/40 text-[10px]">間隔</span>
-									<Slider
-										value={[step.interval]}
+								</span>
+								<div
+									className="flex items-center gap-2"
+									onClick={(e) => e.stopPropagation()}
+								>
+									<span className="text-amber-900/40 text-[10px]">
+										間隔
+									</span>
+									<Input
+										type="number"
+										value={step.interval}
+										onChange={(e) =>
+											onIntervalChange(
+												i,
+												Math.max(
+													0,
+													Number(e.target.value),
+												),
+											)
+										}
+										className="h-6 w-16 border-amber-900/15 text-center text-[10px]"
 										min={0}
-										max={500}
 										step={10}
-										onValueChange={(val) => {
-											const v = Array.isArray(val) ? val[0] : val;
-											onIntervalChange(i, v);
-										}}
-										className="w-24"
 									/>
-									<span className="w-12 text-right font-mono text-amber-900/50 text-[10px]">
-										{step.interval}ms
+									<span className="text-amber-900/40 text-[10px]">
+										ms
 									</span>
 									{steps.length > 1 && (
 										<button
@@ -122,28 +150,36 @@ export const StepPanel = ({
 							) : (
 								<div className="flex flex-wrap gap-1">
 									{step.targetIds.map((tid, ti) => {
-										const t = targets.find((tgt) => tgt.id === tid);
+										const t = targets.find(
+											(tgt) => tgt.id === tid,
+										);
 										if (!t) return null;
 										return (
-											<div
+											<button
 												key={`${tid}-${ti}`}
+												type="button"
 												className={cn(
-													"flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold",
-													TYPE_COLORS[t.type] ?? "bg-stone-700 text-white",
+													"group/badge flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition-colors",
+													TYPE_COLORS[t.type] ??
+														"bg-stone-700 text-white",
+													TYPE_HOVER_COLORS[t.type] ??
+														"hover:bg-stone-600",
 												)}
+												onClick={(e) => {
+													e.stopPropagation();
+													onRemoveTarget(i, tid);
+												}}
 											>
-												<span className="font-mono opacity-70">{ti + 1}</span>
+												<span className="font-mono opacity-70">
+													{ti + 1}
+												</span>
 												<span>
 													({t.gx},{t.gy})
 												</span>
-												<button
-													type="button"
-													className="ml-0.5 opacity-50 hover:opacity-100"
-													onClick={() => onRemoveTarget(i, tid)}
-												>
+												<span className="opacity-0 transition-opacity group-hover/badge:opacity-70">
 													x
-												</button>
-											</div>
+												</span>
+											</button>
 										);
 									})}
 								</div>

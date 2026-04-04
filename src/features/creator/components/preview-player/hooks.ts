@@ -1,31 +1,37 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SpawnEntry } from "@/features/game/constants/stage-definitions";
-import type { CreatorTargetGroup } from "../../types";
+import type { CreatorGroup, CreatorStage } from "../../types";
 import { convertStageToSpawns } from "../../utils/convert-to-spawns";
 
 type PreviewState = "stopped" | "playing";
 
-export const usePreviewPlayer = (group: CreatorTargetGroup) => {
+/** 単一グループまたはステージ全体のプレビュー */
+export const usePreviewPlayer = (
+	source: CreatorGroup | CreatorStage,
+) => {
 	const [state, setState] = useState<PreviewState>("stopped");
 	const [elapsedMs, setElapsedMs] = useState(0);
 	const rafRef = useRef<number>(0);
 	const startTimeRef = useRef(0);
 
 	const spawns = useMemo((): SpawnEntry[] => {
-		// 単一グループをStageに変換
+		if ("groups" in source) {
+			// CreatorStage
+			return convertStageToSpawns(source);
+		}
+		// 単一グループ
 		return convertStageToSpawns({
 			id: "preview",
 			name: "preview",
-			groups: [group],
+			groups: [source],
 			createdAt: 0,
 			updatedAt: 0,
 		});
-	}, [group]);
+	}, [source]);
 
 	const totalDuration = useMemo(() => {
 		if (spawns.length === 0) return 0;
 		const maxTime = Math.max(...spawns.map((s) => s.time));
-		// 最後のspawn + visibleDuration分の余白
 		const lastSpawn = spawns.find((s) => s.time === maxTime);
 		const dur = (lastSpawn?.visibleDuration ?? 3) * 1000;
 		return maxTime + dur + 500;

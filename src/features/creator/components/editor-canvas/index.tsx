@@ -64,7 +64,7 @@ const EditorScene = ({
 export const EditorCanvas = (props: Props) => {
 	return (
 		<div
-			className="relative h-[400px] w-full overflow-hidden rounded-xl bg-cover bg-center bg-no-repeat"
+			className="relative aspect-video w-full overflow-hidden rounded-xl bg-cover bg-center bg-no-repeat"
 			style={{ backgroundImage: "url('/images/bg.png')" }}
 		>
 			<Canvas

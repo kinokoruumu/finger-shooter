@@ -1,11 +1,14 @@
 import { useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getStage, saveStage } from "../../stores/creator-store";
-import type { CreatorGroup, CreatorStage, TargetSlotType } from "../../types";
+import type { CreatorGroup, CreatorStage } from "../../types";
 import { AnimationEditor } from "../animation-editor";
 import { EditorCanvas } from "../editor-canvas";
-import { EditorToolbar } from "../editor-toolbar";
+import { EditorToolbar, type EditorMode } from "../editor-toolbar";
+import { usePreviewPlayer } from "../preview-player/hooks";
+import { PreviewScene } from "../preview-player/internal/preview-scene";
 import { Timeline } from "../timeline";
 
 type Props = {
@@ -46,8 +49,17 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		},
 	);
 	const [activeTab, setActiveTab] = useState<EditorTab>("placement");
-	const [currentTargetType, setCurrentTargetType] =
-		useState<TargetSlotType>("ground");
+	const [editorMode, setEditorMode] = useState<EditorMode>("ground");
+
+	// 全体プレビュー
+	const stagePreview = usePreviewPlayer(stage ?? {
+		id: "",
+		name: "",
+		groups: [],
+		createdAt: 0,
+		updatedAt: 0,
+	});
+	const isStagePreviewPlaying = stagePreview.state === "playing";
 
 	const updateStage = useCallback(
 		(updater: (s: CreatorStage) => CreatorStage) => {
@@ -137,42 +149,12 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			const group = stage?.groups[selectedGroupIdx];
 			if (!group || group.type !== "targets") return;
 
-			const existing = group.targets.find((t) => t.gx === gx && t.gy === gy);
-			if (existing) return;
+			const existing = group.targets.find(
+				(t) => t.gx === gx && t.gy === gy,
+			);
 
-			const newTarget = {
-				id: crypto.randomUUID(),
-				gx,
-				gy,
-				type: currentTargetType,
-				visibleDuration: 4.0,
-			};
-			updateGroup(selectedGroupIdx, {
-				...group,
-				targets: [...group.targets, newTarget],
-			});
-		},
-		[selectedGroupIdx, activeTab, stage, currentTargetType, updateGroup],
-	);
-
-	const handleCellRightClick = useCallback(
-		(gx: number, gy: number) => {
-			if (selectedGroupIdx === null || activeTab !== "placement") return;
-			const group = stage?.groups[selectedGroupIdx];
-			if (!group || group.type !== "targets") return;
-
-			const existing = group.targets.find((t) => t.gx === gx && t.gy === gy);
-			if (!existing) return;
-
-			const cycle: TargetSlotType[] = [
-				"ground",
-				"ground-gold",
-				"ground-penalty",
-			];
-			const currentIdx = cycle.indexOf(existing.type);
-			const nextIdx = currentIdx + 1;
-
-			if (nextIdx >= cycle.length) {
+			if (editorMode === "delete") {
+				if (!existing) return;
 				const newTargets = group.targets.filter(
 					(t) => !(t.gx === gx && t.gy === gy),
 				);
@@ -185,16 +167,32 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 					targets: newTargets,
 					steps: newSteps,
 				});
-			} else {
+				return;
+			}
+
+			if (existing) {
+				if (existing.type === editorMode) return;
 				updateGroup(selectedGroupIdx, {
 					...group,
 					targets: group.targets.map((t) =>
-						t.id === existing.id ? { ...t, type: cycle[nextIdx] } : t,
+						t.id === existing.id ? { ...t, type: editorMode } : t,
 					),
+				});
+			} else {
+				const newTarget = {
+					id: crypto.randomUUID(),
+					gx,
+					gy,
+					type: editorMode,
+					visibleDuration: 4.0,
+				};
+				updateGroup(selectedGroupIdx, {
+					...group,
+					targets: [...group.targets, newTarget],
 				});
 			}
 		},
-		[selectedGroupIdx, activeTab, stage, updateGroup],
+		[selectedGroupIdx, activeTab, stage, editorMode, updateGroup],
 	);
 
 	if (!stage) {
@@ -229,89 +227,150 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 					<span className="text-amber-900/40 text-xs">
 						{stage.groups.length} グループ
 					</span>
+					<div className="ml-auto">
+						{!isStagePreviewPlaying ? (
+							<Button
+								onClick={stagePreview.play}
+								size="sm"
+								className="bg-amber-900 font-bold text-white hover:bg-amber-800"
+								style={rf}
+								disabled={stagePreview.spawns.length === 0}
+							>
+								▶ 全体プレビュー
+							</Button>
+						) : (
+							<Button
+								onClick={stagePreview.stop}
+								size="sm"
+								variant="outline"
+								style={rf}
+							>
+								■ 停止
+							</Button>
+						)}
+					</div>
 				</div>
 			</div>
 
 			<div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-4">
-				{/* エディター領域 */}
-				{selectedGroup ? (
-					<div className="space-y-4">
-						{/* タブ切り替え */}
-						{selectedGroup.type === "targets" && (
-							<div className="flex gap-1 rounded-lg bg-amber-100/50 p-1">
-								{TAB_ITEMS.map((tab) => (
-									<button
-										key={tab.key}
-										type="button"
-										className={cn(
-											"flex-1 rounded-md px-4 py-1.5 text-sm font-bold transition-all",
-											activeTab === tab.key
-												? "bg-white text-amber-900 shadow-sm"
-												: "text-amber-900/40 hover:text-amber-900/60",
-										)}
-										style={rf}
-										onClick={() => setActiveTab(tab.key)}
-									>
-										{tab.label}
-									</button>
-								))}
-							</div>
-						)}
-
-						{/* 配置タブ */}
-						{activeTab === "placement" && selectedGroup.type === "targets" && (
-							<div className="space-y-3">
-								<EditorCanvas
-									targets={selectedGroup.targets}
-									onCellClick={handleCellClick}
-									onCellRightClick={handleCellRightClick}
-								/>
-								<EditorToolbar
-									currentType={currentTargetType}
-									onTypeChange={setCurrentTargetType}
-									targetCount={selectedGroup.targets.length}
-								/>
-							</div>
-						)}
-
-						{/* アニメーションタブ（プレビュー統合） */}
-						{activeTab === "animation" &&
-							selectedGroup.type === "targets" &&
-							selectedGroupIdx !== null && (
-								<AnimationEditor
-									group={selectedGroup}
-									onUpdateGroup={(g) => updateGroup(selectedGroupIdx, g)}
-								/>
-							)}
-
-						{/* 風船・列車は未実装表示 */}
-						{selectedGroup.type === "balloons" && (
-							<p className="py-16 text-center text-amber-900/40" style={rf}>
-								風船エデ��ター（Phase D で実装）
-							</p>
-						)}
-						{selectedGroup.type === "train" && (
-							<p className="py-16 text-center text-amber-900/40" style={rf}>
-								列車エディター（Phase D で実装）
-							</p>
-						)}
-					</div>
-				) : (
-					<div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-amber-900/10">
-						<p className="text-amber-900/30" style={rf}>
-							グループを選択するか、追加してください
+				{/* 全体プレビュー中 */}
+				{isStagePreviewPlaying ? (
+					<div className="space-y-3">
+						<EditorCanvas
+							targets={[]}
+							onCellClick={() => {}}
+							onCellRightClick={() => {}}
+							showGrid={false}
+						>
+							<PreviewScene
+								spawns={stagePreview.spawns}
+								elapsedMs={stagePreview.elapsedMs}
+								isPlaying={isStagePreviewPlaying}
+							/>
+						</EditorCanvas>
+						<p
+							className="text-center text-amber-900/40 text-xs"
+							style={rf}
+						>
+							{stagePreview.spawns.length}個のスポーン /{" "}
+							{(stagePreview.elapsedMs / 1000).toFixed(1)}s
 						</p>
 					</div>
-				)}
+				) : (
+					<>
+						{/* エディター領域 */}
+						{selectedGroup ? (
+							<div className="space-y-4">
+								{selectedGroup.type === "targets" && (
+									<div className="flex gap-1 rounded-lg bg-amber-100/50 p-1">
+										{TAB_ITEMS.map((tab) => (
+											<button
+												key={tab.key}
+												type="button"
+												className={cn(
+													"flex-1 rounded-md px-4 py-1.5 text-sm font-bold transition-all",
+													activeTab === tab.key
+														? "bg-white text-amber-900 shadow-sm"
+														: "text-amber-900/40 hover:text-amber-900/60",
+												)}
+												style={rf}
+												onClick={() =>
+													setActiveTab(tab.key)
+												}
+											>
+												{tab.label}
+											</button>
+										))}
+									</div>
+								)}
 
-				{/* タイムライン（下部） */}
-				<Timeline
-					groups={stage.groups}
-					selectedIdx={selectedGroupIdx}
-					onSelect={setSelectedGroupIdx}
-					onDelete={deleteGroup}
-					onAdd={addGroup}
-				/>
+								{activeTab === "placement" &&
+									selectedGroup.type === "targets" && (
+										<div className="space-y-3">
+											<EditorCanvas
+												targets={selectedGroup.targets}
+												onCellClick={handleCellClick}
+												onCellRightClick={() => {}}
+											/>
+											<EditorToolbar
+												currentMode={editorMode}
+												onModeChange={setEditorMode}
+												targetCount={
+													selectedGroup.targets.length
+												}
+											/>
+										</div>
+									)}
+
+								{activeTab === "animation" &&
+									selectedGroup.type === "targets" &&
+									selectedGroupIdx !== null && (
+										<AnimationEditor
+											group={selectedGroup}
+											onUpdateGroup={(g) =>
+												updateGroup(
+													selectedGroupIdx,
+													g,
+												)
+											}
+										/>
+									)}
+
+								{selectedGroup.type === "balloons" && (
+									<p
+										className="py-16 text-center text-amber-900/40"
+										style={rf}
+									>
+										風船エディター（Phase D で実装）
+									</p>
+								)}
+								{selectedGroup.type === "train" && (
+									<p
+										className="py-16 text-center text-amber-900/40"
+										style={rf}
+									>
+										列車エディター（Phase D で実装）
+									</p>
+								)}
+							</div>
+						) : (
+							<div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-amber-900/10">
+								<p className="text-amber-900/30" style={rf}>
+									グループを選択するか、追加してください
+								</p>
+							</div>
+						)}
+
+						{/* タイムライン（下部） */}
+						<Timeline
+							groups={stage.groups}
+							selectedIdx={selectedGroupIdx}
+							onSelect={setSelectedGroupIdx}
+							onDelete={deleteGroup}
+							onAdd={addGroup}
+						/>
+					</>
+				)}
 			</div>
 		</div>
 	);

@@ -108,7 +108,7 @@ export const GridGuide = ({ onCellClick, onCellRightClick }: Props) => {
 					position={[line.x, line.y, -15.05]}
 				>
 					<planeGeometry args={[line.w, LINE_THICKNESS]} />
-					<meshBasicMaterial color="#ffffff" transparent opacity={0.2} />
+					<meshBasicMaterial color="#ffffff" transparent opacity={0.35} />
 				</mesh>
 			))}
 
@@ -119,7 +119,7 @@ export const GridGuide = ({ onCellClick, onCellRightClick }: Props) => {
 					position={[line.x, line.y, -15.05]}
 				>
 					<planeGeometry args={[LINE_THICKNESS, line.h]} />
-					<meshBasicMaterial color="#ffffff" transparent opacity={0.2} />
+					<meshBasicMaterial color="#ffffff" transparent opacity={0.35} />
 				</mesh>
 			))}
 
