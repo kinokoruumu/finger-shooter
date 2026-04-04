@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getStage, saveStage } from "../../stores/creator-store";
 import type { CreatorGroup, CreatorStage } from "../../types";
+import { BalloonEntryDialog } from "../balloon-entry-dialog";
 import {
 	EditorCanvasWrapper,
 	EditorScene,
@@ -48,6 +49,8 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		},
 	);
 	const [targetDialogOpen, setTargetDialogOpen] = useState(false);
+	const [editingBalloonId, setEditingBalloonId] = useState<string | null>(null);
+	const [trainDialogOpen, setTrainDialogOpen] = useState(false);
 
 	const updateStage = useCallback(
 		(updater: (s: CreatorStage) => CreatorStage) => {
@@ -240,14 +243,8 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 								updateGroup(selectedGroupIdx, g)
 							}
 							onEditTargets={() => setTargetDialogOpen(true)}
-						/>
-
-						{/* 列車設定 */}
-						<TrainEditor
-							group={selectedGroup}
-							onUpdateGroup={(g) =>
-								updateGroup(selectedGroupIdx, g)
-							}
+							onEditBalloon={(id) => setEditingBalloonId(id)}
+							onEditTrain={() => setTrainDialogOpen(true)}
 						/>
 					</div>
 				)}
@@ -277,6 +274,54 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 				<TargetStepDialog
 					open={targetDialogOpen}
 					onClose={() => setTargetDialogOpen(false)}
+					group={selectedGroup}
+					onUpdateGroup={(g) => updateGroup(selectedGroupIdx, g)}
+				/>
+			)}
+
+			{/* 風船編集ダイアログ */}
+			{selectedGroup &&
+				selectedGroupIdx !== null &&
+				editingBalloonId && (() => {
+					const entry = (selectedGroup.balloonEntries ?? []).find(
+						(e) => e.id === editingBalloonId,
+					);
+					if (!entry) return null;
+					return (
+						<BalloonEntryDialog
+							open
+							onClose={() => setEditingBalloonId(null)}
+							entry={entry}
+							onUpdate={(updated) =>
+								updateGroup(selectedGroupIdx, {
+									...selectedGroup,
+									balloonEntries: (
+										selectedGroup.balloonEntries ?? []
+									).map((e) =>
+										e.id === updated.id ? updated : e,
+									),
+								})
+							}
+							onDelete={() => {
+								updateGroup(selectedGroupIdx, {
+									...selectedGroup,
+									balloonEntries: (
+										selectedGroup.balloonEntries ?? []
+									).filter(
+										(e) => e.id !== editingBalloonId,
+									),
+								});
+								setEditingBalloonId(null);
+							}}
+						/>
+					);
+				})()}
+
+			{/* 列車編集ダイアログ */}
+			{selectedGroup && selectedGroupIdx !== null && (
+				<TrainEditor
+					open={trainDialogOpen}
+					onClose={() => setTrainDialogOpen(false)}
 					group={selectedGroup}
 					onUpdateGroup={(g) => updateGroup(selectedGroupIdx, g)}
 				/>
