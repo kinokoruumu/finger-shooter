@@ -154,14 +154,10 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 					<span className="text-amber-900/40 text-xs">
 						{stage.groups.length} グループ
 					</span>
-					<div className="ml-auto flex gap-2">
-						{isAnyPreviewPlaying ? (
+					<div className="ml-auto">
+						{isStagePreviewPlaying ? (
 							<Button
-								onClick={
-									isStagePreviewPlaying
-										? stagePreview.stop
-										: groupPreview.stop
-								}
+								onClick={stagePreview.stop}
 								size="sm"
 								variant="outline"
 								style={rf}
@@ -169,32 +165,18 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 								■ 停止
 							</Button>
 						) : (
-							<>
-								{selectedGroup && (
-									<Button
-										onClick={groupPreview.play}
-										size="sm"
-										variant="outline"
-										style={rf}
-										disabled={
-											groupPreview.spawns.length === 0
-										}
-									>
-										▶ グループ
-									</Button>
-								)}
-								<Button
-									onClick={stagePreview.play}
-									size="sm"
-									className="bg-amber-900 font-bold text-white hover:bg-amber-800"
-									style={rf}
-									disabled={
-										stagePreview.spawns.length === 0
-									}
-								>
+							<Button
+								onClick={stagePreview.play}
+								size="sm"
+								className="bg-amber-900 font-bold text-white hover:bg-amber-800"
+								style={rf}
+								disabled={
+									stagePreview.spawns.length === 0 ||
+									isGroupPreviewPlaying
+								}
+							>
 									▶ 全体
-								</Button>
-							</>
+							</Button>
 						)}
 					</div>
 				</div>
@@ -232,23 +214,25 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 					</EditorCanvasWrapper>
 				)}
 
-				{/* 選択グループの編集 */}
-				{selectedGroup && selectedGroupIdx !== null && !isAnyPreviewPlaying && (
-					<div className="space-y-4">
-						{/* タイムライン */}
-						<StageTimeline
-							group={selectedGroup}
-							onUpdateGroup={(g) =>
-								updateGroup(selectedGroupIdx, g)
-							}
-							onEditTargets={() => setTargetDialogOpen(true)}
-							onEditBalloon={(id) => setEditingBalloonId(id)}
-							onEditTrain={() => setTrainDialogOpen(true)}
-						/>
-					</div>
+				{/* タイムライン（グループプレビュー中も表示） */}
+				{selectedGroup && selectedGroupIdx !== null && !isStagePreviewPlaying && (
+					<StageTimeline
+						group={selectedGroup}
+						onUpdateGroup={(g) =>
+							updateGroup(selectedGroupIdx, g)
+						}
+						onEditTargets={() => setTargetDialogOpen(true)}
+						onEditBalloon={(id) => setEditingBalloonId(id)}
+						onEditTrain={() => setTrainDialogOpen(true)}
+						isPlaying={isGroupPreviewPlaying}
+						onPlay={groupPreview.play}
+						onStop={groupPreview.stop}
+						elapsedMsRef={groupPreview.elapsedMsRef}
+						spawnCount={groupPreview.spawns.length}
+					/>
 				)}
 
-				{!selectedGroup && !isAnyPreviewPlaying && (
+				{!selectedGroup && !isStagePreviewPlaying && (
 					<div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-amber-900/10">
 						<p className="text-amber-900/30" style={rf}>
 							グループを選択するか、追加してください

@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type {
 	CreatorBalloonEntry,
@@ -19,6 +20,11 @@ type Props = {
 	onEditTargets: () => void;
 	onEditBalloon: (entryId: string) => void;
 	onEditTrain: () => void;
+	isPlaying: boolean;
+	onPlay: () => void;
+	onStop: () => void;
+	elapsedMsRef: React.RefObject<number>;
+	spawnCount: number;
 };
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
@@ -367,8 +373,14 @@ export const StageTimeline = ({
 	onEditTargets,
 	onEditBalloon,
 	onEditTrain,
+	isPlaying,
+	onPlay,
+	onStop,
+	elapsedMsRef,
+	spawnCount,
 }: Props) => {
 	const [containerWidth, setContainerWidth] = useState(600);
+	const playheadRef = useRef<HTMLDivElement>(null);
 
 	const duration = calcGroupDuration(group);
 	const timelineWidth = containerWidth - LABEL_WIDTH;
@@ -426,12 +438,48 @@ export const StageTimeline = ({
 		},
 	];
 
+	// 再生ヘッドの位置更新（ref で直接 DOM 操作、React 再レンダリング不要）
+	useEffect(() => {
+		if (!isPlaying || !playheadRef.current) return;
+
+		const tick = () => {
+			if (!playheadRef.current) return;
+			const ms = elapsedMsRef.current;
+			const x = timeToX(ms, duration, timelineWidth) + LABEL_WIDTH;
+			playheadRef.current.style.transform = `translateX(${x}px)`;
+			requestAnimationFrame(tick);
+		};
+		const id = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(id);
+	}, [isPlaying, duration, timelineWidth, elapsedMsRef]);
+
 	return (
 		<div
 			ref={measureRef}
-			className="overflow-hidden rounded-xl border-2 border-amber-900/10 bg-white"
+			className="relative overflow-hidden rounded-xl border-2 border-amber-900/10 bg-white"
 			style={rf}
 		>
+			{/* コントロールバー */}
+			<div className="flex items-center gap-2 border-b border-amber-900/5 bg-amber-50/50 px-3 py-1.5">
+				{!isPlaying ? (
+					<Button
+						onClick={onPlay}
+						size="xs"
+						className="bg-amber-900 font-bold text-white hover:bg-amber-800"
+						disabled={spawnCount === 0}
+					>
+						▶
+					</Button>
+				) : (
+					<Button onClick={onStop} size="xs" variant="outline">
+						■
+					</Button>
+				)}
+				<span className="text-amber-900/40 text-[10px]">
+					{spawnCount}個のスポーン
+				</span>
+			</div>
+
 			{/* ルーラー */}
 			<div className="flex border-b border-amber-900/5 bg-amber-50/30">
 				<div
@@ -459,6 +507,16 @@ export const StageTimeline = ({
 					{track.content}
 				</div>
 			))}
+
+			{/* 再生ヘッド */}
+			<div
+				ref={playheadRef}
+				className={cn(
+					"pointer-events-none absolute top-0 bottom-0 w-0.5 bg-red-500 transition-opacity",
+					isPlaying ? "opacity-100" : "opacity-0",
+				)}
+				style={{ transform: `translateX(${LABEL_WIDTH}px)` }}
+			/>
 		</div>
 	);
 };
