@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-type DragMode = "move" | "resize-left" | "resize-right";
+type DragMode = "move" | "resize-left" | "resize-right" | "resize-spawn";
 
 type Props = {
 	x: number;
@@ -134,6 +134,22 @@ export const DraggableBar = ({
 								width: `${Math.max(0, (sR - dR) * 100)}%`,
 							}}
 						/>
+						{/* 境界B: 出現→表示残りの境界ドラッグハンドル */}
+						{sR > dR && sR < 1 && onDrag && (
+							<div
+								data-testid="resize-spawn-handle"
+								className={cn(
+									"absolute top-0 bottom-0 z-20 w-3 cursor-ew-resize",
+									dragging === "resize-spawn"
+										? "bg-white/30"
+										: "bg-white/10",
+								)}
+								style={{ left: `calc(${sR * 100}% - 6px)` }}
+								onPointerDown={(e) =>
+									handlePointerDown(e, "resize-spawn")
+								}
+							/>
+						)}
 						{/* 表示残り（やや薄い） */}
 						{sR < 1 && (
 							<div

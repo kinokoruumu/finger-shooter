@@ -6,6 +6,7 @@ import type {
 	CreatorGroup,
 } from "../../types";
 import {
+	TARGET_APPEAR_DELAY_MS,
 	calcDraggedTime,
 	calcGroupDuration,
 	calcResizeLeftTime,
@@ -240,6 +241,39 @@ const TargetTrack = ({
 													),
 												}
 											: t,
+									),
+								});
+							} else if (
+								mode === "resize-spawn" &&
+								count > 1
+							) {
+								// 境界B: interval 変更
+								const initialSpawnEnd =
+									dragInitialRef.current.startTime +
+									TARGET_APPEAR_DELAY_MS +
+									(count - 1) *
+										(step?.interval ?? 100);
+								const newSpawnEnd = calcDraggedTime(
+									initialSpawnEnd,
+									totalDx,
+									duration,
+									width,
+								);
+								const newInterval = Math.max(
+									0,
+									Math.round(
+										(newSpawnEnd -
+											(step?.startTime ?? 0) -
+											TARGET_APPEAR_DELAY_MS) /
+											(count - 1),
+									),
+								);
+								onUpdateGroup({
+									...group,
+									targetSteps: steps.map((s, si) =>
+										si === i
+											? { ...s, interval: newInterval }
+											: s,
 									),
 								});
 							}
