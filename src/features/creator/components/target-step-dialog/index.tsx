@@ -242,7 +242,7 @@ export const TargetStepDialog = ({
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="max-h-[90vh] max-w-6xl">
+			<DialogContent className="flex max-h-[90vh] max-w-6xl flex-col overflow-hidden">
 				<DialogHeader>
 					<DialogTitle style={rf}>的の編集</DialogTitle>
 				</DialogHeader>
@@ -273,8 +273,8 @@ export const TargetStepDialog = ({
 				</div>
 
 				{/* Canvas */}
-				<div className="max-h-[40vh]">
-				<EditorCanvasWrapper>
+				<div className="h-[35vh] shrink-0">
+				<EditorCanvasWrapper className="h-full">
 					<EditorScene
 						targets={targets}
 						onCellClick={
@@ -313,12 +313,12 @@ export const TargetStepDialog = ({
 
 				{/* アニメーションタブ */}
 				{tab === "animation" && (
-					<div className="max-h-[40vh] space-y-3 overflow-y-auto" style={rf}>
-						<p className="text-amber-900/40 text-xs">
-							各ステップの開始タイミングはタイムラインでドラッグ移動できます
-						</p>
+					<>
+					<p className="shrink-0 text-amber-900/40 text-xs" style={rf}>
+						各ステップの開始タイミングはタイムラインでドラッグ移動できます
+					</p>
 
-						<div className="space-y-1.5">
+					<div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto" style={rf}>
 							{steps.map((step, i) => {
 								const isActive = i === activeStepIndex;
 								return (
@@ -485,16 +485,16 @@ export const TargetStepDialog = ({
 								);
 							})}
 						</div>
-
-						<Button
-							variant="outline"
-							size="sm"
-							className="w-full border-dashed border-amber-900/20 text-amber-900/50"
-							onClick={handleAddStep}
-						>
-							+ ステップ追加
-						</Button>
-					</div>
+					<Button
+						variant="outline"
+						size="sm"
+						className="w-full shrink-0 border-dashed border-amber-900/20 text-amber-900/50"
+						style={rf}
+						onClick={handleAddStep}
+					>
+						+ ステップ追加
+					</Button>
+					</>
 				)}
 
 				{/* 削除 */}

@@ -1,5 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { Rails } from "@/features/game/components/rails";
+import { cn } from "@/lib/utils";
 import type { CreatorTarget } from "../../types";
 import { GridGuide } from "./internal/grid-guide";
 import { StaticTarget } from "./internal/static-target";
@@ -72,12 +73,16 @@ export const EditorScene = ({
 
 type CanvasWrapperProps = {
 	children: React.ReactNode;
+	className?: string;
 };
 
-export const EditorCanvasWrapper = ({ children }: CanvasWrapperProps) => {
+export const EditorCanvasWrapper = ({ children, className }: CanvasWrapperProps) => {
 	return (
 		<div
-			className="relative aspect-video w-full overflow-hidden rounded-xl bg-cover bg-center bg-no-repeat"
+			className={cn(
+				"relative w-full overflow-hidden rounded-xl bg-cover bg-center bg-no-repeat",
+				className ?? "aspect-video",
+			)}
 			style={{ backgroundImage: "url('/images/bg.png')" }}
 		>
 			<Canvas
