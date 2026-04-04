@@ -98,10 +98,12 @@ const TargetTrack = ({
 	const steps = group.targetSteps ?? [];
 	const dragInitialRef = useRef({ startTime: 0, endTime: 0 });
 
+	const rowCount = Math.max(1, stepBars.length);
+
 	return (
 		<div
 			className="relative hover:bg-amber-900/[0.03]"
-			style={{ height: TRACK_HEIGHT, width }}
+			style={{ height: TRACK_HEIGHT * rowCount, width }}
 			onClick={onClick}
 			role="button"
 			tabIndex={0}
@@ -115,6 +117,7 @@ const TargetTrack = ({
 				const w = Math.max(x2 - x, 6);
 				const count = (steps[i]?.targetIds ?? []).length;
 				const step = steps[i];
+				const rowOffset = i * TRACK_HEIGHT;
 
 				return (
 					<DraggableBar
@@ -215,6 +218,7 @@ const TargetTrack = ({
 							}
 						}}
 						onClick={onClick}
+						style={{ top: rowOffset + 4 }}
 					/>
 				);
 			})}
