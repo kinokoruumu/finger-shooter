@@ -94,6 +94,18 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		[updateStage],
 	);
 
+	const updateGroupFn = useCallback(
+		(idx: number, updater: (g: CreatorGroup) => CreatorGroup) => {
+			updateStage((s) => ({
+				...s,
+				groups: s.groups.map((g, i) =>
+					i === idx ? updater(g) : g,
+				),
+			}));
+		},
+		[updateStage],
+	);
+
 	const handleNameChange = useCallback(
 		(name: string) => {
 			updateStage((s) => ({ ...s, name }));
@@ -220,6 +232,9 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 						group={selectedGroup}
 						onUpdateGroup={(g) =>
 							updateGroup(selectedGroupIdx, g)
+						}
+						onUpdateGroupFn={(fn) =>
+							updateGroupFn(selectedGroupIdx, fn)
 						}
 						onEditTargetSet={(setId, stepIndex) => {
 							setEditingTargetSetId(setId);

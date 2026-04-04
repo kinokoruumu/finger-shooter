@@ -22,6 +22,7 @@ import { DraggableBar } from "./internal/draggable-bar";
 type Props = {
 	group: CreatorGroup;
 	onUpdateGroup: (group: CreatorGroup) => void;
+	onUpdateGroupFn: (updater: (g: CreatorGroup) => CreatorGroup) => void;
 	onEditTargetSet: (setId: string, stepIndex?: number) => void;
 	onEditBalloon: (entryId: string) => void;
 	onEditTrain: () => void;
@@ -94,12 +95,14 @@ const TargetTrack = ({
 	width,
 	onEditSet,
 	onUpdateGroup,
+	onUpdateGroupFn,
 }: {
 	group: CreatorGroup;
 	duration: number;
 	width: number;
 	onEditSet: (setId: string, stepIndex?: number) => void;
 	onUpdateGroup: (group: CreatorGroup) => void;
+	onUpdateGroupFn: (updater: (g: CreatorGroup) => CreatorGroup) => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
 	const sets = group.targetSets ?? [];
@@ -156,8 +159,6 @@ const TargetTrack = ({
 					const setHeight = stepCount * TRACK_HEIGHT;
 					yOffset += setHeight + 8; // セット間余白
 
-					const setDragStartRef = { current: [] as number[] };
-
 					// セットのステップ範囲（背景幅用）
 					let setMinX = Number.POSITIVE_INFINITY;
 					let setMaxX = 0;
@@ -192,33 +193,38 @@ const TargetTrack = ({
 								onPointerDown={(e) => {
 									e.stopPropagation();
 									e.preventDefault();
-									setDragStartRef.current = set.steps.map(
+									const initialSteps = set.steps.map(
+										(s) => ({ ...s }),
+									);
+									const initialStartTimes = initialSteps.map(
 										(s) => s.startTime ?? 0,
 									);
+									const setId = set.id;
 									const startX = e.clientX;
 									let didDrag = false;
 									const onMove = (ev: PointerEvent) => {
 										const totalDx = ev.clientX - startX;
 										if (Math.abs(totalDx) > 2) didDrag = true;
-										const newSteps = set.steps.map(
-											(s, si) => ({
-												...s,
-												startTime: calcDraggedTime(
-													setDragStartRef.current[si],
-													totalDx,
-													duration,
-													width,
-												),
-											}),
+										const newStartTimes = initialStartTimes.map(
+											(t) => calcDraggedTime(t, totalDx, duration, width),
 										);
-										onUpdateGroup({
-											...group,
-											targetSets: sets.map((s) =>
-												s.id === set.id
-													? { ...s, steps: newSteps }
+										// updater パターンで最新の group を使う
+										onUpdateGroupFn((g) => ({
+											...g,
+											targetSets: (g.targetSets ?? []).map((s) =>
+												s.id === setId
+													? {
+															...s,
+															steps: s.steps.map(
+																(st, si) => ({
+																	...st,
+																	startTime: newStartTimes[si] ?? st.startTime,
+																}),
+															),
+														}
 													: s,
 											),
-										});
+										}));
 									};
 
 									const onUp = () => {
@@ -738,6 +744,7 @@ const TrainTrack = ({
 export const StageTimeline = ({
 	group,
 	onUpdateGroup,
+	onUpdateGroupFn,
 	onEditTargetSet,
 	onEditBalloon,
 	onEditTrain,
@@ -775,6 +782,7 @@ export const StageTimeline = ({
 					width={timelineWidth}
 					onEditSet={onEditTargetSet}
 					onUpdateGroup={onUpdateGroup}
+					onUpdateGroupFn={onUpdateGroupFn}
 				/>
 			),
 		},
