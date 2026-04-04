@@ -1,6 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
+import { playSound } from "@/features/audio";
 import type { BalloonTargetData } from "@/features/game/components/balloon-target";
 import { BalloonTarget } from "@/features/game/components/balloon-target";
 import { randomBalloonColor } from "@/features/game/components/balloon-target/utils";
@@ -14,6 +15,7 @@ import { createScreenToWorld } from "@/features/game/utils/screen-to-world";
 
 let nextId = 0;
 const genId = () => ++nextId;
+let lastAppearSoundTime = 0;
 
 type Props = {
 	spawns: SpawnEntry[];
@@ -91,6 +93,11 @@ export const PreviewScene = ({ spawns, isPlaying, onComplete }: Props) => {
 				case "ground":
 				case "ground-gold":
 				case "ground-penalty": {
+					const now = performance.now();
+					if (now - lastAppearSoundTime > 100) {
+						lastAppearSoundTime = now;
+						playSound("target-appear", 0.85);
+					}
 					const hasGrid =
 						entry.gx !== undefined && entry.gy !== undefined;
 					let nx: number;

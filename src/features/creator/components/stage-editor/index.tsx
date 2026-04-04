@@ -228,12 +228,12 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 				{selectedGroup && (
 					<EditorCanvasWrapper>
 						{isAnyPreviewPlaying && activePreviewSpawns ? (
-							<>
-								<ambientLight intensity={0.6} />
-								<directionalLight
-									position={[5, 10, 5]}
-									intensity={0.8}
-								/>
+							<EditorScene
+								targets={[]}
+								onCellClick={() => {}}
+								onCellRightClick={() => {}}
+								showGrid={false}
+							>
 								<PreviewScene
 									spawns={activePreviewSpawns}
 									isPlaying
@@ -243,7 +243,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 											: groupPreview.onComplete
 									}
 								/>
-							</>
+							</EditorScene>
 						) : (
 							<EditorScene
 								targets={(selectedGroup.targetSets ?? []).flatMap((s) => s.targets)}
