@@ -151,7 +151,7 @@ export const DraggableBar = ({
 				<button
 					type="button"
 					data-testid="delete-button"
-					className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] text-white opacity-0 transition-opacity group-hover:opacity-100"
+					className="relative z-10 ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] text-white/0 transition-colors group-hover:bg-red-500/80 group-hover:text-white"
 					onClick={(e) => {
 						e.stopPropagation();
 						onDelete();

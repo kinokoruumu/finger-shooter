@@ -93,6 +93,7 @@ const TargetTrack = ({
 	onClick: () => void;
 	onUpdateGroup: (group: CreatorGroup) => void;
 }) => {
+	const trackRef = useRef<HTMLDivElement>(null);
 	const stepBars = calcTargetStepBars(group);
 	const targets = group.targets ?? [];
 	const steps = group.targetSteps ?? [];
@@ -100,16 +101,32 @@ const TargetTrack = ({
 
 	const rowCount = Math.max(1, stepBars.length);
 
+	const handleTrackClick = useCallback(
+		(e: React.MouseEvent) => {
+			if (!trackRef.current) return;
+			const rect = trackRef.current.getBoundingClientRect();
+			const x = e.clientX - rect.left;
+			const time = xToTime(x, duration, width);
+
+			onUpdateGroup({
+				...group,
+				targetSteps: [
+					...steps,
+					{ targetIds: [], interval: 100, startTime: time },
+				],
+			});
+			// 追加後にダイアログを開く
+			onClick();
+		},
+		[group, steps, duration, width, onUpdateGroup, onClick],
+	);
+
 	return (
 		<div
-			className="relative hover:bg-amber-900/[0.03]"
+			ref={trackRef}
+			className="relative cursor-crosshair hover:bg-amber-900/[0.03]"
 			style={{ height: TRACK_HEIGHT * rowCount, width }}
-			onClick={onClick}
-			role="button"
-			tabIndex={0}
-			onKeyDown={(e) => {
-				if (e.key === "Enter") onClick();
-			}}
+			onClick={handleTrackClick}
 		>
 			{stepBars.map((bar, i) => {
 				const x = timeToX(bar.startTime, duration, width);
@@ -225,6 +242,14 @@ const TargetTrack = ({
 							}
 						}}
 						onClick={onClick}
+						onDelete={() =>
+							onUpdateGroup({
+								...group,
+								targetSteps: steps.filter(
+									(_, si) => si !== i,
+								),
+							})
+						}
 						style={{ top: rowOffset + 4 }}
 					/>
 				);
