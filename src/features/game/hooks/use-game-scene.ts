@@ -20,6 +20,9 @@ import { createScreenToWorld } from "../utils/screen-to-world";
 let nextId = 0;
 const genId = () => ++nextId;
 
+/** 出現音のデバウンス */
+let lastAppearSoundTime = 0;
+
 export const useGameScene = (
 	_isPlaying: boolean,
 	currentStage: number,
@@ -122,6 +125,12 @@ export const useGameScene = (
 				case "ground":
 				case "ground-gold":
 				case "ground-penalty": {
+					// 出現音（デバウンス: 同時出現は1回のみ）
+					const now = performance.now();
+					if (now - lastAppearSoundTime > 100) {
+						lastAppearSoundTime = now;
+						playSound("target-appear", 0.85);
+					}
 					const hasGrid = entry.gx !== undefined && entry.gy !== undefined;
 					let nx: number;
 					let ny: number;

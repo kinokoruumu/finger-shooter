@@ -1,49 +1,46 @@
 import { Canvas } from "@react-three/fiber";
 import { useCallback, useEffect, useState } from "react";
-import {
-	getSoundDuration,
-	getSoundOffset,
-	playSound,
-	preloadSounds,
-	setSoundOffset,
-} from "@/features/audio";
+import { playSound, preloadSounds } from "@/features/audio";
 import type { GroundTargetData } from "@/features/game/components/ground-target";
 import { GroundTarget } from "@/features/game/components/ground-target";
 import { StageTransition } from "@/features/game/components/stage-transition";
 import { STAGES } from "@/features/game/constants/stage-definitions";
+import { TARGET_PATTERNS } from "@/features/game/constants/target-patterns";
 import { ResultScreen } from "@/features/hud/components/result-screen";
 import { WelcomeScreen } from "@/features/hud/components/welcome-screen";
 import { cn } from "@/lib/utils";
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
-// 音をプリロード
+// プリロード
 preloadSounds();
 
 let nextDemoId = 100;
+
+// グリッド→ワールド座標の簡易変換
+const gridToWorld = (gx: number, gy: number): [number, number] => {
+	const nx = 0.2 + (gx / 7) * 0.6;
+	const ny = 0.2 + (gy / 3) * 0.55;
+	const depth = 20; // camera z=5, target z=-15
+	const halfW = Math.tan((60 / 2) * (Math.PI / 180)) * depth;
+	const aspect = window.innerWidth / window.innerHeight;
+	const halfH = halfW / aspect;
+	const x = (nx - 0.5) * 2 * halfW;
+	const y = -(ny - 0.5) * 2 * halfH;
+	return [x, y];
+};
 
 export const UICatalog = () => {
 	const [transitionKey, setTransitionKey] = useState(0);
 	const [transitionStage, setTransitionStage] = useState(1);
 	const [showTransition, setShowTransition] = useState(true);
 
-	// 的アニメーションデモ
 	const [demoTargets, setDemoTargets] = useState<GroundTargetData[]>([]);
-	const [appearOffset, setAppearOffset] = useState(0);
-	const [appearDuration, setAppearDuration] = useState(0);
+	const [patternIdx, setPatternIdx] = useState(0);
 
-	// 音のメタデータを取得
 	useEffect(() => {
-		const init = async () => {
-			await preloadSounds();
-			setAppearOffset(getSoundOffset("target-appear"));
-			setAppearDuration(getSoundDuration("target-appear"));
-		};
-		init();
+		preloadSounds();
 	}, []);
-	const [demoType, setDemoType] = useState<"normal" | "gold" | "penalty">(
-		"normal",
-	);
 
 	const triggerTransition = (stage: number) => {
 		setTransitionStage(stage);
@@ -54,20 +51,31 @@ export const UICatalog = () => {
 		}, 100);
 	};
 
-	const spawnDemoTarget = useCallback(() => {
-		const id = ++nextDemoId;
-		const target: GroundTargetData = {
-			id,
-			x: 0,
-			y: 0,
-			z: -15,
-			isGold: demoType === "gold",
-			isPenalty: demoType === "penalty",
-			visibleDuration: 4.0,
-			scale: 1.8,
-		};
-		setDemoTargets((prev) => [...prev, target]);
-	}, [demoType]);
+	const spawnPattern = useCallback(() => {
+		const pattern = TARGET_PATTERNS[patternIdx];
+		for (const p of pattern.positions) {
+			const spawn = () => {
+				playSound("target-appear", 0.85);
+				const [x, y] = gridToWorld(p.gx, p.gy);
+				const target: GroundTargetData = {
+					id: ++nextDemoId,
+					x,
+					y,
+					z: -15,
+					isGold: false,
+					isPenalty: false,
+					visibleDuration: 5.0,
+					scale: 1.8,
+				};
+				setDemoTargets((prev) => [...prev, target]);
+			};
+			if (p.delay > 0) {
+				setTimeout(spawn, p.delay);
+			} else {
+				spawn();
+			}
+		}
+	}, [patternIdx]);
 
 	const handleDemoDead = useCallback((id: number) => {
 		setDemoTargets((prev) => prev.filter((t) => t.id !== id));
@@ -88,34 +96,27 @@ export const UICatalog = () => {
 
 				{/* 的アニメーション */}
 				<Section title="的アニメーション">
-					<div className="mb-4 flex flex-wrap gap-2">
-						{(
-							[
-								["normal", "通常"],
-								["gold", "+3（金）"],
-								["penalty", "-3（ペナ）"],
-							] as const
-						).map(([type, label]) => (
-							<button
-								key={type}
-								type="button"
-								className={cn(
-									"rounded-lg px-4 py-2 font-bold text-sm text-white transition-colors",
-									demoType === type
-										? "bg-orange-500"
-										: "bg-stone-700 hover:bg-stone-600",
-								)}
-								style={rf}
-								onClick={() => setDemoType(type)}
-							>
-								{label}
-							</button>
-						))}
+					<div className="mb-4 flex flex-wrap items-center gap-3">
+						<select
+							value={patternIdx}
+							onChange={(e) => setPatternIdx(Number(e.target.value))}
+							className="rounded-lg border border-stone-600 bg-stone-800 px-3 py-2 text-sm text-white"
+						>
+							{TARGET_PATTERNS.map((p, i) => {
+								const hasDelay = p.positions.some((pos) => pos.delay > 0);
+								return (
+									<option key={p.name} value={i}>
+										{p.name}（{p.positions.length}個
+										{hasDelay ? "・順次" : "・同時"}）
+									</option>
+								);
+							})}
+						</select>
 						<button
 							type="button"
 							className="rounded-lg bg-amber-800 px-6 py-2 font-bold text-amber-50 text-sm transition-colors hover:bg-amber-700"
 							style={rf}
-							onClick={spawnDemoTarget}
+							onClick={spawnPattern}
 						>
 							出現させる
 						</button>
@@ -128,52 +129,6 @@ export const UICatalog = () => {
 							クリア
 						</button>
 					</div>
-
-					{/* 出現音オフセット調整 */}
-					<div className="mb-4 rounded-xl border border-stone-600 bg-stone-900/80 p-4 backdrop-blur-sm">
-						<p className="mb-2 font-bold text-sm text-white" style={rf}>
-							出現音 (target-appear) オフセット調整
-						</p>
-						<div className="flex items-center gap-3">
-							<input
-								type="range"
-								min="0"
-								max={appearDuration || 1}
-								step="0.01"
-								value={appearOffset}
-								onChange={(e) => {
-									const v = Number.parseFloat(e.target.value);
-									setAppearOffset(v);
-									setSoundOffset("target-appear", v);
-								}}
-								className="flex-1"
-							/>
-							<input
-								type="number"
-								min="0"
-								max={appearDuration || 1}
-								step="0.01"
-								value={appearOffset}
-								onChange={(e) => {
-									const v = Number.parseFloat(e.target.value);
-									setAppearOffset(v);
-									setSoundOffset("target-appear", v);
-								}}
-								className="w-20 rounded-md border border-stone-600 bg-stone-800 px-2 py-1 font-mono text-sm text-white"
-							/>
-							<span className="font-mono text-stone-400 text-xs">
-								/ {appearDuration.toFixed(2)}s
-							</span>
-							<button
-								type="button"
-								className="rounded-md bg-stone-700 px-3 py-1 text-sm text-white hover:bg-stone-600"
-								onClick={() => playSound("target-appear", 1.0)}
-							>
-								試聴
-							</button>
-						</div>
-					</div>
-
 					<div className="relative h-[500px] overflow-hidden rounded-2xl border border-stone-600">
 						<BgImage />
 						<div className="absolute inset-0">
@@ -200,40 +155,6 @@ export const UICatalog = () => {
 							debugMode={false}
 							onDebugStart={() => {}}
 						/>
-					</div>
-				</Section>
-
-				{/* キャリブレーション */}
-				<Section title="キャリブレーション">
-					<div className="relative h-[500px] overflow-hidden rounded-2xl border border-stone-600">
-						<BgImage />
-						<div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
-							<div className="flex w-[90vw] max-w-md flex-col items-center gap-5 rounded-2xl border border-stone-700/60 bg-stone-900/80 px-8 py-8 shadow-2xl shadow-black/40 backdrop-blur-xl">
-								<p
-									className="text-center font-black text-[clamp(1.2rem,3vw,1.5rem)] text-white"
-									style={rf}
-								>
-									照準を調整します
-								</p>
-								<p
-									className="text-center text-[clamp(0.9rem,2.5vw,1.1rem)] text-stone-300 leading-relaxed"
-									style={rf}
-								>
-									手のひらをカメラに向けて
-									<br />
-									キープしてください
-								</p>
-								<div className="h-4 w-full overflow-hidden rounded-full bg-stone-700">
-									<div className="h-full w-[65%] rounded-full bg-orange-500" />
-								</div>
-								<p
-									className="text-center text-stone-500 text-[clamp(0.7rem,2vw,0.85rem)]"
-									style={rf}
-								>
-									プレイ中もいつでも同じ操作で調整できます
-								</p>
-							</div>
-						</div>
 					</div>
 				</Section>
 

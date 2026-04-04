@@ -1,3 +1,4 @@
+import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import type * as THREE from "three";
@@ -92,6 +93,34 @@ const SmallTarget = ({
 					<meshStandardMaterial color={ring.color} />
 				</mesh>
 			))}
+			{slotType === "gold" && (
+				<Text
+					position={[0, 0, 0.1]}
+					fontSize={0.3}
+					color="#552200"
+					fontWeight={900}
+					anchorX="center"
+					anchorY="middle"
+					outlineWidth={0.02}
+					outlineColor="#ffffff"
+				>
+					+3
+				</Text>
+			)}
+			{slotType === "penalty" && (
+				<Text
+					position={[0, 0, 0.1]}
+					fontSize={0.3}
+					color="#ff2222"
+					fontWeight={900}
+					anchorX="center"
+					anchorY="middle"
+					outlineWidth={0.02}
+					outlineColor="#ffffff"
+				>
+					-3
+				</Text>
+			)}
 		</group>
 	);
 };

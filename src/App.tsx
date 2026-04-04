@@ -1,6 +1,6 @@
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { preloadSounds } from "@/features/audio";
+import { preloadSounds, warmupSounds } from "@/features/audio";
 import { CameraView } from "@/features/camera";
 import { useCamera } from "@/features/camera/hooks";
 import { Game3D } from "@/features/game/components/game-3d";
@@ -40,10 +40,11 @@ export const App = () => {
 	const gameState = useGameState();
 
 	const handleWelcome = useCallback(
-		(startRound?: number) => {
+		async (startRound?: number) => {
 			setStarted(true);
 			startCamera();
-			preloadSounds();
+			await preloadSounds();
+			warmupSounds();
 			if (startRound !== undefined && startRound > 0) {
 				setCurrentStage(startRound);
 			}

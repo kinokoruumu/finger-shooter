@@ -1,4 +1,8 @@
-/** Web Audio API ベースの低遅延オーディオマネージャー */
+/**
+ * オーディオマネージャー
+ * - ヒット音等: Web Audio API (低遅延)
+ * - 出現音: HTMLAudioElement プール (初回再生問題回避)
+ */
 
 type SoundName =
 	| "balloon-pop"
@@ -12,20 +16,19 @@ const SOUND_PATHS: Record<SoundName, string> = {
 	"target-hit": "/sounds/target-hit.mp3",
 	"penalty-hit": "/sounds/penalty-hit.mp3",
 	"gold-hit": "/sounds/gold-hit.mp3",
-	"target-appear": "/sounds/target-appear.wav",
+	"target-appear": "/sounds/target-appear.mp3",
 };
 
-/** 各サウンドの再生開始オフセット（秒） */
-const soundOffsets: Partial<Record<SoundName, number>> = {
-	"target-appear": 0,
-};
+/** HTMLAudioElement プールを使うサウンド */
+const HTML_AUDIO_SOUNDS: Set<SoundName> = new Set(["target-appear"]);
+const POOL_SIZE = 4;
+
+// --- Web Audio API ---
 
 let audioCtx: AudioContext | null = null;
 const buffers = new Map<SoundName, AudioBuffer>();
-const originalBuffers = new Map<SoundName, AudioBuffer>();
 let loaded = false;
 
-/** 同時再生数を追跡して音量を自動調整 */
 let activeSources = 0;
 const MAX_CONCURRENT = 5;
 
@@ -36,33 +39,37 @@ const getContext = (): AudioContext => {
 	return audioCtx;
 };
 
-/**
- * AudioBufferの先頭から指定秒数をトリミングした新しいBufferを返す
- */
-const trimBuffer = (
-	ctx: AudioContext,
-	buffer: AudioBuffer,
-	startSec: number,
-): AudioBuffer => {
-	if (startSec <= 0) return buffer;
-	const startSample = Math.floor(startSec * buffer.sampleRate);
-	const newLength = buffer.length - startSample;
-	if (newLength <= 0) return buffer;
+// --- HTMLAudioElement プール ---
 
-	const trimmed = ctx.createBuffer(
-		buffer.numberOfChannels,
-		newLength,
-		buffer.sampleRate,
-	);
-	for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
-		const src = buffer.getChannelData(ch);
-		const dst = trimmed.getChannelData(ch);
-		dst.set(src.subarray(startSample));
+const audioPools = new Map<SoundName, HTMLAudioElement[]>();
+const poolIndex = new Map<SoundName, number>();
+
+const initHtmlPool = (name: SoundName, path: string) => {
+	const pool: HTMLAudioElement[] = [];
+	for (let i = 0; i < POOL_SIZE; i++) {
+		const audio = new Audio(path);
+		audio.preload = "auto";
+		audio.load();
+		pool.push(audio);
 	}
-	return trimmed;
+	audioPools.set(name, pool);
+	poolIndex.set(name, 0);
 };
 
-/** 全サウンドを事前にフェッチ＆デコード */
+const playHtmlAudio = (name: SoundName, volume: number) => {
+	const pool = audioPools.get(name);
+	if (!pool) return;
+	const idx = poolIndex.get(name) ?? 0;
+	const audio = pool[idx];
+	audio.volume = volume;
+	audio.currentTime = 0;
+	audio.play().catch(() => {});
+	poolIndex.set(name, (idx + 1) % pool.length);
+};
+
+// --- 公開 API ---
+
+/** 全サウンドを事前にフェッチ＆デコード/プリロード */
 export const preloadSounds = async (): Promise<void> => {
 	if (loaded) return;
 	const ctx = getContext();
@@ -70,12 +77,14 @@ export const preloadSounds = async (): Promise<void> => {
 	await Promise.all(
 		(Object.entries(SOUND_PATHS) as [SoundName, string][]).map(
 			async ([name, path]) => {
-				const res = await fetch(path);
-				const arrayBuffer = await res.arrayBuffer();
-				const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-				buffers.set(name, audioBuffer);
-				// 元のバッファも保持（トリミング用）
-				originalBuffers.set(name, audioBuffer);
+				if (name in HTML_AUDIO_SOUNDS) {
+					initHtmlPool(name, path);
+				} else {
+					const res = await fetch(path);
+					const arrayBuffer = await res.arrayBuffer();
+					const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+					buffers.set(name, audioBuffer);
+				}
 			},
 		),
 	);
@@ -83,8 +92,13 @@ export const preloadSounds = async (): Promise<void> => {
 	loaded = true;
 };
 
-/** サウンド再生（トリミング済みバッファから再生） */
+/** サウンド再生 */
 export const playSound = (name: SoundName, volume = 1.0): void => {
+	if (name in HTML_AUDIO_SOUNDS) {
+		playHtmlAudio(name, volume);
+		return;
+	}
+
 	const ctx = getContext();
 	const buffer = buffers.get(name);
 	if (!buffer) return;
@@ -124,22 +138,8 @@ const playSoundInternal = (
 	source.start(0);
 };
 
-/** サウンドのオフセットを設定し、バッファをトリミングして差し替え */
-export const setSoundOffset = (name: SoundName, offset: number): void => {
-	soundOffsets[name] = offset;
-	const ctx = getContext();
-	const original = originalBuffers.get(name);
-	if (original) {
-		buffers.set(name, trimBuffer(ctx, original, offset));
-	}
-};
-
-/** 現在のオフセットを取得 */
-export const getSoundOffset = (name: SoundName): number => {
-	return soundOffsets[name] ?? 0;
-};
-
-/** サウンドの元の長さ（秒）を取得 */
-export const getSoundDuration = (name: SoundName): number => {
-	return originalBuffers.get(name)?.duration ?? 0;
-};
+/** 不要になったトリミング・オフセット関連（UIカタログ用に残す） */
+export const setSoundOffset = (_name: SoundName, _offset: number): void => {};
+export const getSoundOffset = (_name: SoundName): number => 0;
+export const getSoundDuration = (_name: SoundName): number => 0;
+export const warmupSounds = (): void => {};

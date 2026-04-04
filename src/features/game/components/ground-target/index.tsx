@@ -1,19 +1,17 @@
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type * as THREE from "three";
-import { playSound } from "@/features/audio";
 
-/** 出現音のデバウンス（100ms以内の連続呼び出しは1回にまとめる） */
-let lastAppearSoundTime = 0;
-const playAppearSound = () => {
-	const now = performance.now();
-	if (now - lastAppearSoundTime < 100) return;
-	lastAppearSoundTime = now;
-	playSound("target-appear", 0.5);
-};
+type TargetState =
+	| "waiting"
+	| "appearing"
+	| "visible"
+	| "leaving"
+	| "destroyed";
 
-type TargetState = "appearing" | "visible" | "leaving" | "destroyed";
+/** 音の無音部分を待つ時間（秒） */
+const APPEAR_DELAY = 0.35;
 
 export type GroundTargetData = {
 	id: number;
@@ -223,20 +221,16 @@ const DestroyParticles = ({
 	);
 };
 
-const APPEAR_DURATION = 0.35;
+const APPEAR_DURATION = 0.2;
 const LEAVE_DURATION = 0.25;
 const Z_BACK = -20;
 
 export const GroundTarget = ({ data, onDead }: Props) => {
 	const groupRef = useRef<THREE.Group>(null);
-	const [state, setState] = useState<TargetState>("appearing");
+	const [state, setState] = useState<TargetState>("waiting");
 	const [showParticles, setShowParticles] = useState(false);
 	const elapsed = useRef(0);
 
-	// 出現時に音を鳴らす（同時出現はデバウンスで1回にまとめる）
-	useEffect(() => {
-		playAppearSound();
-	}, []);
 	const positionRef = useRef<[number, number, number]>([
 		data.x,
 		data.y,
@@ -249,6 +243,14 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 		elapsed.current += delta;
 
 		switch (state) {
+			case "waiting": {
+				// 音の無音部分が終わるまで待機（非表示）
+				if (elapsed.current >= APPEAR_DELAY) {
+					setState("appearing");
+					elapsed.current = 0;
+				}
+				return;
+			}
 			case "appearing": {
 				// 奥(Z_BACK)から手前(data.z)にイン + Y軸90度回転(右向き→正面)
 				const t = Math.min(elapsed.current / APPEAR_DURATION, 1);
@@ -317,6 +319,7 @@ export const GroundTarget = ({ data, onDead }: Props) => {
 			{state !== "destroyed" && (
 				<group
 					ref={groupRef}
+					visible={state !== "waiting"}
 					position={[data.x, data.y, Z_BACK]}
 					userData={{
 						type: "ground-target",
