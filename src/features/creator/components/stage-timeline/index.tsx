@@ -160,17 +160,19 @@ const TargetTrack = ({
 					yOffset += setHeight + 8; // セット間余白
 
 					// セットのステップ範囲（背景幅用）
+					const MIN_BAR_W = 80;
 					let setMinX = Number.POSITIVE_INFINITY;
 					let setMaxX = 0;
 					for (const bar of stepBars) {
 						const bx1 = timeToX(bar.startTime, duration, width);
 						const bx2 = timeToX(bar.endTime, duration, width);
+						const barW = Math.max(bx2 - bx1, MIN_BAR_W);
 						if (bx1 < setMinX) setMinX = bx1;
-						if (bx2 > setMaxX) setMaxX = bx2;
+						if (bx1 + barW > setMaxX) setMaxX = bx1 + barW;
 					}
 					if (stepBars.length === 0) {
 						setMinX = 0;
-						setMaxX = 48;
+						setMaxX = MIN_BAR_W;
 					}
 
 					return (
