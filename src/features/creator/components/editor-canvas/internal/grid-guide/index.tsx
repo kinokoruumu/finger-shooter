@@ -6,7 +6,7 @@ import { createScreenToWorld } from "@/features/game/utils/screen-to-world";
 
 const GRID_W = 8;
 const GRID_H = 4;
-const LINE_THICKNESS = 0.06;
+const LINE_THICKNESS = 0.1;
 
 type Props = {
 	onCellClick: (gx: number, gy: number) => void;
@@ -108,7 +108,7 @@ export const GridGuide = ({ onCellClick, onCellRightClick }: Props) => {
 					position={[line.x, line.y, -15.05]}
 				>
 					<planeGeometry args={[line.w, LINE_THICKNESS]} />
-					<meshBasicMaterial color="#000000" transparent opacity={0.3} />
+					<meshBasicMaterial color="#000000" transparent opacity={0.5} />
 				</mesh>
 			))}
 
@@ -119,7 +119,7 @@ export const GridGuide = ({ onCellClick, onCellRightClick }: Props) => {
 					position={[line.x, line.y, -15.05]}
 				>
 					<planeGeometry args={[LINE_THICKNESS, line.h]} />
-					<meshBasicMaterial color="#000000" transparent opacity={0.3} />
+					<meshBasicMaterial color="#000000" transparent opacity={0.5} />
 				</mesh>
 			))}
 
@@ -139,7 +139,7 @@ export const GridGuide = ({ onCellClick, onCellRightClick }: Props) => {
 					}}
 				>
 					<planeGeometry args={[cellSize.w * 0.95, cellSize.h * 0.95]} />
-					<meshBasicMaterial color="#000000" transparent opacity={0.05} />
+					<meshBasicMaterial color="#000000" transparent opacity={0.1} />
 				</mesh>
 			))}
 		</group>
