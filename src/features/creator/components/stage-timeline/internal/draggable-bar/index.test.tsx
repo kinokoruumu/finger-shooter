@@ -141,21 +141,4 @@ describe("DraggableBar", () => {
 		});
 	});
 
-	describe("削除", () => {
-		it("削除ボタンクリックで onDelete が呼ばれる", () => {
-			const onDelete = vi.fn();
-			const onClick = vi.fn();
-			render(
-				<DraggableBar
-					{...defaultProps}
-					onDelete={onDelete}
-					onClick={onClick}
-				/>,
-			);
-
-			fireEvent.click(screen.getByTestId("delete-button"));
-			expect(onDelete).toHaveBeenCalledOnce();
-			expect(onClick).not.toHaveBeenCalled();
-		});
-	});
 });

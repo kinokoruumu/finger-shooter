@@ -16,7 +16,6 @@ type Props = {
 	onDrag?: (totalDeltaX: number, mode: DragMode) => void;
 	onDragEnd?: () => void;
 	onClick?: () => void;
-	onDelete?: () => void;
 	style?: React.CSSProperties;
 };
 
@@ -32,7 +31,6 @@ export const DraggableBar = ({
 	spawnRatio,
 	onDragEnd,
 	onClick,
-	onDelete,
 	style: extraStyle,
 }: Props) => {
 	const [dragging, setDragging] = useState<DragMode | null>(null);
@@ -83,7 +81,7 @@ export const DraggableBar = ({
 				? "ew-resize"
 				: "grab";
 
-	const actualWidth = Math.max(barWidth, 8);
+	const actualWidth = Math.max(barWidth, 48);
 
 	return (
 		<div
@@ -146,20 +144,6 @@ export const DraggableBar = ({
 				/>
 			)}
 
-			{/* 削除ボタン */}
-			{onDelete && (
-				<button
-					type="button"
-					data-testid="delete-button"
-					className="relative z-10 ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] text-white/0 transition-colors group-hover:bg-red-500/80 group-hover:text-white"
-					onClick={(e) => {
-						e.stopPropagation();
-						onDelete();
-					}}
-				>
-					×
-				</button>
-			)}
-		</div>
+			</div>
 	);
 };

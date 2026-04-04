@@ -242,14 +242,6 @@ const TargetTrack = ({
 							}
 						}}
 						onClick={onClick}
-						onDelete={() =>
-							onUpdateGroup({
-								...group,
-								targetSteps: steps.filter(
-									(_, si) => si !== i,
-								),
-							})
-						}
 						style={{ top: rowOffset + 4 }}
 					/>
 				);
@@ -356,14 +348,6 @@ const BalloonTrack = ({
 							});
 						}}
 						onClick={() => onEditEntry(entry.id)}
-						onDelete={() =>
-							onUpdateGroup({
-								...group,
-								balloonEntries: entries.filter(
-									(e) => e.id !== entry.id,
-								),
-							})
-						}
 						style={{ top: rowOffset + 4 }}
 					/>
 				);
@@ -507,12 +491,6 @@ const TrainTrack = ({
 						}
 					}}
 					onClick={onEdit}
-					onDelete={() =>
-						onUpdateGroup({
-							...group,
-							trainStartTime: null,
-						})
-					}
 				/>
 			)}
 			{!group.train && (
