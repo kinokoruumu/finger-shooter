@@ -242,7 +242,7 @@ export const TargetStepDialog = ({
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto">
+			<DialogContent className="max-h-[90vh] max-w-6xl">
 				<DialogHeader>
 					<DialogTitle style={rf}>的の編集</DialogTitle>
 				</DialogHeader>
@@ -311,7 +311,7 @@ export const TargetStepDialog = ({
 
 				{/* アニメーションタブ */}
 				{tab === "animation" && (
-					<div className="space-y-3" style={rf}>
+					<div className="max-h-[40vh] space-y-3 overflow-y-auto" style={rf}>
 						<p className="text-amber-900/40 text-xs">
 							各ステップの開始タイミングはタイムラインでドラッグ移動できます
 						</p>
