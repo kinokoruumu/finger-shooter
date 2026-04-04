@@ -24,25 +24,28 @@ const convertGroup = (
 ): SpawnEntry[] => {
 	const spawns: SpawnEntry[] = [];
 
-	// --- 的 ---
-	const targetSteps = group.targetSteps ?? [];
-	for (const step of targetSteps) {
-		const interval = step.interval ?? 100;
-		const baseTime = step.startTime ?? 0;
-		for (let i = 0; i < step.targetIds.length; i++) {
-			const target = group.targets.find(
-				(t) => t.id === step.targetIds[i],
-			);
-			if (!target) continue;
-			spawns.push({
-				time: baseTime + i * interval,
-				group: groupIndex,
-				type: target.type,
-				nx: 0,
-				gx: target.gx,
-				gy: target.gy,
-				visibleDuration: target.visibleDuration,
-			});
+	// --- 的セット ---
+	const targetSets = group.targetSets ?? [];
+	for (const set of targetSets) {
+		const steps = set.steps ?? [];
+		for (const step of steps) {
+			const interval = step.interval ?? 100;
+			const baseTime = step.startTime ?? 0;
+			for (let i = 0; i < step.targetIds.length; i++) {
+				const target = set.targets.find(
+					(t) => t.id === step.targetIds[i],
+				);
+				if (!target) continue;
+				spawns.push({
+					time: baseTime + i * interval,
+					group: groupIndex,
+					type: target.type,
+					nx: 0,
+					gx: target.gx,
+					gy: target.gy,
+					visibleDuration: target.visibleDuration,
+				});
+			}
 		}
 	}
 

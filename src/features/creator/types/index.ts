@@ -8,12 +8,19 @@ export type CreatorTarget = {
 	visibleDuration: number;
 };
 
-/** 的のステップ（配置+出現順序） */
+/** 的のステップ（出現順序） */
 export type CreatorTargetStep = {
 	targetIds: string[];
 	interval: number;
 	/** ステップの開始タイミング(ms) */
 	startTime: number;
+};
+
+/** 的セット: 独立した配置 + ステップ群 */
+export type CreatorTargetSet = {
+	id: string;
+	targets: CreatorTarget[];
+	steps: CreatorTargetStep[];
 };
 
 /** 風船のタイムラインエントリ */
@@ -46,9 +53,8 @@ export type CreatorTrain = {
 /** 1グループ = 順次実行される1つのまとまり */
 export type CreatorGroup = {
 	id: string;
-	/** 的 */
-	targets: CreatorTarget[];
-	targetSteps: CreatorTargetStep[];
+	/** 的セット（複数可） */
+	targetSets: CreatorTargetSet[];
 	/** 風船 */
 	balloonEntries: CreatorBalloonEntry[];
 	/** 列車 */

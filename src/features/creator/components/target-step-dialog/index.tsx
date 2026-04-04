@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type {
 	CreatorGroup,
+	CreatorTargetSet,
 	CreatorTargetStep,
 } from "../../types";
 import {
@@ -22,6 +23,8 @@ type Props = {
 	open: boolean;
 	onClose: () => void;
 	group: CreatorGroup;
+	targetSet: CreatorTargetSet;
+	initialStepIndex?: number;
 	onUpdateGroup: (group: CreatorGroup) => void;
 };
 
@@ -45,14 +48,42 @@ export const TargetStepDialog = ({
 	open,
 	onClose,
 	group,
+	targetSet,
+	initialStepIndex,
 	onUpdateGroup,
 }: Props) => {
-	const [tab, setTab] = useState<Tab>("placement");
+	const [tab, setTab] = useState<Tab>(
+		initialStepIndex != null ? "animation" : "placement",
+	);
 	const [editorMode, setEditorMode] = useState<EditorMode>("ground");
-	const [activeStepIndex, setActiveStepIndex] = useState(0);
+	const [activeStepIndex, setActiveStepIndex] = useState(
+		initialStepIndex ?? 0,
+	);
 
-	const targets = group.targets ?? [];
-	const steps = group.targetSteps ?? [];
+	const targets = targetSet.targets ?? [];
+	const steps = targetSet.steps ?? [];
+
+	const updateSet = useCallback(
+		(updater: (s: CreatorTargetSet) => CreatorTargetSet) => {
+			onUpdateGroup({
+				...group,
+				targetSets: (group.targetSets ?? []).map((s) =>
+					s.id === targetSet.id ? updater(s) : s,
+				),
+			});
+		},
+		[group, targetSet.id, onUpdateGroup],
+	);
+
+	const deleteSet = useCallback(() => {
+		onUpdateGroup({
+			...group,
+			targetSets: (group.targetSets ?? []).filter(
+				(s) => s.id !== targetSet.id,
+			),
+		});
+		onClose();
+	}, [group, targetSet.id, onUpdateGroup, onClose]);
 
 	// --- 配置操作 ---
 	const handleCellClick = useCallback(
@@ -65,36 +96,36 @@ export const TargetStepDialog = ({
 
 			if (editorMode === "delete") {
 				if (!existing) return;
-				onUpdateGroup({
-					...group,
-					targets: targets.filter(
+				updateSet((s) => ({
+					...s,
+					targets: s.targets.filter(
 						(t) => !(t.gx === gx && t.gy === gy),
 					),
-					targetSteps: steps.map((s) => ({
-						...s,
-						targetIds: s.targetIds.filter(
+					steps: s.steps.map((st) => ({
+						...st,
+						targetIds: st.targetIds.filter(
 							(id) => id !== existing.id,
 						),
 					})),
-				});
+				}));
 				return;
 			}
 
 			if (existing) {
 				if (existing.type === editorMode) return;
-				onUpdateGroup({
-					...group,
-					targets: targets.map((t) =>
+				updateSet((s) => ({
+					...s,
+					targets: s.targets.map((t) =>
 						t.id === existing.id
 							? { ...t, type: editorMode }
 							: t,
 					),
-				});
+				}));
 			} else {
-				onUpdateGroup({
-					...group,
+				updateSet((s) => ({
+					...s,
 					targets: [
-						...targets,
+						...s.targets,
 						{
 							id: crypto.randomUUID(),
 							gx,
@@ -103,10 +134,10 @@ export const TargetStepDialog = ({
 							visibleDuration: 4.0,
 						},
 					],
-				});
+				}));
 			}
 		},
-		[tab, targets, steps, editorMode, group, onUpdateGroup],
+		[tab, targets, editorMode, updateSet],
 	);
 
 	// --- アニメーション操作 ---
@@ -139,66 +170,74 @@ export const TargetStepDialog = ({
 
 			const step = steps[activeStepIndex];
 			if (step.targetIds.includes(targetId)) {
-				const newSteps = steps.map((s, i) =>
-					i === activeStepIndex
-						? {
-								...s,
-								targetIds: s.targetIds.filter(
-									(id) => id !== targetId,
-								),
-							}
-						: s,
-				);
-				onUpdateGroup({ ...group, targetSteps: newSteps });
+				updateSet((s) => ({
+					...s,
+					steps: s.steps.map((st, i) =>
+						i === activeStepIndex
+							? {
+									...st,
+									targetIds: st.targetIds.filter(
+										(id) => id !== targetId,
+									),
+								}
+							: st,
+					),
+				}));
 			} else {
-				const newSteps = steps.map((s, i) => {
-					if (i === activeStepIndex) return s;
-					return {
-						...s,
-						targetIds: s.targetIds.filter(
-							(id) => id !== targetId,
-						),
+				updateSet((s) => {
+					const newSteps = s.steps.map((st, i) => {
+						if (i === activeStepIndex) return st;
+						return {
+							...st,
+							targetIds: st.targetIds.filter(
+								(id) => id !== targetId,
+							),
+						};
+					});
+					newSteps[activeStepIndex] = {
+						...newSteps[activeStepIndex],
+						targetIds: [
+							...newSteps[activeStepIndex].targetIds,
+							targetId,
+						],
 					};
+					return { ...s, steps: newSteps };
 				});
-				newSteps[activeStepIndex] = {
-					...newSteps[activeStepIndex],
-					targetIds: [
-						...newSteps[activeStepIndex].targetIds,
-						targetId,
-					],
-				};
-				onUpdateGroup({ ...group, targetSteps: newSteps });
 			}
 		},
-		[tab, steps, activeStepIndex, group, onUpdateGroup],
+		[tab, steps, activeStepIndex, updateSet],
 	);
 
 	const handleAddStep = useCallback(() => {
-		// 最後のステップの終了時刻 + 300ms に配置
 		const lastStep = steps[steps.length - 1];
 		const lastEnd = lastStep
 			? (lastStep.startTime ?? 0) +
-				Math.max(0, lastStep.targetIds.length - 1) * (lastStep.interval ?? 100)
+				Math.max(0, lastStep.targetIds.length - 1) *
+					(lastStep.interval ?? 100)
 			: 0;
 		const newStep: CreatorTargetStep = {
 			targetIds: [],
 			interval: 100,
 			startTime: lastEnd + 300,
 		};
-		const newSteps = [...steps, newStep];
-		onUpdateGroup({ ...group, targetSteps: newSteps });
-		setActiveStepIndex(newSteps.length - 1);
-	}, [steps, group, onUpdateGroup]);
+		updateSet((s) => ({
+			...s,
+			steps: [...s.steps, newStep],
+		}));
+		setActiveStepIndex(steps.length);
+	}, [steps, updateSet]);
 
 	const handleDeleteStep = useCallback(
 		(index: number) => {
-			const newSteps = steps.filter((_, i) => i !== index);
-			onUpdateGroup({ ...group, targetSteps: newSteps });
-			if (activeStepIndex >= newSteps.length) {
-				setActiveStepIndex(Math.max(0, newSteps.length - 1));
+			updateSet((s) => ({
+				...s,
+				steps: s.steps.filter((_, i) => i !== index),
+			}));
+			if (activeStepIndex >= steps.length - 1) {
+				setActiveStepIndex(Math.max(0, steps.length - 2));
 			}
 		},
-		[steps, activeStepIndex, group, onUpdateGroup],
+		[steps, activeStepIndex, updateSet],
 	);
 
 	return (
@@ -233,7 +272,7 @@ export const TargetStepDialog = ({
 					))}
 				</div>
 
-				{/* Canvas（ダイアログ内の別Canvas） */}
+				{/* Canvas */}
 				<EditorCanvasWrapper>
 					<EditorScene
 						targets={targets}
@@ -261,7 +300,7 @@ export const TargetStepDialog = ({
 					/>
 				</EditorCanvasWrapper>
 
-				{/* 配置タブUI */}
+				{/* 配置タブ */}
 				{tab === "placement" && (
 					<EditorToolbar
 						currentMode={editorMode}
@@ -270,14 +309,13 @@ export const TargetStepDialog = ({
 					/>
 				)}
 
-				{/* アニメーションタブUI */}
+				{/* アニメーションタブ */}
 				{tab === "animation" && (
 					<div className="space-y-3" style={rf}>
 						<p className="text-amber-900/40 text-xs">
 							各ステップの開始タイミングはタイムラインでドラッグ移動できます
 						</p>
 
-						{/* ステップリスト */}
 						<div className="space-y-1.5">
 							{steps.map((step, i) => {
 								const isActive = i === activeStepIndex;
@@ -310,7 +348,7 @@ export const TargetStepDialog = ({
 											</span>
 											<div className="flex items-center gap-2">
 												<span className="text-amber-900/30 text-[10px]">
-													間隔
+													出現間隔
 												</span>
 												<Input
 													type="number"
@@ -318,12 +356,13 @@ export const TargetStepDialog = ({
 														step.interval ?? 100
 													}
 													onChange={(e) => {
-														const newSteps =
-															steps.map(
-																(s, si) =>
+														updateSet((s) => ({
+															...s,
+															steps: s.steps.map(
+																(st, si) =>
 																	si === i
 																		? {
-																				...s,
+																				...st,
 																				interval:
 																					Math.max(
 																						0,
@@ -334,13 +373,9 @@ export const TargetStepDialog = ({
 																						),
 																					),
 																			}
-																		: s,
-															);
-														onUpdateGroup({
-															...group,
-															targetSteps:
-																newSteps,
-														});
+																		: st,
+															),
+														}));
 													}}
 													onClick={(e) =>
 														e.stopPropagation()
@@ -369,7 +404,6 @@ export const TargetStepDialog = ({
 											</div>
 										</button>
 
-										{/* 的リスト */}
 										{step.targetIds.length > 0 && (
 											<div className="mt-2 flex flex-wrap gap-1">
 												{step.targetIds.map(
@@ -398,33 +432,30 @@ export const TargetStepDialog = ({
 																	e,
 																) => {
 																	e.stopPropagation();
-																	const newSteps =
-																		steps.map(
-																			(
-																				s,
-																				si,
-																			) =>
-																				si ===
-																				i
-																					? {
-																							...s,
-																							targetIds:
-																								s.targetIds.filter(
-																									(
-																										id,
-																									) =>
-																										id !==
-																										tid,
-																								),
-																						}
-																					: s,
-																		);
-																	onUpdateGroup(
-																		{
-																			...group,
-																			targetSteps:
-																				newSteps,
-																		},
+																	updateSet(
+																		(s) => ({
+																			...s,
+																			steps: s.steps.map(
+																				(
+																					st,
+																					si,
+																				) =>
+																					si ===
+																					i
+																						? {
+																								...st,
+																								targetIds:
+																									st.targetIds.filter(
+																										(
+																											id,
+																										) =>
+																											id !==
+																											tid,
+																									),
+																							}
+																						: st,
+																			),
+																		}),
 																	);
 																}}
 															>
@@ -463,6 +494,17 @@ export const TargetStepDialog = ({
 						</Button>
 					</div>
 				)}
+
+				{/* 削除 */}
+				<div className="flex justify-end pt-2">
+					<Button
+						variant="destructive"
+						size="sm"
+						onClick={deleteSet}
+					>
+						この的セットを削除
+					</Button>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

@@ -24,8 +24,7 @@ const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
 const createEmptyGroup = (): CreatorGroup => ({
 	id: crypto.randomUUID(),
-	targets: [],
-	targetSteps: [{ targetIds: [], interval: 100, startTime: 0 }],
+	targetSets: [],
 	balloonEntries: [],
 	train: null,
 	trainStartTime: null,
@@ -47,7 +46,8 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			return loaded && loaded.groups.length > 0 ? 0 : null;
 		},
 	);
-	const [targetDialogOpen, setTargetDialogOpen] = useState(false);
+	const [editingTargetSetId, setEditingTargetSetId] = useState<string | null>(null);
+	const [editingTargetStepIndex, setEditingTargetStepIndex] = useState<number | undefined>(undefined);
 	const [editingBalloonId, setEditingBalloonId] = useState<string | null>(null);
 	const [trainDialogOpen, setTrainDialogOpen] = useState(false);
 
@@ -205,7 +205,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 							</>
 						) : (
 							<EditorScene
-								targets={selectedGroup.targets}
+								targets={(selectedGroup.targetSets ?? []).flatMap((s) => s.targets)}
 								onCellClick={() => {}}
 								onCellRightClick={() => {}}
 								showGrid={false}
@@ -221,7 +221,10 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 						onUpdateGroup={(g) =>
 							updateGroup(selectedGroupIdx, g)
 						}
-						onEditTargets={() => setTargetDialogOpen(true)}
+						onEditTargetSet={(setId, stepIndex) => {
+							setEditingTargetSetId(setId);
+							setEditingTargetStepIndex(stepIndex);
+						}}
 						onEditBalloon={(id) => setEditingBalloonId(id)}
 						onEditTrain={() => setTrainDialogOpen(true)}
 						isPlaying={isGroupPreviewPlaying}
@@ -253,14 +256,27 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			</div>
 
 			{/* 的編集ダイアログ */}
-			{selectedGroup && selectedGroupIdx !== null && (
-				<TargetStepDialog
-					open={targetDialogOpen}
-					onClose={() => setTargetDialogOpen(false)}
-					group={selectedGroup}
-					onUpdateGroup={(g) => updateGroup(selectedGroupIdx, g)}
-				/>
-			)}
+			{selectedGroup &&
+				selectedGroupIdx !== null &&
+				editingTargetSetId && (() => {
+					const targetSet = (selectedGroup.targetSets ?? []).find(
+						(s) => s.id === editingTargetSetId,
+					);
+					if (!targetSet) return null;
+					return (
+						<TargetStepDialog
+							open
+							onClose={() => {
+								setEditingTargetSetId(null);
+								setEditingTargetStepIndex(undefined);
+							}}
+							group={selectedGroup}
+							targetSet={targetSet}
+							initialStepIndex={editingTargetStepIndex}
+							onUpdateGroup={(g) => updateGroup(selectedGroupIdx, g)}
+						/>
+					);
+				})()}
 
 			{/* 風船編集ダイアログ */}
 			{selectedGroup &&

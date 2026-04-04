@@ -78,12 +78,19 @@ export const getBalloonVisibleDuration = (): number => BALLOON_VISIBLE_MS;
 
 // --- グループ時間計算 ---
 
-/** 的ステップの各バー情報（startTime〜endTime を visibleDuration 含む） */
-export const calcTargetStepBars = (
-	group: CreatorGroup,
-): { startTime: number; delayEndTime: number; spawnEndTime: number; endTime: number }[] => {
-	const steps = group.targetSteps ?? [];
-	const targets = group.targets ?? [];
+type StepBar = {
+	startTime: number;
+	delayEndTime: number;
+	spawnEndTime: number;
+	endTime: number;
+};
+
+/** 的セット内のステップバー情報を計算 */
+export const calcTargetStepBarsForSet = (
+	set: { targets: CreatorGroup["targetSets"][number]["targets"]; steps: CreatorGroup["targetSets"][number]["steps"] },
+): StepBar[] => {
+	const steps = set.steps ?? [];
+	const targets = set.targets ?? [];
 
 	return steps.map((step) => {
 		const interval = step.interval ?? 100;
@@ -93,13 +100,11 @@ export const calcTargetStepBars = (
 		const spawnDuration = count > 0 ? (count - 1) * interval : 0;
 		const spawnEndTime = start + spawnDuration;
 
-		// 最大の visibleDuration を取得
 		const maxVisible = step.targetIds.reduce((mv, tid) => {
 			const t = targets.find((tgt) => tgt.id === tid);
 			return Math.max(mv, (t?.visibleDuration ?? 2.5) * 1000);
 		}, 0);
 
-		// 各的は spawn 後 APPEAR_DELAY 待ってから表示開始
 		const appearDelay = count > 0 ? TARGET_APPEAR_DELAY_MS : 0;
 
 		return {
@@ -113,10 +118,17 @@ export const calcTargetStepBars = (
 	});
 };
 
-/** 的ステップの最大終了時刻(ms) */
+/** 全的セットの最大終了時刻(ms) */
 export const calcTargetsDuration = (group: CreatorGroup): number => {
-	const bars = calcTargetStepBars(group);
-	return bars.reduce((max, b) => Math.max(max, b.endTime), 0);
+	const sets = group.targetSets ?? [];
+	let max = 0;
+	for (const set of sets) {
+		const bars = calcTargetStepBarsForSet(set);
+		for (const b of bars) {
+			if (b.endTime > max) max = b.endTime;
+		}
+	}
+	return max;
 };
 
 /** 風船エントリの最大終了時刻(ms) */

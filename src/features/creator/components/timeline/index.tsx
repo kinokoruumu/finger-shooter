@@ -28,11 +28,11 @@ const GroupContent = ({
 	group,
 	isSelected,
 }: { group: CreatorGroup; isSelected: boolean }) => {
-	const targets = group.targets ?? [];
+	const allTargets = (group.targetSets ?? []).flatMap((s) => s.targets);
 	const balloonEntries = group.balloonEntries ?? [];
 	const hasBalloons = balloonEntries.length > 0;
 	const hasTrain = group.train && group.trainStartTime != null;
-	const hasAny = targets.length > 0 || hasBalloons || hasTrain;
+	const hasAny = allTargets.length > 0 || hasBalloons || hasTrain;
 
 	if (!hasAny) {
 		return (
@@ -51,13 +51,13 @@ const GroupContent = ({
 	return (
 		<div className="space-y-1.5">
 			{/* 的 */}
-			{targets.length > 0 && (
+			{allTargets.length > 0 && (
 				<div className="flex items-center gap-1.5">
 					<span className="w-6 shrink-0 text-[10px] font-bold text-amber-900/40">
 						的
 					</span>
 					<div className="flex flex-wrap gap-0.5">
-						{targets.map((t) => {
+						{allTargets.map((t) => {
 							const badge = TARGET_BADGE[t.type];
 							return (
 								<span

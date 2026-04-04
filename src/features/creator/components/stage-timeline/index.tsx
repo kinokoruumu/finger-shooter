@@ -10,7 +10,7 @@ import {
 	calcDraggedTime,
 	calcGroupDuration,
 	calcResizeLeftTime,
-	calcTargetStepBars,
+	calcTargetStepBarsForSet,
 	getBalloonVisibleDuration,
 	timeToX,
 	trainDurationToSpeed,
@@ -22,7 +22,7 @@ import { DraggableBar } from "./internal/draggable-bar";
 type Props = {
 	group: CreatorGroup;
 	onUpdateGroup: (group: CreatorGroup) => void;
-	onEditTargets: () => void;
+	onEditTargetSet: (setId: string, stepIndex?: number) => void;
 	onEditBalloon: (entryId: string) => void;
 	onEditTrain: () => void;
 	isPlaying: boolean;
@@ -80,27 +80,33 @@ const TimeRuler = ({
 	);
 };
 
+/** 的セットの色 */
+const SET_COLORS = [
+	{ bg: "bg-amber-100/40", border: "border-amber-400/30", bar: "bg-amber-500", barActive: "bg-amber-700" },
+	{ bg: "bg-orange-100/40", border: "border-orange-400/30", bar: "bg-orange-500", barActive: "bg-orange-700" },
+	{ bg: "bg-rose-100/40", border: "border-rose-400/30", bar: "bg-rose-500", barActive: "bg-rose-700" },
+	{ bg: "bg-lime-100/40", border: "border-lime-400/30", bar: "bg-lime-500", barActive: "bg-lime-700" },
+];
+
 /** 的トラック */
 const TargetTrack = ({
 	group,
 	duration,
 	width,
-	onClick,
+	onEditSet,
 	onUpdateGroup,
 }: {
 	group: CreatorGroup;
 	duration: number;
 	width: number;
-	onClick: () => void;
+	onEditSet: (setId: string, stepIndex?: number) => void;
 	onUpdateGroup: (group: CreatorGroup) => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
-	const stepBars = calcTargetStepBars(group);
-	const targets = group.targets ?? [];
-	const steps = group.targetSteps ?? [];
+	const sets = group.targetSets ?? [];
 	const dragInitialRef = useRef({ startTime: 0, endTime: 0 });
 
-	const rowCount = Math.max(1, stepBars.length);
+	const rowCount = Math.max(1, sets.length);
 
 	const handleTrackClick = useCallback(
 		(e: React.MouseEvent) => {
@@ -109,183 +115,230 @@ const TargetTrack = ({
 			const x = e.clientX - rect.left;
 			const time = xToTime(x, duration, width);
 
+			const newSet = {
+				id: crypto.randomUUID(),
+				targets: [],
+				steps: [{ targetIds: [], interval: 100, startTime: time }],
+			};
 			onUpdateGroup({
 				...group,
-				targetSteps: [
-					...steps,
-					{ targetIds: [], interval: 100, startTime: time },
-				],
+				targetSets: [...sets, newSet],
 			});
-			// 追加後にダイアログを開く
-			onClick();
+			onEditSet(newSet.id);
 		},
-		[group, steps, duration, width, onUpdateGroup, onClick],
+		[group, sets, duration, width, onUpdateGroup, onEditSet],
 	);
 
 	return (
 		<div
 			ref={trackRef}
-			className="relative cursor-crosshair hover:bg-amber-900/[0.03]"
+			className="relative cursor-crosshair"
 			style={{ height: TRACK_HEIGHT * rowCount, width }}
 			onClick={handleTrackClick}
 		>
-			{stepBars.map((bar, i) => {
-				const x = timeToX(bar.startTime, duration, width);
-				const x2 = timeToX(bar.endTime, duration, width);
-				const w = Math.max(x2 - x, 6);
-				const count = (steps[i]?.targetIds ?? []).length;
-				const step = steps[i];
-				const rowOffset = i * TRACK_HEIGHT;
-				const totalDur = bar.endTime - bar.startTime;
-				const delayRatio = totalDur > 0
-					? (bar.delayEndTime - bar.startTime) / totalDur
-					: 0;
-				const spawnRatio = totalDur > 0
-					? (bar.spawnEndTime - bar.startTime) / totalDur
-					: 1;
+			{sets.map((set, setIdx) => {
+				const stepBars = calcTargetStepBarsForSet(set);
+				const colors = SET_COLORS[setIdx % SET_COLORS.length];
+				const rowOffset = setIdx * TRACK_HEIGHT;
+
+				// セット全体の範囲を計算（背景用）
+				let setMinX = Number.POSITIVE_INFINITY;
+				let setMaxX = 0;
+				for (const bar of stepBars) {
+					const x1 = timeToX(bar.startTime, duration, width);
+					const x2 = timeToX(bar.endTime, duration, width);
+					if (x1 < setMinX) setMinX = x1;
+					if (x2 > setMaxX) setMaxX = x2;
+				}
 
 				return (
-					<DraggableBar
-						key={`step-${i}`}
-						x={x}
-						width={w}
-						color="bg-amber-500"
-						activeColor="bg-amber-700"
-						label={`${count}個 出現間隔${(step?.interval ?? 100)}ms`}
-						fadeLabel={`表示${targets.find((t) => step?.targetIds.includes(t.id))?.visibleDuration ?? 2.5}秒`}
-						trackHeight={TRACK_HEIGHT}
-						delayRatio={delayRatio}
-						spawnRatio={spawnRatio}
-						onDragStart={() => {
-							dragInitialRef.current = {
-								startTime: bar.startTime,
-								endTime: bar.endTime,
-							};
-						}}
-						onDrag={(totalDx, mode) => {
-							const updateStep = (upd: Record<string, number>) =>
-								onUpdateGroup({
-									...group,
-									targetSteps: steps.map((s, si) =>
-										si === i ? { ...s, ...upd } : s,
-									),
-								});
+					<div key={set.id}>
+						{/* セット背景 */}
+						{stepBars.length > 0 && (
+							<div
+								className={cn(
+									"absolute rounded-lg border",
+									colors.bg,
+									colors.border,
+								)}
+								style={{
+									left: setMinX - 2,
+									width: setMaxX - setMinX + 4,
+									top: rowOffset + 1,
+									height: TRACK_HEIGHT - 2,
+								}}
+							/>
+						)}
 
-							if (mode === "move") {
-								const newTime = calcDraggedTime(
-									dragInitialRef.current.startTime,
-									totalDx,
-									duration,
-									width,
-								);
-								updateStep({ startTime: newTime });
-							} else if (mode === "resize-left") {
-								// 右端固定で visibleDuration 変更
-								const newStart = calcResizeLeftTime(
-									dragInitialRef.current.startTime,
-									dragInitialRef.current.endTime,
-									100, // 最小 100ms
-									totalDx,
-									duration,
-									width,
-								);
-								const newVisible =
-									(dragInitialRef.current.endTime -
-										newStart -
-										(count > 1
-											? (count - 1) * (step?.interval ?? 100)
-											: 0)) /
-									1000;
-								onUpdateGroup({
-									...group,
-									targets: targets.map((t) =>
-										step?.targetIds.includes(t.id)
-											? {
-													...t,
-													visibleDuration: Math.max(
-														0.5,
-														Math.round(newVisible * 10) / 10,
-													),
-												}
-											: t,
-									),
-									targetSteps: steps.map((s, si) =>
-										si === i
-											? { ...s, startTime: newStart }
-											: s,
-									),
-								});
-							} else if (mode === "resize-right") {
-								// 左端固定で visibleDuration 変更
-								const newEndTime = calcDraggedTime(
-									dragInitialRef.current.endTime,
-									totalDx,
-									duration,
-									width,
-								);
-								const spawnEnd =
-									(step?.startTime ?? 0) +
-									(count > 1
-										? (count - 1) * (step?.interval ?? 100)
-										: 0);
-								const newVisible = (newEndTime - spawnEnd) / 1000;
-								onUpdateGroup({
-									...group,
-									targets: targets.map((t) =>
-										step?.targetIds.includes(t.id)
-											? {
-													...t,
-													visibleDuration: Math.max(
-														0.5,
-														Math.round(newVisible * 10) / 10,
-													),
-												}
-											: t,
-									),
-								});
-							} else if (
-								mode === "resize-spawn" &&
-								count > 1
-							) {
-								// 境界B: interval 変更
-								const initialSpawnEnd =
-									dragInitialRef.current.startTime +
-									TARGET_APPEAR_DELAY_MS +
-									(count - 1) *
-										(step?.interval ?? 100);
-								const newSpawnEnd = calcDraggedTime(
-									initialSpawnEnd,
-									totalDx,
-									duration,
-									width,
-								);
-								const newInterval = Math.max(
-									0,
-									Math.round(
-										(newSpawnEnd -
-											(step?.startTime ?? 0) -
-											TARGET_APPEAR_DELAY_MS) /
-											(count - 1),
-									),
-								);
-								onUpdateGroup({
-									...group,
-									targetSteps: steps.map((s, si) =>
-										si === i
-											? { ...s, interval: newInterval }
-											: s,
-									),
-								});
-							}
-						}}
-						onClick={onClick}
-						style={{ top: rowOffset + 4 }}
-					/>
+						{/* ステップバー */}
+						{stepBars.map((bar, i) => {
+							const x = timeToX(bar.startTime, duration, width);
+							const x2 = timeToX(bar.endTime, duration, width);
+							const w = Math.max(x2 - x, 6);
+							const step = set.steps[i];
+							const count = (step?.targetIds ?? []).length;
+							const totalDur = bar.endTime - bar.startTime;
+							const delayRatio = totalDur > 0
+								? (bar.delayEndTime - bar.startTime) / totalDur
+								: 0;
+							const spawnRatio = totalDur > 0
+								? (bar.spawnEndTime - bar.startTime) / totalDur
+								: 1;
+
+							return (
+								<DraggableBar
+									key={`${set.id}-step-${i}`}
+									x={x}
+									width={w}
+									color={colors.bar}
+									activeColor={colors.barActive}
+									label={`${count}個 出現間隔${step?.interval ?? 100}ms`}
+									fadeLabel={`表示${set.targets.find((t) => step?.targetIds.includes(t.id))?.visibleDuration ?? 2.5}秒`}
+									trackHeight={TRACK_HEIGHT}
+									delayRatio={delayRatio}
+									spawnRatio={spawnRatio}
+									onDragStart={() => {
+										dragInitialRef.current = {
+											startTime: bar.startTime,
+											endTime: bar.endTime,
+										};
+									}}
+									onDrag={(totalDx, mode) => {
+										const updateSet = (
+											updater: (s: typeof set) => typeof set,
+										) =>
+											onUpdateGroup({
+												...group,
+												targetSets: sets.map((s) =>
+													s.id === set.id
+														? updater(s)
+														: s,
+												),
+											});
+
+										if (mode === "move") {
+											const newTime = calcDraggedTime(
+												dragInitialRef.current.startTime,
+												totalDx,
+												duration,
+												width,
+											);
+											updateSet((s) => ({
+												...s,
+												steps: s.steps.map((st, si) =>
+													si === i
+														? { ...st, startTime: newTime }
+														: st,
+												),
+											}));
+										} else if (mode === "resize-left") {
+											const newStart = calcResizeLeftTime(
+												dragInitialRef.current.startTime,
+												dragInitialRef.current.endTime,
+												100,
+												totalDx,
+												duration,
+												width,
+											);
+											const newVisible =
+												(dragInitialRef.current.endTime -
+													newStart -
+													TARGET_APPEAR_DELAY_MS -
+													(count > 1
+														? (count - 1) * (step?.interval ?? 100)
+														: 0)) /
+												1000;
+											updateSet((s) => ({
+												...s,
+												targets: s.targets.map((t) =>
+													step?.targetIds.includes(t.id)
+														? {
+																...t,
+																visibleDuration: Math.max(
+																	0.5,
+																	Math.round(newVisible * 10) / 10,
+																),
+															}
+														: t,
+												),
+												steps: s.steps.map((st, si) =>
+													si === i
+														? { ...st, startTime: newStart }
+														: st,
+												),
+											}));
+										} else if (mode === "resize-right") {
+											const newEndTime = calcDraggedTime(
+												dragInitialRef.current.endTime,
+												totalDx,
+												duration,
+												width,
+											);
+											const spawnEnd =
+												(step?.startTime ?? 0) +
+												TARGET_APPEAR_DELAY_MS +
+												(count > 1
+													? (count - 1) * (step?.interval ?? 100)
+													: 0);
+											const newVisible = (newEndTime - spawnEnd) / 1000;
+											updateSet((s) => ({
+												...s,
+												targets: s.targets.map((t) =>
+													step?.targetIds.includes(t.id)
+														? {
+																...t,
+																visibleDuration: Math.max(
+																	0.5,
+																	Math.round(newVisible * 10) / 10,
+																),
+															}
+														: t,
+												),
+											}));
+										} else if (
+											mode === "resize-spawn" &&
+											count > 1
+										) {
+											const initialSpawnEnd =
+												dragInitialRef.current.startTime +
+												TARGET_APPEAR_DELAY_MS +
+												(count - 1) * (step?.interval ?? 100);
+											const newSpawnEnd = calcDraggedTime(
+												initialSpawnEnd,
+												totalDx,
+												duration,
+												width,
+											);
+											const newInterval = Math.max(
+												0,
+												Math.round(
+													(newSpawnEnd -
+														(step?.startTime ?? 0) -
+														TARGET_APPEAR_DELAY_MS) /
+														(count - 1),
+												),
+											);
+											updateSet((s) => ({
+												...s,
+												steps: s.steps.map((st, si) =>
+													si === i
+														? { ...st, interval: newInterval }
+														: st,
+												),
+											}));
+										}
+									}}
+									onClick={() => onEditSet(set.id, i)}
+									style={{ top: rowOffset + 4 }}
+								/>
+							);
+						})}
+					</div>
 				);
 			})}
-			{targets.length === 0 && stepBars.length === 0 && (
+			{sets.length === 0 && (
 				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20 cursor-pointer">
-					クリックして的を編集
+					クリックで的セットを追加
 				</span>
 			)}
 		</div>
@@ -606,7 +659,7 @@ const TrainTrack = ({
 export const StageTimeline = ({
 	group,
 	onUpdateGroup,
-	onEditTargets,
+	onEditTargetSet,
 	onEditBalloon,
 	onEditTrain,
 	isPlaying,
@@ -641,7 +694,7 @@ export const StageTimeline = ({
 					group={group}
 					duration={duration}
 					width={timelineWidth}
-					onClick={onEditTargets}
+					onEditSet={onEditTargetSet}
 					onUpdateGroup={onUpdateGroup}
 				/>
 			),
