@@ -104,6 +104,7 @@ const TargetTrack = ({
 	const trackRef = useRef<HTMLDivElement>(null);
 	const sets = group.targetSets ?? [];
 	const dragInitialRef = useRef({ startTime: 0, endTime: 0 });
+	const suppressClickRef = useRef(false);
 
 	// 各セットの行数と累積オフセットを計算
 	const setLayouts = sets.map((set) => {
@@ -115,6 +116,10 @@ const TargetTrack = ({
 
 	const handleTrackClick = useCallback(
 		(e: React.MouseEvent) => {
+			if (suppressClickRef.current) {
+				suppressClickRef.current = false;
+				return;
+			}
 			if (!trackRef.current) return;
 			const rect = trackRef.current.getBoundingClientRect();
 			const x = e.clientX - rect.left;
@@ -225,7 +230,9 @@ const TargetTrack = ({
 											"pointerup",
 											onUp,
 										);
-										if (!didDrag) {
+										if (didDrag) {
+											suppressClickRef.current = true;
+										} else {
 											onEditSet(set.id);
 										}
 									};
