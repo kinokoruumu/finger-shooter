@@ -238,19 +238,20 @@ const diagonal = (
 };
 
 /** V字パターン（8個→5.5s） */
+/** V字パターン（8個→5.5s、左右交互に出現） */
 const vShape = (
 	time: number,
 	type: SpawnEntry["type"] = "ground",
 	dur = 5.5,
 ): TargetEntry[] => [
 	t(time, type, 0, 0, dur),
-	t(time, type, 7, 0, dur),
+	t(time + 100, type, 7, 0, dur),
 	t(time + 200, type, 1, 1, dur),
-	t(time + 200, type, 6, 1, dur),
+	t(time + 300, type, 6, 1, dur),
 	t(time + 400, type, 2, 2, dur),
-	t(time + 400, type, 5, 2, dur),
+	t(time + 500, type, 5, 2, dur),
 	t(time + 600, type, 3, 3, dur),
-	t(time + 600, type, 4, 3, dur),
+	t(time + 700, type, 4, 3, dur),
 ];
 
 /** クロス（十字）パターン（11個→6s） */
