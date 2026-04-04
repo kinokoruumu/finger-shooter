@@ -47,19 +47,29 @@ export const WelcomeScreen = ({ onStart, debugMode, onDebugStart }: Props) => {
 					>
 						あそびかた
 					</p>
-					<div className="flex flex-col gap-3">
-						<Step
-							num="1"
-							label="手を動かしてねらう"
-							desc="手の動きに照準が追従します"
-							delay={0.25}
+					<div className="flex items-center gap-4">
+						<motion.img
+							src="/images/hand-pinch.png"
+							alt="ピンチジェスチャー"
+							className="h-20 w-20 shrink-0 opacity-60"
+							initial={{ opacity: 0, scale: 0.8 }}
+							animate={{ opacity: 0.6, scale: 1 }}
+							transition={{ delay: 0.2, duration: 0.4 }}
 						/>
-						<Step
-							num="2"
-							label="ピンチで発射"
-							desc="親指と人差し指をつまむと弾が出ます"
-							delay={0.35}
-						/>
+						<div className="flex flex-col gap-3">
+							<Step
+								num="1"
+								label="手を動かしてねらう"
+								desc="手の動きに照準が追従します"
+								delay={0.25}
+							/>
+							<Step
+								num="2"
+								label="ピンチで発射"
+								desc="親指と人差し指をつまむと弾が出ます"
+								delay={0.35}
+							/>
+						</div>
 					</div>
 				</motion.div>
 
