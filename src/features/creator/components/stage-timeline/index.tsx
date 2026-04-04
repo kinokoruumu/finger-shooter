@@ -149,7 +149,8 @@ const TargetTrack = ({
 						width={w}
 						color="bg-amber-500"
 						activeColor="bg-amber-700"
-						label={`${count}個 ${(step?.interval ?? 100)}ms`}
+						label={`${count}個 出現間隔${(step?.interval ?? 100)}ms`}
+						fadeLabel={`表示${targets.find((t) => step?.targetIds.includes(t.id))?.visibleDuration ?? 2.5}秒`}
 						trackHeight={TRACK_HEIGHT}
 						spawnRatio={spawnRatio}
 						onDragStart={() => {
@@ -322,7 +323,8 @@ const BalloonTrack = ({
 						width={barW}
 						color="bg-sky-400"
 						activeColor="bg-sky-600"
-						label={`×${entry.count} ${spreadLabel}${(entry.interval ?? 0) > 0 ? ` ${entry.interval}ms` : ""}`}
+						label={`${entry.count}個 ${spreadLabel}${(entry.interval ?? 0) > 0 ? ` 出現間隔${entry.interval}ms` : ""}`}
+						fadeLabel={`${(getBalloonVisibleDuration() / 1000).toFixed(0)}秒で消滅`}
 						spawnRatio={spawnRatio}
 						trackHeight={TRACK_HEIGHT}
 						onDragStart={() => {

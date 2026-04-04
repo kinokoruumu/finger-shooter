@@ -11,6 +11,8 @@ type Props = {
 	label: string;
 	trackHeight: number;
 	spawnRatio?: number;
+	/** 薄い部分（消えるまで）のラベル */
+	fadeLabel?: string;
 	onDragStart?: () => void;
 	onDrag?: (totalDeltaX: number, mode: DragMode) => void;
 	onDragEnd?: () => void;
@@ -28,6 +30,7 @@ export const DraggableBar = ({
 	onDragStart,
 	onDrag,
 	spawnRatio,
+	fadeLabel,
 	onDragEnd,
 	onClick,
 	style: extraStyle,
@@ -112,14 +115,20 @@ export const DraggableBar = ({
 					/>
 					<div
 						className={cn(
-							"absolute top-0 right-0 bottom-0 opacity-40",
+							"absolute top-0 right-0 bottom-0 flex items-center justify-end opacity-40",
 							spawnRatio === 0 ? "rounded-md" : "rounded-r-md",
 							dragging ? activeColor : color,
 						)}
 						style={{
 							left: `${Math.min(100, spawnRatio * 100)}%`,
 						}}
-					/>
+					>
+						{fadeLabel && (
+							<span className="truncate px-1 text-[8px] text-white/80">
+								{fadeLabel}
+							</span>
+						)}
+					</div>
 				</>
 			)}
 
