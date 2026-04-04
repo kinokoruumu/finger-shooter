@@ -112,7 +112,8 @@ export const DraggableBar = ({
 					/>
 					<div
 						className={cn(
-							"absolute top-0 right-0 bottom-0 rounded-r-md opacity-40",
+							"absolute top-0 right-0 bottom-0 opacity-40",
+							spawnRatio === 0 ? "rounded-md" : "rounded-r-md",
 							dragging ? activeColor : color,
 						)}
 						style={{
