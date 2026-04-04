@@ -1,14 +1,8 @@
 import type { SpawnEntry } from "@/features/game/constants/stage-definitions";
-import type {
-	CreatorBalloonGroup,
-	CreatorGroup,
-	CreatorStage,
-	CreatorTargetGroup,
-	CreatorTrainGroup,
-} from "../types";
+import type { CreatorGroup, CreatorStage } from "../types";
 
-const convertTargetGroup = (
-	group: CreatorTargetGroup,
+const convertGroup = (
+	group: CreatorGroup,
 	groupIndex: number,
 ): SpawnEntry[] => {
 	const spawns: SpawnEntry[] = [];
@@ -16,56 +10,43 @@ const convertTargetGroup = (
 
 	for (const step of group.steps) {
 		for (let i = 0; i < step.targetIds.length; i++) {
-			const target = group.targets.find((t) => t.id === step.targetIds[i]);
-			if (!target) continue;
-			spawns.push({
-				time: time + i * step.interval,
-				group: groupIndex,
-				type: target.type,
-				nx: 0,
-				gx: target.gx,
-				gy: target.gy,
-				visibleDuration: target.visibleDuration,
-			});
+			const id = step.targetIds[i];
+
+			// 的から探す
+			const target = group.targets.find((t) => t.id === id);
+			if (target) {
+				spawns.push({
+					time: time + i * step.interval,
+					group: groupIndex,
+					type: target.type,
+					nx: 0,
+					gx: target.gx,
+					gy: target.gy,
+					visibleDuration: target.visibleDuration,
+				});
+				continue;
+			}
+
+			// 風船から探す
+			const balloon = group.balloons.find((b) => b.id === id);
+			if (balloon) {
+				spawns.push({
+					time: time + i * step.interval,
+					group: groupIndex,
+					type: "balloon",
+					nx: balloon.nx,
+				});
+			}
 		}
 		if (step.targetIds.length > 0) {
-			time += (step.targetIds.length - 1) * step.interval + group.stepDelay;
+			time +=
+				(step.targetIds.length - 1) * step.interval + group.stepDelay;
 		}
 	}
-	return spawns;
-};
 
-const convertBalloonGroup = (
-	group: CreatorBalloonGroup,
-	groupIndex: number,
-): SpawnEntry[] => {
-	const spawns: SpawnEntry[] = [];
-	let time = 0;
-
-	for (const step of group.steps) {
-		for (let i = 0; i < step.targetIds.length; i++) {
-			const balloon = group.balloons.find((b) => b.id === step.targetIds[i]);
-			if (!balloon) continue;
-			spawns.push({
-				time: time + i * step.interval,
-				group: groupIndex,
-				type: "balloon",
-				nx: balloon.nx,
-			});
-		}
-		if (step.targetIds.length > 0) {
-			time += (step.targetIds.length - 1) * step.interval + group.stepDelay;
-		}
-	}
-	return spawns;
-};
-
-const convertTrainGroup = (
-	group: CreatorTrainGroup,
-	groupIndex: number,
-): SpawnEntry[] => {
-	return [
-		{
+	// 列車
+	if (group.train) {
+		spawns.push({
 			time: 0,
 			group: groupIndex,
 			type: "train",
@@ -73,25 +54,15 @@ const convertTrainGroup = (
 			direction: group.train.direction,
 			trainSpeed: group.train.speed,
 			slotsOscillate: group.train.slotsOscillate,
-			goldSlots: group.train.slots.filter((s) => s.type === "gold").length,
-			penaltySlots: group.train.slots.filter((s) => s.type === "penalty")
+			goldSlots: group.train.slots.filter((s) => s.type === "gold")
 				.length,
-		},
-	];
-};
-
-const convertGroup = (
-	group: CreatorGroup,
-	groupIndex: number,
-): SpawnEntry[] => {
-	switch (group.type) {
-		case "targets":
-			return convertTargetGroup(group, groupIndex);
-		case "balloons":
-			return convertBalloonGroup(group, groupIndex);
-		case "train":
-			return convertTrainGroup(group, groupIndex);
+			penaltySlots: group.train.slots.filter(
+				(s) => s.type === "penalty",
+			).length,
+		});
 	}
+
+	return spawns;
 };
 
 export const convertStageToSpawns = (stage: CreatorStage): SpawnEntry[] => {

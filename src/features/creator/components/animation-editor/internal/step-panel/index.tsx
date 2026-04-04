@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type {
 	CreatorAnimationStep,
+	CreatorBalloon,
 	CreatorTarget,
 } from "@/features/creator/types";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ type Props = {
 	steps: CreatorAnimationStep[];
 	stepDelay: number;
 	targets: CreatorTarget[];
+	balloons: CreatorBalloon[];
 	activeStepIndex: number;
 	onActiveStepChange: (index: number) => void;
 	onAddStep: () => void;
@@ -37,6 +39,7 @@ export const StepPanel = ({
 	steps,
 	stepDelay,
 	targets,
+	balloons,
 	activeStepIndex,
 	onActiveStepChange,
 	onAddStep,
@@ -140,7 +143,7 @@ export const StepPanel = ({
 								</div>
 							</div>
 
-							{/* ステップ内の的リスト */}
+							{/* ステップ内のアイテムリスト */}
 							{step.targetIds.length === 0 ? (
 								<p className="py-2 text-center text-amber-900/30 text-xs">
 									{isActive
@@ -153,17 +156,33 @@ export const StepPanel = ({
 										const t = targets.find(
 											(tgt) => tgt.id === tid,
 										);
-										if (!t) return null;
+										const b = !t
+											? balloons.find(
+													(bl) => bl.id === tid,
+												)
+											: null;
+										if (!t && !b) return null;
+
+										const colorClass = t
+											? (TYPE_COLORS[t.type] ??
+												"bg-stone-700 text-white")
+											: "bg-sky-400 text-white";
+										const hoverClass = t
+											? (TYPE_HOVER_COLORS[t.type] ??
+												"hover:bg-stone-600")
+											: "hover:bg-sky-300";
+										const label = t
+											? `(${t.gx},${t.gy})`
+											: `風船`;
+
 										return (
 											<button
 												key={`${tid}-${ti}`}
 												type="button"
 												className={cn(
 													"group/badge flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition-colors",
-													TYPE_COLORS[t.type] ??
-														"bg-stone-700 text-white",
-													TYPE_HOVER_COLORS[t.type] ??
-														"hover:bg-stone-600",
+													colorClass,
+													hoverClass,
 												)}
 												onClick={(e) => {
 													e.stopPropagation();
@@ -173,9 +192,7 @@ export const StepPanel = ({
 												<span className="font-mono opacity-70">
 													{ti + 1}
 												</span>
-												<span>
-													({t.gx},{t.gy})
-												</span>
+												<span>{label}</span>
 												<span className="opacity-0 transition-opacity group-hover/badge:opacity-70">
 													x
 												</span>

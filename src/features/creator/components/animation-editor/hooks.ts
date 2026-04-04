@@ -1,14 +1,20 @@
 import { useCallback, useMemo, useState } from "react";
-import type { CreatorAnimationStep, CreatorTargetGroup } from "../../types";
+import type { CreatorAnimationStep, CreatorGroup } from "../../types";
+
+export type SceneContentProps = {
+	ghostTargetIds: Set<string>;
+	targetLabels: Map<string, string>;
+	onTargetClick: (targetId: string) => void;
+};
 
 export const useAnimationEditor = (
-	group: CreatorTargetGroup,
-	onUpdateGroup: (group: CreatorTargetGroup) => void,
+	group: CreatorGroup,
+	onUpdateGroup: (group: CreatorGroup) => void,
 ) => {
 	const [activeStepIndex, setActiveStepIndex] = useState(0);
 
-	// 全ステップに登録済みの的ID
-	const registeredTargetIds = useMemo(() => {
+	// 全ステップに登録済みの的/風船ID
+	const registeredIds = useMemo(() => {
 		const ids = new Set<string>();
 		for (const step of group.steps) {
 			for (const tid of step.targetIds) {
@@ -18,25 +24,27 @@ export const useAnimationEditor = (
 		return ids;
 	}, [group.steps]);
 
-	// 未登録の的 → 半透明表示
+	// 未登録 or 他ステップの的/風船 → 半透明表示
 	const ghostTargetIds = useMemo(() => {
 		const ids = new Set<string>();
+		// 未登録
 		for (const t of group.targets) {
-			if (!registeredTargetIds.has(t.id)) {
-				ids.add(t.id);
-			}
+			if (!registeredIds.has(t.id)) ids.add(t.id);
 		}
-		// 他のステップに属する的も半透明に
-		for (const step of group.steps) {
-			if (group.steps.indexOf(step) === activeStepIndex) continue;
-			for (const tid of step.targetIds) {
+		for (const b of group.balloons) {
+			if (!registeredIds.has(b.id)) ids.add(b.id);
+		}
+		// 他ステップに属するもの
+		for (let i = 0; i < group.steps.length; i++) {
+			if (i === activeStepIndex) continue;
+			for (const tid of group.steps[i].targetIds) {
 				ids.add(tid);
 			}
 		}
 		return ids;
-	}, [group.targets, group.steps, registeredTargetIds, activeStepIndex]);
+	}, [group.targets, group.balloons, group.steps, registeredIds, activeStepIndex]);
 
-	// アクティブステップ内の的だけに番号ラベルを表示
+	// アクティブステップ内の的/風船に番号ラベル
 	const targetLabels = useMemo(() => {
 		const labels = new Map<string, string>();
 		const activeStep = group.steps[activeStepIndex];
@@ -54,13 +62,11 @@ export const useAnimationEditor = (
 
 			const step = steps[activeStepIndex];
 			if (step.targetIds.includes(targetId)) {
-				// このステップから除外
 				steps[activeStepIndex] = {
 					...step,
 					targetIds: step.targetIds.filter((id) => id !== targetId),
 				};
 			} else {
-				// 他のステップから除外してからこのステップに追加
 				const newSteps = steps.map((s, i) => {
 					if (i === activeStepIndex) return s;
 					return {

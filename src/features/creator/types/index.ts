@@ -9,7 +9,9 @@ export type CreatorTarget = {
 };
 
 export type CreatorAnimationStep = {
+	/** 的/風船のID（クリック順） */
 	targetIds: string[];
+	/** ステップ内の出現間隔(ms) */
 	interval: number;
 };
 
@@ -33,32 +35,15 @@ export type CreatorTrain = {
 	slots: CreatorTrainSlot[];
 };
 
-export type CreatorTargetGroup = {
+/** 1グループ = 順次実行される1つのまとまり。的・風船・列車を自由に混在可能 */
+export type CreatorGroup = {
 	id: string;
-	type: "targets";
 	targets: CreatorTarget[];
-	steps: CreatorAnimationStep[];
-	stepDelay: number;
-};
-
-export type CreatorBalloonGroup = {
-	id: string;
-	type: "balloons";
 	balloons: CreatorBalloon[];
+	train: CreatorTrain | null;
 	steps: CreatorAnimationStep[];
 	stepDelay: number;
 };
-
-export type CreatorTrainGroup = {
-	id: string;
-	type: "train";
-	train: CreatorTrain;
-};
-
-export type CreatorGroup =
-	| CreatorTargetGroup
-	| CreatorBalloonGroup
-	| CreatorTrainGroup;
 
 export type CreatorStage = {
 	id: string;

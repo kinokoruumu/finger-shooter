@@ -3,23 +3,19 @@ import type { CreatorTarget } from "../../types";
 import { GridGuide } from "./internal/grid-guide";
 import { StaticTarget } from "./internal/static-target";
 
-type Props = {
+type SceneProps = {
 	targets: CreatorTarget[];
 	onCellClick: (gx: number, gy: number) => void;
 	onCellRightClick: (gx: number, gy: number) => void;
-	/** アニメーション画面用: 半透明表示する的のID */
 	ghostTargetIds?: Set<string>;
-	/** アニメーション画面用: 番号ラベルのマップ(id → 表示番号) */
 	targetLabels?: Map<string, string>;
-	/** アニメーション画面用: 的クリック時 */
 	onTargetClick?: (targetId: string) => void;
-	/** グリッドガイド表示 */
 	showGrid?: boolean;
-	/** 追加の3Dコンテンツ（プレビュー用） */
 	children?: React.ReactNode;
 };
 
-const EditorScene = ({
+/** Canvas 内部のシーン（Canvas の外で使う） */
+export const EditorScene = ({
 	targets,
 	onCellClick,
 	onCellRightClick,
@@ -28,7 +24,7 @@ const EditorScene = ({
 	onTargetClick,
 	showGrid = true,
 	children,
-}: Props) => {
+}: SceneProps) => {
 	return (
 		<group>
 			<ambientLight intensity={0.6} />
@@ -61,7 +57,12 @@ const EditorScene = ({
 	);
 };
 
-export const EditorCanvas = (props: Props) => {
+type CanvasWrapperProps = {
+	children: React.ReactNode;
+};
+
+/** Canvas コンテナ。StageEditor で1つだけ保持する。 */
+export const EditorCanvasWrapper = ({ children }: CanvasWrapperProps) => {
 	return (
 		<div
 			className="relative aspect-video w-full overflow-hidden rounded-xl bg-cover bg-center bg-no-repeat"
@@ -73,7 +74,7 @@ export const EditorCanvas = (props: Props) => {
 				style={{ background: "transparent" }}
 				onContextMenu={(e) => e.preventDefault()}
 			>
-				<EditorScene {...props} />
+				{children}
 			</Canvas>
 		</div>
 	);
