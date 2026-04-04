@@ -6,6 +6,7 @@ import { getStage, saveStage } from "../../stores/creator-store";
 import type { CreatorGroup, CreatorStage } from "../../types";
 import { AnimationEditor } from "../animation-editor";
 import { useAnimationEditor } from "../animation-editor/hooks";
+import { BalloonEditor } from "../balloon-editor";
 import {
 	EditorCanvasWrapper,
 	EditorScene,
@@ -13,6 +14,7 @@ import {
 import { EditorToolbar, type EditorMode } from "../editor-toolbar";
 import { usePreviewPlayer } from "../preview-player/hooks";
 import { PreviewScene } from "../preview-player/internal/preview-scene";
+import { TrainEditor } from "../train-editor";
 import { Timeline } from "../timeline";
 
 type Props = {
@@ -365,11 +367,27 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 
 						{/* 配置タブ */}
 						{activeTab === "placement" && (
-							<EditorToolbar
-								currentMode={editorMode}
-								onModeChange={setEditorMode}
-								targetCount={selectedGroup.targets.length}
-							/>
+							<div className="space-y-6">
+								<EditorToolbar
+									currentMode={editorMode}
+									onModeChange={setEditorMode}
+									targetCount={selectedGroup.targets.length}
+								/>
+								<BalloonEditor
+									group={selectedGroup}
+									onUpdateGroup={(g) =>
+										selectedGroupIdx !== null &&
+										updateGroup(selectedGroupIdx, g)
+									}
+								/>
+								<TrainEditor
+									group={selectedGroup}
+									onUpdateGroup={(g) =>
+										selectedGroupIdx !== null &&
+										updateGroup(selectedGroupIdx, g)
+									}
+								/>
+							</div>
 						)}
 
 						{/* アニメーションタブ */}
