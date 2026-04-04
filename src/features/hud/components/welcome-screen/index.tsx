@@ -111,7 +111,7 @@ export const WelcomeScreen = ({ onStart, debugMode, onDebugStart }: Props) => {
 								className="cursor-pointer rounded-lg border-2 border-amber-900/10 bg-white px-3 py-1.5 font-mono text-amber-900/50 text-xs transition-colors hover:bg-amber-50"
 								onClick={() => onDebugStart(i)}
 							>
-								R{i + 1}
+								{s.name}
 							</button>
 						))}
 					</motion.div>
