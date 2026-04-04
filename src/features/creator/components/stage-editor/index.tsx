@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useHistory } from "../../hooks/use-history";
 import { getStage, saveStage } from "../../stores/creator-store";
 import type { CreatorGroup, CreatorStage } from "../../types";
 import { BalloonEntryDialog } from "../balloon-entry-dialog";
@@ -31,7 +32,7 @@ const createEmptyGroup = (): CreatorGroup => ({
 });
 
 export const StageEditor = ({ stageId, onBack }: Props) => {
-	const [stage, setStage] = useState<CreatorStage | null>(() => {
+	const initialStage = (() => {
 		const loaded = getStage(stageId) ?? null;
 		if (loaded && loaded.groups.length === 0) {
 			const updated = { ...loaded, groups: [createEmptyGroup()] };
@@ -39,7 +40,14 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			return updated;
 		}
 		return loaded;
-	});
+	})();
+
+	const {
+		state: stage,
+		setState: setStage,
+		undo,
+		redo,
+	} = useHistory<CreatorStage | null>(initialStage);
 	const [selectedGroupIdx, setSelectedGroupIdx] = useState<number | null>(
 		() => {
 			const loaded = getStage(stageId);
@@ -60,8 +68,29 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 				return next;
 			});
 		},
-		[],
+		[setStage],
 	);
+
+	// undo/redo 後に localStorage に保存
+	useEffect(() => {
+		if (stage) saveStage(stage);
+	}, [stage]);
+
+	// Cmd+Z / Cmd+Shift+Z
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+				e.preventDefault();
+				if (e.shiftKey) {
+					redo();
+				} else {
+					undo();
+				}
+			}
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [undo, redo]);
 
 	const addGroup = useCallback(() => {
 		let newIndex = 0;
