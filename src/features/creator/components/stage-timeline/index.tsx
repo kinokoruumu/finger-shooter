@@ -312,7 +312,7 @@ const BalloonTrack = ({
 				const x2 = timeToX(entry.time + totalDur, duration, width);
 				const barW = Math.max(x2 - x, 8);
 				const rowOffset = idx * TRACK_HEIGHT;
-				const spawnRatio = totalDur > 0 ? Math.max(0.05, spawnDur / totalDur) : 0;
+				const spawnRatio = totalDur > 0 ? spawnDur / totalDur : 0;
 				const spreadLabel = { left: "左寄り", center: "中央", right: "右寄り", random: "ランダム" }[entry.spread];
 
 				return (
@@ -323,7 +323,7 @@ const BalloonTrack = ({
 						color="bg-sky-400"
 						activeColor="bg-sky-600"
 						label={`×${entry.count} ${spreadLabel}${(entry.interval ?? 0) > 0 ? ` ${entry.interval}ms` : ""}`}
-						spawnRatio={spawnRatio > 0.05 ? spawnRatio : undefined}
+						spawnRatio={spawnRatio}
 						trackHeight={TRACK_HEIGHT}
 						onDragStart={() => {
 							dragInitialRef.current = {
