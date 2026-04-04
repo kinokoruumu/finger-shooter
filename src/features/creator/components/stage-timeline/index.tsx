@@ -106,7 +106,13 @@ const TargetTrack = ({
 	const sets = group.targetSets ?? [];
 	const dragInitialRef = useRef({ startTime: 0, endTime: 0 });
 
-	const rowCount = Math.max(1, sets.length);
+	// 各セットの行数と累積オフセットを計算
+	const setLayouts = sets.map((set) => {
+		const stepCount = Math.max(1, (set.steps ?? []).length);
+		return { stepCount };
+	});
+	const totalRows = setLayouts.reduce((sum, l) => sum + l.stepCount, 0);
+	const rowCount = Math.max(1, totalRows + sets.length * 0.5); // セット間余白分
 
 	const handleTrackClick = useCallback(
 		(e: React.MouseEvent) => {
@@ -136,42 +142,39 @@ const TargetTrack = ({
 			style={{ height: TRACK_HEIGHT * rowCount, width }}
 			onClick={handleTrackClick}
 		>
-			{sets.map((set, setIdx) => {
-				const stepBars = calcTargetStepBarsForSet(set);
-				const colors = SET_COLORS[setIdx % SET_COLORS.length];
-				const rowOffset = setIdx * TRACK_HEIGHT;
+			{(() => {
+				let yOffset = 0;
+				return sets.map((set, setIdx) => {
+					const stepBars = calcTargetStepBarsForSet(set);
+					const colors = SET_COLORS[setIdx % SET_COLORS.length];
+					const setStartY = yOffset;
+					const stepCount = Math.max(1, stepBars.length);
+					const setHeight = stepCount * TRACK_HEIGHT;
+					yOffset += setHeight + 8; // セット間余白
 
-				// セット全体の範囲を計算（背景用）
-				let setMinX = Number.POSITIVE_INFINITY;
-				let setMaxX = 0;
-				for (const bar of stepBars) {
-					const x1 = timeToX(bar.startTime, duration, width);
-					const x2 = timeToX(bar.endTime, duration, width);
-					if (x1 < setMinX) setMinX = x1;
-					if (x2 > setMaxX) setMaxX = x2;
-				}
-
-				return (
-					<div key={set.id}>
-						{/* セット背景 */}
-						{stepBars.length > 0 && (
+					return (
+						<div key={set.id}>
+							{/* セット括り（左ボーダー + 背景） */}
 							<div
 								className={cn(
-									"absolute rounded-lg border",
+									"absolute rounded-r-lg border-l-4",
 									colors.bg,
 									colors.border,
 								)}
 								style={{
-									left: setMinX - 2,
-									width: setMaxX - setMinX + 4,
-									top: rowOffset + 1,
-									height: TRACK_HEIGHT - 2,
+									left: 0,
+									top: setStartY,
+									width: "100%",
+									height: setHeight,
+								}}
+								onClick={(e) => {
+									e.stopPropagation();
+									onEditSet(set.id);
 								}}
 							/>
-						)}
 
-						{/* ステップバー */}
-						{stepBars.map((bar, i) => {
+							{/* ステップバー */}
+							{stepBars.map((bar, i) => {
 							const x = timeToX(bar.startTime, duration, width);
 							const x2 = timeToX(bar.endTime, duration, width);
 							const w = Math.max(x2 - x, 6);
@@ -329,13 +332,14 @@ const TargetTrack = ({
 										}
 									}}
 									onClick={() => onEditSet(set.id, i)}
-									style={{ top: rowOffset + 4 }}
+									style={{ top: setStartY + i * TRACK_HEIGHT + 4 }}
 								/>
 							);
 						})}
-					</div>
-				);
-			})}
+						</div>
+					);
+				});
+			})()}
 			{sets.length === 0 && (
 				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-amber-900/20 cursor-pointer">
 					クリックで的セットを追加
