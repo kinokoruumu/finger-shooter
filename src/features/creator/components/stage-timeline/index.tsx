@@ -11,6 +11,8 @@ import {
 	calcResizeLeft,
 	calcTargetStepTimes,
 	timeToX,
+	trainDurationToSpeed,
+	trainSpeedToDuration,
 	xToTime,
 } from "../../utils/timeline-calc";
 import { DraggableBar } from "./internal/draggable-bar";
@@ -385,7 +387,7 @@ const TrainTrack = ({
 	onEdit: () => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
-	const dragInitialTimeRef = useRef(0);
+	const dragInitialRef = useRef({ startTime: 0, trainDur: 0 });
 
 	const handleTrackClick = useCallback(
 		(e: React.MouseEvent) => {
@@ -403,10 +405,10 @@ const TrainTrack = ({
 
 	const hasBlock = group.train && group.trainStartTime != null;
 
-	// 列車の走行時間を速度から概算（表示用）
-	const trainDuration = group.train
-		? Math.round(3000 / (group.train.speed || 2))
+	const trainDur = group.train
+		? trainSpeedToDuration(group.train.speed)
 		: 1500;
+	const startTime = group.trainStartTime ?? 0;
 
 	return (
 		<div
@@ -422,14 +424,10 @@ const TrainTrack = ({
 		>
 			{hasBlock && (
 				<DraggableBar
-					x={timeToX(group.trainStartTime ?? 0, duration, width)}
+					x={timeToX(startTime, duration, width)}
 					width={
-						timeToX(
-							(group.trainStartTime ?? 0) + trainDuration,
-							duration,
-							width,
-						) -
-						timeToX(group.trainStartTime ?? 0, duration, width)
+						timeToX(startTime + trainDur, duration, width) -
+						timeToX(startTime, duration, width)
 					}
 					color="bg-violet-500"
 					activeColor="bg-violet-700"
@@ -438,20 +436,70 @@ const TrainTrack = ({
 					}
 					trackHeight={TRACK_HEIGHT}
 					onDragStart={() => {
-						dragInitialTimeRef.current =
-							group.trainStartTime ?? 0;
+						dragInitialRef.current = {
+							startTime,
+							trainDur,
+						};
 					}}
-					onDrag={(totalDx) => {
-						const newTime = calcDraggedTime(
-							dragInitialTimeRef.current,
-							totalDx,
-							duration,
-							width,
-						);
-						onUpdateGroup({
-							...group,
-							trainStartTime: newTime,
-						});
+					onDrag={(totalDx, mode) => {
+						if (mode === "move") {
+							const newTime = calcDraggedTime(
+								dragInitialRef.current.startTime,
+								totalDx,
+								duration,
+								width,
+							);
+							onUpdateGroup({
+								...group,
+								trainStartTime: newTime,
+							});
+						} else if (mode === "resize-right") {
+							// 右端ドラッグ → endTime を変更 → speed を逆算
+							const oldEndTime =
+								dragInitialRef.current.startTime +
+								dragInitialRef.current.trainDur;
+							const newEndTime = calcDraggedTime(
+								oldEndTime,
+								totalDx,
+								duration,
+								width,
+							);
+							const newDur = Math.max(
+								200,
+								newEndTime - startTime,
+							);
+							const newSpeed = trainDurationToSpeed(newDur);
+							onUpdateGroup({
+								...group,
+								train: group.train
+									? { ...group.train, speed: newSpeed }
+									: null,
+							});
+						} else if (mode === "resize-left") {
+							// 左端ドラッグ → endTime 固定で startTime + speed を変更
+							const endTime =
+								dragInitialRef.current.startTime +
+								dragInitialRef.current.trainDur;
+							const newStart = calcDraggedTime(
+								dragInitialRef.current.startTime,
+								totalDx,
+								duration,
+								width,
+							);
+							const clampedStart = Math.min(
+								newStart,
+								endTime - 200,
+							);
+							const newDur = endTime - clampedStart;
+							const newSpeed = trainDurationToSpeed(newDur);
+							onUpdateGroup({
+								...group,
+								trainStartTime: clampedStart,
+								train: group.train
+									? { ...group.train, speed: newSpeed }
+									: null,
+							});
+						}
 					}}
 					onClick={onEdit}
 					onDelete={() =>

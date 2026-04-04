@@ -8,6 +8,8 @@ import {
 	calcTargetStepTimes,
 	calcTargetsDuration,
 	timeToX,
+	trainDurationToSpeed,
+	trainSpeedToDuration,
 	xToTime,
 } from "./timeline-calc";
 
@@ -229,5 +231,33 @@ describe("calcResizeLeft", () => {
 		const result = calcResizeLeft(100, 100, 1, -50, DURATION, WIDTH);
 		expect(result.interval).toBe(0);
 		expect(result.startTime).toBeLessThan(100);
+	});
+});
+
+describe("trainDurationToSpeed / trainSpeedToDuration", () => {
+	it("speed=2 → duration=1500ms", () => {
+		expect(trainSpeedToDuration(2)).toBe(1500);
+	});
+
+	it("duration=1500ms → speed=2", () => {
+		expect(trainDurationToSpeed(1500)).toBe(2);
+	});
+
+	it("往復変換で元に戻る", () => {
+		const speed = 2.5;
+		const dur = trainSpeedToDuration(speed);
+		expect(trainDurationToSpeed(dur)).toBe(speed);
+	});
+
+	it("短い duration は速い speed", () => {
+		expect(trainDurationToSpeed(600)).toBe(5);
+	});
+
+	it("長い duration は遅い speed", () => {
+		expect(trainDurationToSpeed(3000)).toBe(1);
+	});
+
+	it("duration=0 は最大速度5を返す", () => {
+		expect(trainDurationToSpeed(0)).toBe(5);
 	});
 });

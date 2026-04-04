@@ -49,6 +49,19 @@ export const calcResizeLeft = (
 	return { startTime: clamped, interval: newInterval };
 };
 
+/** 列車の走行時間(ms) → speed 変換。speed = BASE / duration */
+const TRAIN_BASE_DURATION = 3000;
+
+export const trainDurationToSpeed = (durationMs: number): number => {
+	if (durationMs <= 0) return 5;
+	return Math.round((TRAIN_BASE_DURATION / durationMs) * 10) / 10;
+};
+
+export const trainSpeedToDuration = (speed: number): number => {
+	if (speed <= 0) return TRAIN_BASE_DURATION;
+	return Math.round(TRAIN_BASE_DURATION / speed);
+};
+
 /** ドラッグ移動後の新しい時間を計算 */
 export const calcDraggedTime = (
 	initialTime: number,
