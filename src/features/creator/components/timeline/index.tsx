@@ -113,8 +113,8 @@ export const Timeline = ({
 	onAdd,
 }: Props) => {
 	return (
-		<div className="rounded-2xl border-2 border-amber-900/10 bg-white p-4">
-			<div className="mb-4 flex items-center justify-between">
+		<div className="rounded-2xl border-2 border-amber-900/10 bg-white p-3 sm:p-4">
+			<div className="mb-3 flex items-center justify-between sm:mb-4">
 				<p
 					className="font-bold text-amber-900 text-sm"
 					style={rf}
@@ -169,7 +169,7 @@ export const Timeline = ({
 								)}
 								<div
 									className={cn(
-										"flex min-w-[160px] cursor-pointer flex-col gap-2.5 rounded-xl border-2 p-4 transition-all",
+										"flex min-w-[120px] cursor-pointer flex-col gap-2 rounded-xl border-2 p-3 transition-all sm:min-w-[160px] sm:gap-2.5 sm:p-4",
 										isSelected
 											? "border-amber-500 bg-amber-50"
 											: "border-transparent bg-stone-50 hover:bg-stone-100",

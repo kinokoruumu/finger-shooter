@@ -105,7 +105,7 @@ export const TrainEditor = ({
 						<>
 							{/* 方向 */}
 							<div className="flex items-center gap-4">
-								<span className="w-20 shrink-0 text-amber-900/60 text-sm">
+								<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 									方向
 								</span>
 								<div className="flex gap-1.5">
@@ -138,7 +138,7 @@ export const TrainEditor = ({
 
 							{/* 速度 */}
 							<div className="flex items-center gap-4">
-								<span className="w-20 shrink-0 text-amber-900/60 text-sm">
+								<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 									速度
 								</span>
 								<Input
@@ -167,7 +167,7 @@ export const TrainEditor = ({
 
 							{/* 的の上下移動 */}
 							<div className="flex items-center gap-4">
-								<span className="w-20 shrink-0 text-amber-900/60 text-sm">
+								<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 									的の上下移動
 								</span>
 								<button
@@ -197,7 +197,7 @@ export const TrainEditor = ({
 								<span className="text-amber-900/60 text-sm">
 									スロット（クリックで種類変更）
 								</span>
-								<div className="flex gap-6">
+								<div className="flex gap-3 sm:gap-6">
 									{[0, 1, 2].map((car) => (
 										<div
 											key={`car-${car}`}

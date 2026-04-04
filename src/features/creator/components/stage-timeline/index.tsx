@@ -35,8 +35,8 @@ type Props = {
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
-const TRACK_HEIGHT = 44;
-const LABEL_WIDTH = 56;
+const TRACK_HEIGHT = 40;
+const LABEL_WIDTH = 44;
 
 /** 時間ルーラー */
 const TimeRuler = ({
@@ -904,7 +904,7 @@ export const StageTimeline = ({
 				>
 					<div
 						className={cn(
-							"flex shrink-0 items-center justify-center border-r border-white/5 border-l-3 text-xs font-bold text-white/50",
+							"flex shrink-0 items-center justify-center border-r border-white/5 border-l-3 text-[10px] font-bold text-white/50 sm:text-xs",
 							track.color,
 						)}
 						style={{ width: LABEL_WIDTH }}

@@ -258,7 +258,7 @@ export const TargetStepDialog = ({
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="flex max-h-[90vh] max-w-6xl flex-col overflow-hidden">
+			<DialogContent className="flex max-h-[90vh] max-w-[calc(100%-1rem)] flex-col overflow-hidden sm:max-w-6xl">
 				<DialogHeader>
 					<DialogTitle style={rf}>的の編集</DialogTitle>
 				</DialogHeader>
@@ -289,7 +289,7 @@ export const TargetStepDialog = ({
 				</div>
 
 				{/* Canvas */}
-				<div className="h-[35vh] shrink-0">
+				<div className="h-[25vh] shrink-0 sm:h-[35vh]">
 				<EditorCanvasWrapper className="h-full">
 					<EditorScene
 						targets={targets}
@@ -351,7 +351,7 @@ export const TargetStepDialog = ({
 										}
 									>
 										<div
-											className="flex w-full items-center justify-between text-left"
+											className="flex w-full flex-wrap items-center justify-between gap-1 text-left"
 										>
 											<span
 												className={cn(

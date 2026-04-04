@@ -59,7 +59,7 @@ export const EditorToolbar = ({
 }: Props) => {
 	return (
 		<div className="space-y-2" style={rf}>
-			<div className="flex items-center gap-2">
+			<div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
 				{MODE_OPTIONS.map((opt) => {
 					const isActive = currentMode === opt.mode;
 					return (

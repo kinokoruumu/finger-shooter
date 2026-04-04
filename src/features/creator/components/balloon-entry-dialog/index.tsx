@@ -46,7 +46,7 @@ export const BalloonEntryDialog = ({
 				<div className="space-y-4" style={rf}>
 					{/* 個数 */}
 					<div className="flex items-center gap-3">
-						<span className="w-20 shrink-0 text-amber-900/60 text-sm">
+						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							個数
 						</span>
 						<Input
@@ -66,7 +66,7 @@ export const BalloonEntryDialog = ({
 
 					{/* 出現間隔 */}
 					<div className="flex items-center gap-3">
-						<span className="w-20 shrink-0 text-amber-900/60 text-sm">
+						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							間隔
 						</span>
 						<Input
@@ -119,7 +119,7 @@ export const BalloonEntryDialog = ({
 
 					{/* 出現タイミング */}
 					<div className="flex items-center gap-3">
-						<span className="w-20 shrink-0 text-amber-900/60 text-sm">
+						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							タイミング
 						</span>
 						<Input
