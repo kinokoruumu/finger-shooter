@@ -152,12 +152,14 @@ const TargetTrack = ({
 					const setHeight = stepCount * TRACK_HEIGHT;
 					yOffset += setHeight + 8; // セット間余白
 
+					const setDragStartRef = { current: [] as number[] };
+
 					return (
 						<div key={set.id}>
-							{/* セット括り（左ボーダー + 背景） */}
+							{/* セット括り（左ボーダー + 背景、ドラッグで一括移動） */}
 							<div
 								className={cn(
-									"absolute rounded-r-lg border-l-4",
+									"absolute cursor-grab rounded-r-lg border-l-4",
 									colors.bg,
 									colors.border,
 								)}
@@ -170,6 +172,56 @@ const TargetTrack = ({
 								onClick={(e) => {
 									e.stopPropagation();
 									onEditSet(set.id);
+								}}
+								onPointerDown={(e) => {
+									e.stopPropagation();
+									e.preventDefault();
+									setDragStartRef.current = set.steps.map(
+										(s) => s.startTime ?? 0,
+									);
+									const startX = e.clientX;
+									const onMove = (ev: PointerEvent) => {
+										const totalDx = ev.clientX - startX;
+										const newSteps = set.steps.map(
+											(s, si) => ({
+												...s,
+												startTime: calcDraggedTime(
+													setDragStartRef.current[si],
+													totalDx,
+													duration,
+													width,
+												),
+											}),
+										);
+										onUpdateGroup({
+											...group,
+											targetSets: sets.map((s) =>
+												s.id === set.id
+													? { ...s, steps: newSteps }
+													: s,
+											),
+										});
+									};
+
+									const onUp = () => {
+										window.removeEventListener(
+											"pointermove",
+											onMove,
+										);
+										window.removeEventListener(
+											"pointerup",
+											onUp,
+										);
+									};
+
+									window.addEventListener(
+										"pointermove",
+										onMove,
+									);
+									window.addEventListener(
+										"pointerup",
+										onUp,
+									);
 								}}
 							/>
 
