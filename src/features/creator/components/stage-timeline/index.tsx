@@ -120,7 +120,10 @@ const TargetTrack = ({
 				const rowOffset = i * TRACK_HEIGHT;
 				const totalDur = bar.endTime - bar.startTime;
 				const spawnDur = bar.spawnEndTime - bar.startTime;
-				const spawnRatio = totalDur > 0 ? spawnDur / totalDur : 1;
+				// 出現期間の割合。最低10%を保証して視覚的に見えるようにする
+				const spawnRatio = totalDur > 0
+					? Math.max(0.1, spawnDur / totalDur)
+					: 1;
 
 				return (
 					<DraggableBar
@@ -289,7 +292,7 @@ const BalloonTrack = ({
 				const x2 = timeToX(entry.time + balloonVisible, duration, width);
 				const barW = Math.max(x2 - x, 8);
 				const rowOffset = idx * TRACK_HEIGHT;
-				const spreadLabel = { left: "左", center: "中", right: "右", random: "散" }[entry.spread];
+				const spreadLabel = { left: "左寄り", center: "中央", right: "右寄り", random: "ランダム" }[entry.spread];
 
 				return (
 					<DraggableBar
