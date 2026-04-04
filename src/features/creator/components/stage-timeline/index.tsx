@@ -118,6 +118,9 @@ const TargetTrack = ({
 				const count = (steps[i]?.targetIds ?? []).length;
 				const step = steps[i];
 				const rowOffset = i * TRACK_HEIGHT;
+				const totalDur = bar.endTime - bar.startTime;
+				const spawnDur = bar.spawnEndTime - bar.startTime;
+				const spawnRatio = totalDur > 0 ? spawnDur / totalDur : 1;
 
 				return (
 					<DraggableBar
@@ -128,6 +131,7 @@ const TargetTrack = ({
 						activeColor="bg-amber-700"
 						label={`${count}個 ${(step?.interval ?? 100)}ms`}
 						trackHeight={TRACK_HEIGHT}
+						spawnRatio={spawnRatio}
 						onDragStart={() => {
 							dragInitialRef.current = {
 								startTime: bar.startTime,

@@ -10,6 +10,8 @@ type Props = {
 	activeColor: string;
 	label: string;
 	trackHeight: number;
+	/** バー内の出現期間の割合 (0-1)。指定するとバーが2色に分かれる */
+	spawnRatio?: number;
 	onDragStart?: () => void;
 	onDrag?: (totalDeltaX: number, mode: DragMode) => void;
 	onDragEnd?: () => void;
@@ -27,6 +29,7 @@ export const DraggableBar = ({
 	trackHeight,
 	onDragStart,
 	onDrag,
+	spawnRatio,
 	onDragEnd,
 	onClick,
 	onDelete,
@@ -80,16 +83,18 @@ export const DraggableBar = ({
 				? "ew-resize"
 				: "grab";
 
+	const actualWidth = Math.max(barWidth, 8);
+
 	return (
 		<div
 			data-testid="draggable-bar"
 			className={cn(
-				"group absolute flex items-center rounded-md text-[10px] font-bold text-white transition-colors",
-				dragging ? activeColor : color,
+				"group absolute flex items-center overflow-hidden rounded-md text-[10px] font-bold text-white transition-colors",
+				spawnRatio == null && (dragging ? activeColor : color),
 			)}
 			style={{
 				left: x,
-				width: Math.max(barWidth, 8),
+				width: actualWidth,
 				height: trackHeight - 8,
 				cursor: cursorForDrag,
 				...extraStyle,
@@ -97,16 +102,38 @@ export const DraggableBar = ({
 			onPointerDown={(e) => handlePointerDown(e, "move")}
 			onClick={handleClick}
 		>
+			{/* 2色表示: 出現期間(濃) + 表示残り(薄) */}
+			{spawnRatio != null && (
+				<>
+					<div
+						className={cn(
+							"absolute top-0 bottom-0 left-0 rounded-l-md",
+							dragging ? activeColor : color,
+						)}
+						style={{ width: `${Math.min(100, spawnRatio * 100)}%` }}
+					/>
+					<div
+						className={cn(
+							"absolute top-0 right-0 bottom-0 rounded-r-md opacity-40",
+							dragging ? activeColor : color,
+						)}
+						style={{
+							left: `${Math.min(100, spawnRatio * 100)}%`,
+						}}
+					/>
+				</>
+			)}
+
 			{/* 左端リサイズハンドル */}
 			{onDrag && (
 				<div
 					data-testid="resize-left-handle"
-					className="absolute top-0 bottom-0 left-0 w-2 cursor-ew-resize rounded-l-md hover:bg-white/20"
+					className="absolute top-0 bottom-0 left-0 z-10 w-2 cursor-ew-resize rounded-l-md hover:bg-white/20"
 					onPointerDown={(e) => handlePointerDown(e, "resize-left")}
 				/>
 			)}
 
-			<span className="truncate px-2">{label}</span>
+			<span className="relative z-10 truncate px-2">{label}</span>
 
 			{/* 右端リサイズハンドル */}
 			{onDrag && (
