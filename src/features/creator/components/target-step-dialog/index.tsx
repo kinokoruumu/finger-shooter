@@ -242,7 +242,7 @@ export const TargetStepDialog = ({
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="max-w-4xl">
+			<DialogContent className="max-w-6xl">
 				<DialogHeader>
 					<DialogTitle style={rf}>的の編集</DialogTitle>
 				</DialogHeader>
