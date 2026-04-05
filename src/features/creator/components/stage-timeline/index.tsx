@@ -953,17 +953,15 @@ export const StageTimeline = ({
 			const x = timeToX(ms, pxPerMs) + LABEL_WIDTH;
 			playheadRef.current.style.transform = `translateX(${x}px)`;
 
-			// 自動追従スクロール（滑らかに追従）
+			// 自動追従スクロール（閾値超えで1回だけジャンプ）
 			const container = scrollRef.current;
 			if (container) {
 				const headInView = x - container.scrollLeft;
 				const viewWidth = container.clientWidth;
 				if (headInView > viewWidth * 0.8) {
-					const target = x - viewWidth * 0.5;
-					container.scrollLeft += (target - container.scrollLeft) * 0.1;
+					container.scrollTo({ left: x - viewWidth * 0.3, behavior: "auto" });
 				} else if (headInView < viewWidth * 0.1 && container.scrollLeft > 0) {
-					const target = x - viewWidth * 0.3;
-					container.scrollLeft += (target - container.scrollLeft) * 0.1;
+					container.scrollTo({ left: x - viewWidth * 0.3, behavior: "auto" });
 				}
 			}
 
@@ -1063,7 +1061,7 @@ export const StageTimeline = ({
 			<div
 				ref={playheadRef}
 				className={cn(
-					"pointer-events-none absolute top-0 bottom-0 w-0.5 bg-red-500 transition-opacity",
+					"pointer-events-none absolute top-0 bottom-0 w-0.5 bg-red-500",
 					isPlaying ? "opacity-100" : "opacity-0",
 				)}
 				style={{ transform: `translateX(${LABEL_WIDTH}px)` }}
