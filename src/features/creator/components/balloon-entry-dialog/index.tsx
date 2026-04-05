@@ -1,4 +1,5 @@
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import {
 	Dialog,
 	DialogContent,
@@ -29,6 +30,9 @@ const SPREAD_OPTIONS: {
 	{ value: "right", label: "右寄り" },
 ];
 
+const isDefaultEntry = (entry: CreatorBalloonEntry): boolean =>
+	entry.count === 3 && entry.interval === 500 && entry.spread === "random";
+
 export const BalloonEntryDialog = ({
 	open,
 	onClose,
@@ -36,7 +40,19 @@ export const BalloonEntryDialog = ({
 	onUpdate,
 	onDelete,
 }: Props) => {
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+	const handleDelete = () => {
+		if (isDefaultEntry(entry)) {
+			onDelete();
+			onClose();
+		} else {
+			setShowDeleteConfirm(true);
+		}
+	};
+
 	return (
+		<>
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
 			<DialogContent className="sm:max-w-sm">
 				<DialogHeader>
@@ -45,7 +61,7 @@ export const BalloonEntryDialog = ({
 
 				<div className="space-y-4" style={rf}>
 					{/* 個数 */}
-					<div className="flex items-center gap-3">
+					<div className="flex flex-wrap items-center gap-2 sm:gap-3">
 						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							個数
 						</span>
@@ -65,7 +81,7 @@ export const BalloonEntryDialog = ({
 					</div>
 
 					{/* 出現間隔 */}
-					<div className="flex items-center gap-3">
+					<div className="flex flex-wrap items-center gap-2 sm:gap-3">
 						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							間隔
 						</span>
@@ -85,15 +101,15 @@ export const BalloonEntryDialog = ({
 							min={0}
 							step={50}
 						/>
-						<span className="text-amber-900/40 text-sm">ms（0=同時出現）</span>
+						<span className="text-amber-900/40 text-xs sm:text-sm">ms（0=同時出現）</span>
 					</div>
 
 					{/* 出現位置 */}
 					<div className="space-y-2">
-						<span className="text-amber-900/60 text-sm">
+						<span className="text-amber-900/60 text-xs sm:text-sm">
 							出現位置
 						</span>
-						<div className="flex gap-1.5">
+						<div className="flex flex-wrap gap-1.5">
 							{SPREAD_OPTIONS.map((opt) => (
 								<button
 									key={opt.value}
@@ -118,7 +134,7 @@ export const BalloonEntryDialog = ({
 					</div>
 
 					{/* 出現タイミング */}
-					<div className="flex items-center gap-3">
+					<div className="flex flex-wrap items-center gap-2 sm:gap-3">
 						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							タイミング
 						</span>
@@ -138,24 +154,34 @@ export const BalloonEntryDialog = ({
 							min={0}
 							step={50}
 						/>
-						<span className="text-amber-900/40 text-sm">ms</span>
+						<span className="text-amber-900/40 text-xs sm:text-sm">ms</span>
 					</div>
 
 					{/* 削除 */}
-					<div className="flex justify-end pt-2">
-						<Button
-							variant="destructive"
-							size="sm"
-							onClick={() => {
-								onDelete();
-								onClose();
-							}}
+					<div className="flex justify-end">
+						<button
+							type="button"
+							className="text-xs text-red-400 transition-colors hover:text-red-600"
+							style={rf}
+							onClick={handleDelete}
 						>
 							この風船を削除
-						</Button>
+						</button>
 					</div>
 				</div>
 			</DialogContent>
 		</Dialog>
+
+		<ConfirmDeleteDialog
+			open={showDeleteConfirm}
+			onOpenChange={setShowDeleteConfirm}
+			title="風船の削除"
+			description="この風船エントリを削除しますか？"
+			onConfirm={() => {
+				onDelete();
+				onClose();
+			}}
+		/>
+		</>
 	);
 };

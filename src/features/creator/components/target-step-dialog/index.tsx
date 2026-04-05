@@ -1,14 +1,5 @@
 import { useCallback, useState } from "react";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -546,25 +537,13 @@ export const TargetStepDialog = ({
 			</DialogContent>
 		</Dialog>
 
-			<AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-				<AlertDialogContent className="sm:max-w-sm">
-					<AlertDialogHeader>
-						<AlertDialogTitle style={rf}>的セットの削除</AlertDialogTitle>
-						<AlertDialogDescription>
-							配置した{targets.length}個の的もすべて失われます。本当に削除しますか？
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>キャンセル</AlertDialogCancel>
-						<AlertDialogAction
-							className="bg-red-600 hover:bg-red-700"
-							onClick={deleteSet}
-						>
-							削除する
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+			<ConfirmDeleteDialog
+				open={showDeleteConfirm}
+				onOpenChange={setShowDeleteConfirm}
+				title="的セットの削除"
+				description={`配置した${targets.length}個の的もすべて失われます。本当に削除しますか？`}
+				onConfirm={deleteSet}
+			/>
 		</>
 	);
 };

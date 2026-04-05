@@ -1,4 +1,5 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -47,6 +48,14 @@ export const TrainEditor = ({
 	onUpdateGroup,
 }: Props) => {
 	const train = group.train;
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+	const isDefault = train
+		? train.direction === 1 &&
+			train.speed === 2.0 &&
+			!train.slotsOscillate &&
+			train.slots.every((s) => s.type === "normal")
+		: true;
 
 	const handleEnable = useCallback(() => {
 		onUpdateGroup({ ...group, train: DEFAULT_TRAIN });
@@ -82,6 +91,7 @@ export const TrainEditor = ({
 	);
 
 	return (
+		<>
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
 			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
 				<DialogHeader>
@@ -246,22 +256,39 @@ export const TrainEditor = ({
 							</div>
 
 							{/* 削除 */}
-							<div className="flex justify-end pt-2">
-								<Button
-									variant="destructive"
-									size="sm"
+							<div className="flex justify-end">
+								<button
+									type="button"
+									className="text-xs text-red-400 transition-colors hover:text-red-600"
+									style={rf}
 									onClick={() => {
-										handleDisable();
-										onClose();
+										if (isDefault) {
+											handleDisable();
+											onClose();
+										} else {
+											setShowDeleteConfirm(true);
+										}
 									}}
 								>
 									列車を削除
-								</Button>
+								</button>
 							</div>
 						</>
 					)}
 				</div>
 			</DialogContent>
 		</Dialog>
+
+		<ConfirmDeleteDialog
+			open={showDeleteConfirm}
+			onOpenChange={setShowDeleteConfirm}
+			title="列車の削除"
+			description="列車の設定を削除しますか？スロットの設定もすべて失われます。"
+			onConfirm={() => {
+				handleDisable();
+				onClose();
+			}}
+		/>
+		</>
 	);
 };
