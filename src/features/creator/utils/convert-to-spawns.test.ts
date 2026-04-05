@@ -40,7 +40,13 @@ describe("convertStageToSpawns", () => {
 					makeSet({
 						targets: [
 							{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
-							{ id: "t2", gx: 1, gy: 0, type: "ground-gold", visibleDuration: 4 },
+							{
+								id: "t2",
+								gx: 1,
+								gy: 0,
+								type: "ground-gold",
+								visibleDuration: 4,
+							},
 						],
 						steps: [{ targetIds: ["t1", "t2"], interval: 100, startTime: 0 }],
 					}),
@@ -65,7 +71,13 @@ describe("convertStageToSpawns", () => {
 					makeSet({
 						id: "sB",
 						targets: [
-							{ id: "b1", gx: 0, gy: 0, type: "ground-gold", visibleDuration: 4 },
+							{
+								id: "b1",
+								gx: 0,
+								gy: 0,
+								type: "ground-gold",
+								visibleDuration: 4,
+							},
 						],
 						steps: [{ targetIds: ["b1"], interval: 0, startTime: 2000 }],
 					}),
@@ -91,7 +103,13 @@ describe("convertStageToSpawns", () => {
 					makeSet({
 						id: "sB",
 						targets: [
-							{ id: "b1", gx: 3, gy: 2, type: "ground-penalty", visibleDuration: 4 },
+							{
+								id: "b1",
+								gx: 3,
+								gy: 2,
+								type: "ground-penalty",
+								visibleDuration: 4,
+							},
 						],
 						steps: [{ targetIds: ["b1"], interval: 0, startTime: 5000 }],
 					}),
@@ -124,7 +142,10 @@ describe("convertStageToSpawns", () => {
 					direction: 1,
 					speed: 2.5,
 					slotsOscillate: true,
-					slots: [{ index: 0, type: "gold" }, { index: 1, type: "penalty" }],
+					slots: [
+						{ index: 0, type: "gold" },
+						{ index: 1, type: "penalty" },
+					],
 				},
 				trainStartTime: 2000,
 			});
@@ -174,7 +195,10 @@ describe("convertStageToSpawns", () => {
 	describe("エッジケース", () => {
 		it("targetSets が undefined でもクラッシュしない", () => {
 			const group = makeGroup();
-			const broken = { ...group, targetSets: undefined } as unknown as CreatorGroup;
+			const broken = {
+				...group,
+				targetSets: undefined,
+			} as unknown as CreatorGroup;
 			expect(convertStageToSpawns(makeStage([broken]))).toEqual([]);
 		});
 	});

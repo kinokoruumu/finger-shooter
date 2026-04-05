@@ -190,7 +190,7 @@ export const useGameScene = (
 				}
 			}
 		},
-		[screenToWorld, gridToNormalized],
+		[screenToWorld],
 	);
 
 	// グループごとのスポーンを事前計算（ソート済み）

@@ -71,9 +71,7 @@ describe("useHistory", () => {
 
 	it("updater 関数で setState できる", () => {
 		const { result } = renderHook(() => useHistory({ count: 0 }));
-		act(() =>
-			result.current.setState((prev) => ({ count: prev.count + 1 })),
-		);
+		act(() => result.current.setState((prev) => ({ count: prev.count + 1 })));
 		expect(result.current.state).toEqual({ count: 1 });
 	});
 

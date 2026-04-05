@@ -4,10 +4,7 @@ type Options = {
 	maxHistory?: number;
 };
 
-export const useHistory = <T>(
-	initialState: T,
-	options: Options = {},
-) => {
+export const useHistory = <T>(initialState: T, options: Options = {}) => {
 	const { maxHistory = 50 } = options;
 	const [state, setStateInternal] = useState(initialState);
 	const pastRef = useRef<T[]>([]);
@@ -17,12 +14,8 @@ export const useHistory = <T>(
 		(next: T | ((prev: T) => T)) => {
 			setStateInternal((prev) => {
 				const newState =
-					typeof next === "function"
-						? (next as (prev: T) => T)(prev)
-						: next;
-				pastRef.current = [...pastRef.current, prev].slice(
-					-maxHistory,
-				);
+					typeof next === "function" ? (next as (prev: T) => T)(prev) : next;
+				pastRef.current = [...pastRef.current, prev].slice(-maxHistory);
 				futureRef.current = [];
 				return newState;
 			});
@@ -43,8 +36,7 @@ export const useHistory = <T>(
 	const redo = useCallback(() => {
 		setStateInternal((current) => {
 			if (futureRef.current.length === 0) return current;
-			const next =
-				futureRef.current[futureRef.current.length - 1];
+			const next = futureRef.current[futureRef.current.length - 1];
 			futureRef.current = futureRef.current.slice(0, -1);
 			pastRef.current = [...pastRef.current, current];
 			return next;

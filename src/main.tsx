@@ -44,9 +44,7 @@ export const router = createRouter({ routeTree });
 // は router インスタンス経由で利用可能。
 
 const Root = () => {
-	const [pathname, setPathname] = useState(
-		router.state.location.pathname,
-	);
+	const [pathname, setPathname] = useState(router.state.location.pathname);
 
 	useEffect(() => {
 		return router.history.subscribe(() => {

@@ -171,11 +171,7 @@ export const StaticTarget = ({ target, ghost, disabled, label }: Props) => {
 	const visualScale = disabled ? 0.6 : 1;
 
 	return (
-		<group
-			ref={groupRef}
-			position={position}
-			scale={0.3}
-		>
+		<group ref={groupRef} position={position} scale={0.3}>
 			<group
 				scale={(targetScale / 1.8) * visualScale}
 				renderOrder={ghost || disabled ? -1 : 0}

@@ -27,11 +27,7 @@ describe("DraggableBar", () => {
 			const onClick = vi.fn();
 			const onDrag = vi.fn();
 			render(
-				<DraggableBar
-					{...defaultProps}
-					onClick={onClick}
-					onDrag={onDrag}
-				/>,
+				<DraggableBar {...defaultProps} onClick={onClick} onDrag={onDrag} />,
 			);
 
 			const bar = screen.getByTestId("draggable-bar");
@@ -64,17 +60,11 @@ describe("DraggableBar", () => {
 			expect(onDragStart).toHaveBeenCalledOnce();
 
 			// 右に50px移動
-			fireEvent(
-				window,
-				new PointerEvent("pointermove", { clientX: 250 }),
-			);
+			fireEvent(window, new PointerEvent("pointermove", { clientX: 250 }));
 			expect(onDrag).toHaveBeenCalledWith(50, "move");
 
 			// さらに右に30px（開始からは80px）
-			fireEvent(
-				window,
-				new PointerEvent("pointermove", { clientX: 280 }),
-			);
+			fireEvent(window, new PointerEvent("pointermove", { clientX: 280 }));
 			expect(onDrag).toHaveBeenCalledWith(80, "move");
 		});
 
@@ -92,19 +82,13 @@ describe("DraggableBar", () => {
 			const bar = screen.getByTestId("draggable-bar");
 
 			fireEvent.pointerDown(bar, { clientX: 200 });
-			fireEvent(
-				window,
-				new PointerEvent("pointermove", { clientX: 250 }),
-			);
+			fireEvent(window, new PointerEvent("pointermove", { clientX: 250 }));
 			fireEvent(window, new PointerEvent("pointerup"));
 
 			expect(onDragEnd).toHaveBeenCalledOnce();
 
 			onDrag.mockClear();
-			fireEvent(
-				window,
-				new PointerEvent("pointermove", { clientX: 300 }),
-			);
+			fireEvent(window, new PointerEvent("pointermove", { clientX: 300 }));
 			expect(onDrag).not.toHaveBeenCalled();
 		});
 	});
@@ -117,10 +101,7 @@ describe("DraggableBar", () => {
 			const handle = screen.getByTestId("resize-right-handle");
 
 			fireEvent.pointerDown(handle, { clientX: 160 });
-			fireEvent(
-				window,
-				new PointerEvent("pointermove", { clientX: 190 }),
-			);
+			fireEvent(window, new PointerEvent("pointermove", { clientX: 190 }));
 
 			expect(onDrag).toHaveBeenCalledWith(30, "resize-right");
 		});
@@ -132,13 +113,9 @@ describe("DraggableBar", () => {
 			const handle = screen.getByTestId("resize-left-handle");
 
 			fireEvent.pointerDown(handle, { clientX: 100 });
-			fireEvent(
-				window,
-				new PointerEvent("pointermove", { clientX: 80 }),
-			);
+			fireEvent(window, new PointerEvent("pointermove", { clientX: 80 }));
 
 			expect(onDrag).toHaveBeenCalledWith(-20, "resize-left");
 		});
 	});
-
 });

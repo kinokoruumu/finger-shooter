@@ -2,11 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CreatorTarget } from "../types";
 import { getPresetInterval, sortTargetsByPreset } from "./target-presets";
 
-const t = (
-	id: string,
-	gx: number,
-	gy: number,
-): CreatorTarget => ({
+const t = (id: string, gx: number, gy: number): CreatorTarget => ({
 	id,
 	gx,
 	gy,

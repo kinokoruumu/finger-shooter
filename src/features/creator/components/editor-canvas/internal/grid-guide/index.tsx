@@ -102,22 +102,16 @@ export const GridGuide = ({ onCellClick, onCellRightClick }: Props) => {
 	return (
 		<group>
 			{/* 水平グリッドライン */}
-			{gridLines.horizontal.map((line, i) => (
-				<mesh
-					key={`h-${i}`}
-					position={[line.x, line.y, -15.05]}
-				>
+			{gridLines.horizontal.map((line) => (
+				<mesh key={`h-${line.x}-${line.y}`} position={[line.x, line.y, -15.05]}>
 					<planeGeometry args={[line.w, LINE_THICKNESS]} />
 					<meshBasicMaterial color="#000000" transparent opacity={0.5} />
 				</mesh>
 			))}
 
 			{/* 垂直グリッドライン */}
-			{gridLines.vertical.map((line, i) => (
-				<mesh
-					key={`v-${i}`}
-					position={[line.x, line.y, -15.05]}
-				>
+			{gridLines.vertical.map((line) => (
+				<mesh key={`v-${line.x}-${line.y}`} position={[line.x, line.y, -15.05]}>
 					<planeGeometry args={[LINE_THICKNESS, line.h]} />
 					<meshBasicMaterial color="#000000" transparent opacity={0.5} />
 				</mesh>
@@ -125,6 +119,7 @@ export const GridGuide = ({ onCellClick, onCellRightClick }: Props) => {
 
 			{/* クリック用のセル */}
 			{cells.map((cell) => (
+				// biome-ignore lint/a11y/noStaticElementInteractions: R3F mesh element, not a DOM element
 				<mesh
 					key={`grid-${cell.gx}-${cell.gy}`}
 					position={[cell.x, cell.y, -15.1]}

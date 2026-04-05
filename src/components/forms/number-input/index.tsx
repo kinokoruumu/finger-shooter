@@ -1,7 +1,10 @@
 import { useCallback, useState } from "react";
 import { Input } from "@/components/ui/input";
 
-type Props = Omit<React.ComponentProps<typeof Input>, "value" | "onChange" | "type"> & {
+type Props = Omit<
+	React.ComponentProps<typeof Input>,
+	"value" | "onChange" | "type"
+> & {
 	value: number;
 	onChange: (value: number) => void;
 	defaultValue?: number;

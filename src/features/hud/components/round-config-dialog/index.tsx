@@ -5,9 +5,9 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import type { RoundConfig } from "@/features/creator/types";
 import { STAGES } from "@/features/game/constants/stage-definitions";
 import { cn } from "@/lib/utils";
-import type { RoundConfig } from "@/features/creator/types";
 
 type Props = {
 	open: boolean;
@@ -72,9 +72,7 @@ export const RoundConfigDialog = ({
 										: "border-amber-900/10 bg-white hover:border-amber-900/20",
 								)}
 								onClick={() =>
-									setEditingSlot(
-										editingSlot === slot ? null : slot,
-									)
+									setEditingSlot(editingSlot === slot ? null : slot)
 								}
 							>
 								<span
@@ -91,17 +89,13 @@ export const RoundConfigDialog = ({
 									<p
 										className={cn(
 											"truncate font-bold text-sm",
-											isCustom(slot)
-												? "text-orange-700"
-												: "text-amber-900/70",
+											isCustom(slot) ? "text-orange-700" : "text-amber-900/70",
 										)}
 									>
 										{getSlotLabel(slot)}
 									</p>
 									{isCustom(slot) && (
-										<p className="text-[10px] text-orange-500/60">
-											オリジナル
-										</p>
+										<p className="text-[10px] text-orange-500/60">オリジナル</p>
 									)}
 								</div>
 							</button>
@@ -117,9 +111,7 @@ export const RoundConfigDialog = ({
 												? "bg-amber-800 text-white"
 												: "text-amber-900/50 hover:bg-amber-100",
 										)}
-										onClick={() =>
-											handleSelect(slot, null)
-										}
+										onClick={() => handleSelect(slot, null)}
 									>
 										{STAGES[slot].name}（デフォルト）
 									</button>
@@ -133,9 +125,7 @@ export const RoundConfigDialog = ({
 													? "bg-orange-500 text-white"
 													: "text-amber-900/50 hover:bg-amber-100",
 											)}
-											onClick={() =>
-												handleSelect(slot, s.id)
-											}
+											onClick={() => handleSelect(slot, s.id)}
 										>
 											{s.name}
 										</button>

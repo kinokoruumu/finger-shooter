@@ -1,11 +1,7 @@
 import type { SpawnEntry } from "@/features/game/constants/stage-definitions";
 import type { CreatorGroup, CreatorStage } from "../types";
 
-const spreadToNx = (
-	spread: string,
-	index: number,
-	total: number,
-): number => {
+const spreadToNx = (spread: string, index: number, total: number): number => {
 	switch (spread) {
 		case "left":
 			return 0.15 + (index / Math.max(total - 1, 1)) * 0.25;
@@ -32,9 +28,7 @@ const convertGroup = (
 			const interval = step.interval ?? 100;
 			const baseTime = step.startTime ?? 0;
 			for (let i = 0; i < step.targetIds.length; i++) {
-				const target = set.targets.find(
-					(t) => t.id === step.targetIds[i],
-				);
+				const target = set.targets.find((t) => t.id === step.targetIds[i]);
 				if (!target) continue;
 				spawns.push({
 					time: baseTime + i * interval,
@@ -73,11 +67,9 @@ const convertGroup = (
 			direction: group.train.direction,
 			trainSpeed: group.train.speed,
 			slotsOscillate: group.train.slotsOscillate,
-			goldSlots: group.train.slots.filter((s) => s.type === "gold")
+			goldSlots: group.train.slots.filter((s) => s.type === "gold").length,
+			penaltySlots: group.train.slots.filter((s) => s.type === "penalty")
 				.length,
-			penaltySlots: group.train.slots.filter(
-				(s) => s.type === "penalty",
-			).length,
 		});
 	}
 

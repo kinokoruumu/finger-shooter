@@ -3,8 +3,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { preloadSounds, warmupSounds } from "@/features/audio";
 import { CameraView } from "@/features/camera";
 import { useCamera } from "@/features/camera/hooks";
+import {
+	getRoundConfig,
+	getStage,
+	getStages,
+	saveRoundConfig,
+} from "@/features/creator/stores/creator-store";
+import type { RoundConfig } from "@/features/creator/types";
+import { convertStageToSpawns } from "@/features/creator/utils/convert-to-spawns";
 import { Game3D } from "@/features/game/components/game-3d";
 import { StageTransition } from "@/features/game/components/stage-transition";
+import {
+	STAGES,
+	type StageDefinition,
+} from "@/features/game/constants/stage-definitions";
 import { useGameState } from "@/features/game/hooks/use-game-state";
 import {
 	consumeFireEvents,
@@ -23,18 +35,6 @@ import { LoadingScreen } from "@/features/hud/components/loading-screen";
 import { ResultScreen } from "@/features/hud/components/result-screen";
 import { TrackingStatus } from "@/features/hud/components/tracking-status";
 import { WelcomeScreen } from "@/features/hud/components/welcome-screen";
-import {
-	STAGES,
-	type StageDefinition,
-} from "@/features/game/constants/stage-definitions";
-import type { RoundConfig } from "@/features/creator/types";
-import {
-	getStage,
-	getStages,
-	getRoundConfig,
-	saveRoundConfig,
-} from "@/features/creator/stores/creator-store";
-import { convertStageToSpawns } from "@/features/creator/utils/convert-to-spawns";
 import { cn } from "@/lib/utils";
 
 const buildStagesFromConfig = (config: RoundConfig): StageDefinition[] =>

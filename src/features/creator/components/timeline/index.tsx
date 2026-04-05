@@ -27,7 +27,10 @@ const TARGET_BADGE: Record<
 const GroupContent = ({
 	group,
 	isSelected,
-}: { group: CreatorGroup; isSelected: boolean }) => {
+}: {
+	group: CreatorGroup;
+	isSelected: boolean;
+}) => {
 	const allTargets = (group.targetSets ?? []).flatMap((s) => s.targets);
 	const balloonEntries = group.balloonEntries ?? [];
 	const hasBalloons = balloonEntries.length > 0;
@@ -82,11 +85,7 @@ const GroupContent = ({
 						風
 					</span>
 					<span className="text-[10px] text-amber-900/40">
-						{balloonEntries.reduce(
-							(sum, e) => sum + e.count,
-							0,
-						)}
-						個
+						{balloonEntries.reduce((sum, e) => sum + e.count, 0)}個
 					</span>
 				</div>
 			)}
@@ -115,10 +114,7 @@ export const Timeline = ({
 	return (
 		<div className="rounded-2xl border-2 border-amber-900/10 bg-white p-3 sm:p-4">
 			<div className="mb-3 flex items-center justify-between sm:mb-4">
-				<p
-					className="font-bold text-amber-900 text-sm"
-					style={rf}
-				>
+				<p className="font-bold text-amber-900 text-sm" style={rf}>
 					グループ（順次実行）
 				</p>
 				<button
@@ -132,10 +128,7 @@ export const Timeline = ({
 			</div>
 
 			{groups.length === 0 ? (
-				<p
-					className="py-6 text-center text-amber-900/30 text-sm"
-					style={rf}
-				>
+				<p className="py-6 text-center text-amber-900/30 text-sm" style={rf}>
 					グループを追加してください
 				</p>
 			) : (
@@ -144,10 +137,7 @@ export const Timeline = ({
 						const isSelected = selectedIdx === i;
 
 						return (
-							<div
-								key={group.id}
-								className="flex shrink-0 items-center"
-							>
+							<div key={group.id} className="flex shrink-0 items-center">
 								{i > 0 && (
 									<div className="flex w-8 items-center justify-center">
 										<svg
@@ -155,6 +145,7 @@ export const Timeline = ({
 											height="12"
 											viewBox="0 0 18 12"
 											className="text-amber-300"
+											aria-hidden="true"
 										>
 											<path
 												d="M0 6h14M11 2l4 4-4 4"
@@ -167,6 +158,7 @@ export const Timeline = ({
 										</svg>
 									</div>
 								)}
+								{/* biome-ignore lint/a11y/useSemanticElements: 内部にbuttonがあるためbutton要素にできない */}
 								<div
 									className={cn(
 										"flex min-w-[120px] cursor-pointer flex-col gap-2 rounded-xl border-2 p-3 transition-all sm:min-w-[160px] sm:gap-2.5 sm:p-4",
@@ -178,10 +170,7 @@ export const Timeline = ({
 									tabIndex={0}
 									onClick={() => onSelect(i)}
 									onKeyDown={(e) => {
-										if (
-											e.key === "Enter" ||
-											e.key === " "
-										) {
+										if (e.key === "Enter" || e.key === " ") {
 											e.preventDefault();
 											onSelect(i);
 										}
@@ -191,9 +180,7 @@ export const Timeline = ({
 										<span
 											className={cn(
 												"font-bold text-sm",
-												isSelected
-													? "text-amber-900"
-													: "text-amber-900/70",
+												isSelected ? "text-amber-900" : "text-amber-900/70",
 											)}
 											style={rf}
 										>
@@ -211,10 +198,7 @@ export const Timeline = ({
 										</button>
 									</div>
 
-									<GroupContent
-										group={group}
-										isSelected={isSelected}
-									/>
+									<GroupContent group={group} isSelected={isSelected} />
 								</div>
 							</div>
 						);
