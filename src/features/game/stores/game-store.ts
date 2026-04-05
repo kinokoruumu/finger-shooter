@@ -1,3 +1,4 @@
+import { startTransition } from "react";
 import { GAME_CONFIG } from "@/features/game/constants/game-config";
 import { STAGES } from "@/features/game/constants/stage-definitions";
 import type { FireEvent, SharedState } from "@/features/game/types/shared";
@@ -64,9 +65,11 @@ export const subscribe = (listener: Listener) => {
 };
 
 export const notifyListeners = () => {
-	for (const listener of listeners) {
-		listener();
-	}
+	startTransition(() => {
+		for (const listener of listeners) {
+			listener();
+		}
+	});
 };
 
 // スコア等のUI状態
