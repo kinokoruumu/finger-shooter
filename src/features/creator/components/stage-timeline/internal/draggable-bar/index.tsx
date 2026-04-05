@@ -187,8 +187,11 @@ export const DraggableBar = ({
 				/>
 			)}
 
+			{/* モバイル用ドラッグハンドル */}
+			<span className="relative z-10 ml-1 text-white/30 sm:hidden">⠿</span>
+
 			<span
-				className="relative z-10 truncate px-3"
+				className="relative z-10 truncate px-2 sm:px-3"
 				style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
 			>
 				{label}

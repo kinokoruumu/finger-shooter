@@ -875,11 +875,10 @@ export const StageTimeline = ({
 	return (
 		<div
 			ref={measureRef}
-			className="relative select-none overflow-x-auto rounded-xl bg-[#1a1d21]"
+			className="relative select-none rounded-xl bg-[#1a1d21]"
 			style={rf}
 		>
-			<div className="min-w-[500px]">
-			{/* コントロールバー */}
+			{/* コントロールバー（スクロール外） */}
 			<div className="flex items-center gap-2 border-b border-white/5 bg-white/[0.03] px-3 py-1.5">
 				{!isPlaying ? (
 					<Button
@@ -903,6 +902,10 @@ export const StageTimeline = ({
 					{spawnCount}個のスポーン
 				</span>
 			</div>
+
+			{/* スクロール可能エリア */}
+			<div className="overflow-x-auto">
+			<div className="min-w-[500px]">
 
 			{/* ルーラー */}
 			<div className="flex border-b border-white/5 bg-[#1e2227]">
@@ -941,7 +944,9 @@ export const StageTimeline = ({
 				)}
 				style={{ transform: `translateX(${LABEL_WIDTH}px)` }}
 			/>
-			</div>
+
+			</div>{/* min-w */}
+			</div>{/* overflow-x-auto */}
 		</div>
 	);
 };
