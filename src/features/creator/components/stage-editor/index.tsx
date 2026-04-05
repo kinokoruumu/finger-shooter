@@ -175,10 +175,10 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 	}
 
 	return (
-		<div className="flex min-h-screen flex-col bg-[#f5f0e8]">
+		<div className="flex min-h-screen select-none flex-col bg-[#f5f0e8]">
 			{/* ヘッダー */}
 			<div className="border-b border-amber-900/10 bg-white/80 px-3 py-2 sm:px-4 sm:py-3">
-				<div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 sm:gap-4">
+				<div className="mx-auto flex max-w-6xl items-center gap-2 sm:gap-4">
 					<button
 						type="button"
 						className="font-medium text-amber-900/60 text-sm hover:text-amber-900"
@@ -189,7 +189,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 					<Input
 						value={stage.name}
 						onChange={(e) => handleNameChange(e.target.value)}
-						className="min-w-0 flex-1 border-amber-900/15 font-bold text-amber-900 sm:max-w-xs sm:flex-none"
+						className="min-w-0 flex-1 select-text border-amber-900/15 font-bold text-amber-900 sm:max-w-xs sm:flex-none"
 						style={rf}
 					/>
 					<span className="hidden text-amber-900/40 text-xs sm:inline">
