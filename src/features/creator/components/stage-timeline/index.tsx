@@ -1,18 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type {
-	CreatorBalloonEntry,
-	CreatorGroup,
-} from "../../types";
+import type { CreatorBalloonEntry, CreatorGroup } from "../../types";
 import {
-	TARGET_APPEAR_DELAY_MS,
 	calcDraggedTime,
 	calcGroupDuration,
 	calcPxPerMs,
 	calcResizeLeftTime,
 	calcTargetStepBarsForSet,
 	getBalloonVisibleDuration,
+	TARGET_APPEAR_DELAY_MS,
 	timeToX,
 	trainDurationToSpeed,
 	trainSpeedToDuration,
@@ -47,7 +44,11 @@ const TimeRuler = ({
 	pxPerMs,
 	duration,
 	width,
-}: { pxPerMs: number; duration: number; width: number }) => {
+}: {
+	pxPerMs: number;
+	duration: number;
+	width: number;
+}) => {
 	// ラベルが重ならない最小ステップ(ms)を計算
 	const candidates = [250, 500, 1000, 2000, 5000, 10000, 30000];
 	const labelStep =
@@ -67,17 +68,11 @@ const TimeRuler = ({
 	return (
 		<div className="relative h-8" style={{ width }}>
 			{ticks.map((tick) => (
-				<div
-					key={tick.x}
-					className="absolute top-0"
-					style={{ left: tick.x }}
-				>
+				<div key={tick.x} className="absolute top-0" style={{ left: tick.x }}>
 					<div
 						className={cn(
 							"w-px",
-							tick.showLabel
-								? "h-3 bg-white/20"
-								: "h-2 bg-white/10",
+							tick.showLabel ? "h-3 bg-white/20" : "h-2 bg-white/10",
 						)}
 					/>
 					{tick.showLabel && (
@@ -151,14 +146,16 @@ const TargetTrack = ({
 			});
 			onEditSet(newSet.id);
 		},
-		[group, sets, pxPerMs, width, onUpdateGroup, onEditSet],
+		[group, sets, pxPerMs, onUpdateGroup, onEditSet],
 	);
 
 	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: タイムライントラックはポインター操作専用
 		<div
 			ref={trackRef}
 			className="relative cursor-crosshair"
 			style={{ height: TRACK_HEIGHT * rowCount, width }}
+			role="application"
 			onClick={handleTrackClick}
 		>
 			{(() => {
@@ -190,11 +187,13 @@ const TargetTrack = ({
 					return (
 						<div key={set.id}>
 							{/* セット括り（左ボーダー + 背景、ドラッグで一括移動） */}
+							{/* biome-ignore lint/a11y/useKeyWithClickEvents: ドラッグ操作専用 */}
 							<div
 								className={cn(
 									"absolute cursor-grab touch-none select-none rounded-lg",
 									colors.bg,
 								)}
+								role="application"
 								style={{
 									left: Math.max(0, setMinX - 4),
 									top: setStartY,
@@ -207,9 +206,7 @@ const TargetTrack = ({
 								onPointerDown={(e) => {
 									e.stopPropagation();
 									e.preventDefault();
-									const initialSteps = set.steps.map(
-										(s) => ({ ...s }),
-									);
+									const initialSteps = set.steps.map((s) => ({ ...s }));
 									const initialStartTimes = initialSteps.map(
 										(s) => s.startTime ?? 0,
 									);
@@ -230,20 +227,14 @@ const TargetTrack = ({
 											if (minNewTime <= 0 && totalDx < 0) {
 												// 左端到達: 全ステップを同じ offset で移動
 												const offset = 0 - minInitialTime;
-												return initialStartTimes.map(
-													(t) => t + offset,
-												);
+												return initialStartTimes.map((t) => t + offset);
 											}
 											return null;
 										})();
 										const newStartTimes =
 											clampedDelta ??
 											initialStartTimes.map((t) =>
-												calcDraggedTime(
-													t,
-													totalDx,
-													pxPerMs,
-												),
+												calcDraggedTime(t, totalDx, pxPerMs),
 											);
 										// updater パターンで最新の group を使う
 										onUpdateGroupFn((g) => ({
@@ -252,12 +243,10 @@ const TargetTrack = ({
 												s.id === setId
 													? {
 															...s,
-															steps: s.steps.map(
-																(st, si) => ({
-																	...st,
-																	startTime: newStartTimes[si] ?? st.startTime,
-																}),
-															),
+															steps: s.steps.map((st, si) => ({
+																...st,
+																startTime: newStartTimes[si] ?? st.startTime,
+															})),
 														}
 													: s,
 											),
@@ -265,14 +254,8 @@ const TargetTrack = ({
 									};
 
 									const onUp = () => {
-										window.removeEventListener(
-											"pointermove",
-											onMove,
-										);
-										window.removeEventListener(
-											"pointerup",
-											onUp,
-										);
+										window.removeEventListener("pointermove", onMove);
+										window.removeEventListener("pointerup", onUp);
 										if (didDrag) {
 											suppressClickRef.current = true;
 										} else {
@@ -280,177 +263,163 @@ const TargetTrack = ({
 										}
 									};
 
-									window.addEventListener(
-										"pointermove",
-										onMove,
-									);
-									window.addEventListener(
-										"pointerup",
-										onUp,
-									);
+									window.addEventListener("pointermove", onMove);
+									window.addEventListener("pointerup", onUp);
 								}}
 							/>
 
 							{/* ステップバー */}
 							{stepBars.map((bar, i) => {
-							const x = timeToX(bar.startTime, pxPerMs);
-							const x2 = timeToX(bar.endTime, pxPerMs);
-							const w = Math.max(x2 - x, 6);
-							const step = set.steps[i];
-							const count = (step?.targetIds ?? []).length;
-							const totalDur = bar.endTime - bar.startTime;
-							const delayRatio = totalDur > 0
-								? (bar.delayEndTime - bar.startTime) / totalDur
-								: 0;
-							const spawnRatio = totalDur > 0
-								? (bar.spawnEndTime - bar.startTime) / totalDur
-								: 1;
+								const x = timeToX(bar.startTime, pxPerMs);
+								const x2 = timeToX(bar.endTime, pxPerMs);
+								const w = Math.max(x2 - x, 6);
+								const step = set.steps[i];
+								const count = (step?.targetIds ?? []).length;
+								const totalDur = bar.endTime - bar.startTime;
+								const delayRatio =
+									totalDur > 0
+										? (bar.delayEndTime - bar.startTime) / totalDur
+										: 0;
+								const spawnRatio =
+									totalDur > 0
+										? (bar.spawnEndTime - bar.startTime) / totalDur
+										: 1;
 
-							return (
-								<DraggableBar
-									key={`${set.id}-step-${i}`}
-									x={x}
-									width={w}
-									color={colors.bar}
-									activeColor={colors.barActive}
-									label={`${count}個 出現間隔${step?.interval ?? 100}ms`}
-									fadeLabel={`表示${set.targets.find((t) => step?.targetIds.includes(t.id))?.visibleDuration ?? 2.5}秒`}
-									trackHeight={TRACK_HEIGHT}
-									delayRatio={delayRatio}
-									spawnRatio={spawnRatio}
-									onDragStart={() => {
-										dragInitialRef.current = {
-											startTime: bar.startTime,
-											endTime: bar.endTime,
-										};
-									}}
-									onDrag={(totalDx, mode) => {
-										const updateSet = (
-											updater: (s: typeof set) => typeof set,
-										) =>
-											onUpdateGroup({
-												...group,
-												targetSets: sets.map((s) =>
-													s.id === set.id
-														? updater(s)
-														: s,
-												),
-											});
+								return (
+									<DraggableBar
+										// biome-ignore lint/suspicious/noArrayIndexKey: ステップにはIDがなくインデックスが安定
+										key={`${set.id}-step-${i}`}
+										x={x}
+										width={w}
+										color={colors.bar}
+										activeColor={colors.barActive}
+										label={`${count}個 出現間隔${step?.interval ?? 100}ms`}
+										fadeLabel={`表示${set.targets.find((t) => step?.targetIds.includes(t.id))?.visibleDuration ?? 2.5}秒`}
+										trackHeight={TRACK_HEIGHT}
+										delayRatio={delayRatio}
+										spawnRatio={spawnRatio}
+										onDragStart={() => {
+											dragInitialRef.current = {
+												startTime: bar.startTime,
+												endTime: bar.endTime,
+											};
+										}}
+										onDrag={(totalDx, mode) => {
+											const updateSet = (
+												updater: (s: typeof set) => typeof set,
+											) =>
+												onUpdateGroup({
+													...group,
+													targetSets: sets.map((s) =>
+														s.id === set.id ? updater(s) : s,
+													),
+												});
 
-										if (mode === "move") {
-											const newTime = calcDraggedTime(
-												dragInitialRef.current.startTime,
-												totalDx,
-												pxPerMs,
-											);
-											updateSet((s) => ({
-												...s,
-												steps: s.steps.map((st, si) =>
-													si === i
-														? { ...st, startTime: newTime }
-														: st,
-												),
-											}));
-										} else if (mode === "resize-left") {
-											const newStart = calcResizeLeftTime(
-												dragInitialRef.current.startTime,
-												dragInitialRef.current.endTime,
-												100,
-												totalDx,
-												pxPerMs,
-											);
-											const newVisible =
-												(dragInitialRef.current.endTime -
-													newStart -
-													TARGET_APPEAR_DELAY_MS -
+											if (mode === "move") {
+												const newTime = calcDraggedTime(
+													dragInitialRef.current.startTime,
+													totalDx,
+													pxPerMs,
+												);
+												updateSet((s) => ({
+													...s,
+													steps: s.steps.map((st, si) =>
+														si === i ? { ...st, startTime: newTime } : st,
+													),
+												}));
+											} else if (mode === "resize-left") {
+												const newStart = calcResizeLeftTime(
+													dragInitialRef.current.startTime,
+													dragInitialRef.current.endTime,
+													100,
+													totalDx,
+													pxPerMs,
+												);
+												const newVisible =
+													(dragInitialRef.current.endTime -
+														newStart -
+														TARGET_APPEAR_DELAY_MS -
+														(count > 1
+															? (count - 1) * (step?.interval ?? 100)
+															: 0)) /
+													1000;
+												updateSet((s) => ({
+													...s,
+													targets: s.targets.map((t) =>
+														step?.targetIds.includes(t.id)
+															? {
+																	...t,
+																	visibleDuration: Math.max(
+																		0.5,
+																		Math.round(newVisible * 10) / 10,
+																	),
+																}
+															: t,
+													),
+													steps: s.steps.map((st, si) =>
+														si === i ? { ...st, startTime: newStart } : st,
+													),
+												}));
+											} else if (mode === "resize-right") {
+												const newEndTime = calcDraggedTime(
+													dragInitialRef.current.endTime,
+													totalDx,
+													pxPerMs,
+												);
+												const spawnEnd =
+													(step?.startTime ?? 0) +
+													TARGET_APPEAR_DELAY_MS +
 													(count > 1
 														? (count - 1) * (step?.interval ?? 100)
-														: 0)) /
-												1000;
-											updateSet((s) => ({
-												...s,
-												targets: s.targets.map((t) =>
-													step?.targetIds.includes(t.id)
-														? {
-																...t,
-																visibleDuration: Math.max(
-																	0.5,
-																	Math.round(newVisible * 10) / 10,
-																),
-															}
-														: t,
-												),
-												steps: s.steps.map((st, si) =>
-													si === i
-														? { ...st, startTime: newStart }
-														: st,
-												),
-											}));
-										} else if (mode === "resize-right") {
-											const newEndTime = calcDraggedTime(
-												dragInitialRef.current.endTime,
-												totalDx,
-												pxPerMs,
-											);
-											const spawnEnd =
-												(step?.startTime ?? 0) +
-												TARGET_APPEAR_DELAY_MS +
-												(count > 1
-													? (count - 1) * (step?.interval ?? 100)
-													: 0);
-											const newVisible = (newEndTime - spawnEnd) / 1000;
-											updateSet((s) => ({
-												...s,
-												targets: s.targets.map((t) =>
-													step?.targetIds.includes(t.id)
-														? {
-																...t,
-																visibleDuration: Math.max(
-																	0.5,
-																	Math.round(newVisible * 10) / 10,
-																),
-															}
-														: t,
-												),
-											}));
-										} else if (
-											mode === "resize-spawn" &&
-											count > 1
-										) {
-											const initialSpawnEnd =
-												dragInitialRef.current.startTime +
-												TARGET_APPEAR_DELAY_MS +
-												(count - 1) * (step?.interval ?? 100);
-											const newSpawnEnd = calcDraggedTime(
-												initialSpawnEnd,
-												totalDx,
-												pxPerMs,
-											);
-											const newInterval = Math.max(
-												0,
-												Math.round(
-													(newSpawnEnd -
-														(step?.startTime ?? 0) -
-														TARGET_APPEAR_DELAY_MS) /
-														(count - 1),
-												),
-											);
-											updateSet((s) => ({
-												...s,
-												steps: s.steps.map((st, si) =>
-													si === i
-														? { ...st, interval: newInterval }
-														: st,
-												),
-											}));
-										}
-									}}
-									onClick={() => onEditSet(set.id, i)}
-									scrollContainerRef={scrollContainerRef}
-									style={{ top: setStartY + i * TRACK_HEIGHT + 4 }}
-								/>
-							);
-						})}
+														: 0);
+												const newVisible = (newEndTime - spawnEnd) / 1000;
+												updateSet((s) => ({
+													...s,
+													targets: s.targets.map((t) =>
+														step?.targetIds.includes(t.id)
+															? {
+																	...t,
+																	visibleDuration: Math.max(
+																		0.5,
+																		Math.round(newVisible * 10) / 10,
+																	),
+																}
+															: t,
+													),
+												}));
+											} else if (mode === "resize-spawn" && count > 1) {
+												const initialSpawnEnd =
+													dragInitialRef.current.startTime +
+													TARGET_APPEAR_DELAY_MS +
+													(count - 1) * (step?.interval ?? 100);
+												const newSpawnEnd = calcDraggedTime(
+													initialSpawnEnd,
+													totalDx,
+													pxPerMs,
+												);
+												const newInterval = Math.max(
+													0,
+													Math.round(
+														(newSpawnEnd -
+															(step?.startTime ?? 0) -
+															TARGET_APPEAR_DELAY_MS) /
+															(count - 1),
+													),
+												);
+												updateSet((s) => ({
+													...s,
+													steps: s.steps.map((st, si) =>
+														si === i ? { ...st, interval: newInterval } : st,
+													),
+												}));
+											}
+										}}
+										onClick={() => onEditSet(set.id, i)}
+										scrollContainerRef={scrollContainerRef}
+										style={{ top: setStartY + i * TRACK_HEIGHT + 4 }}
+									/>
+								);
+							})}
 						</div>
 					);
 				});
@@ -503,16 +472,18 @@ const BalloonTrack = ({
 				balloonEntries: [...entries, newEntry],
 			});
 		},
-		[group, entries, pxPerMs, width, onUpdateGroup],
+		[group, entries, pxPerMs, onUpdateGroup],
 	);
 
 	const rowCount = Math.max(1, entries.length);
 
 	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: タイムライントラックはポインター操作専用
 		<div
 			ref={trackRef}
 			className="relative cursor-crosshair"
 			style={{ height: TRACK_HEIGHT * rowCount, width }}
+			role="application"
 			onClick={handleTrackClick}
 		>
 			{entries.map((entry, idx) => {
@@ -524,7 +495,12 @@ const BalloonTrack = ({
 				const barW = Math.max(x2 - x, 8);
 				const rowOffset = idx * TRACK_HEIGHT;
 				const spawnRatio = totalDur > 0 ? spawnDur / totalDur : 0;
-				const spreadLabel = { left: "左寄り", center: "中央", right: "右寄り", random: "ランダム" }[entry.spread];
+				const spreadLabel = {
+					left: "左寄り",
+					center: "中央",
+					right: "右寄り",
+					random: "ランダム",
+				}[entry.spread];
 
 				return (
 					<DraggableBar
@@ -544,15 +520,11 @@ const BalloonTrack = ({
 							};
 						}}
 						onDrag={(totalDx, mode) => {
-							const update = (
-								upd: Partial<CreatorBalloonEntry>,
-							) =>
+							const update = (upd: Partial<CreatorBalloonEntry>) =>
 								onUpdateGroup({
 									...group,
 									balloonEntries: entries.map((e) =>
-										e.id === entry.id
-											? { ...e, ...upd }
-											: e,
+										e.id === entry.id ? { ...e, ...upd } : e,
 									),
 								});
 
@@ -576,10 +548,7 @@ const BalloonTrack = ({
 								);
 								const newInterval = Math.max(
 									0,
-									Math.round(
-										(newEndTime - entry.time) /
-											(entry.count - 1),
-									),
+									Math.round((newEndTime - entry.time) / (entry.count - 1)),
 								);
 								update({ interval: newInterval });
 							} else if (mode === "resize-left" && entry.count > 1) {
@@ -596,10 +565,7 @@ const BalloonTrack = ({
 								);
 								const newInterval = Math.max(
 									0,
-									Math.round(
-										(oldEndTime - newStart) /
-											(entry.count - 1),
-									),
+									Math.round((oldEndTime - newStart) / (entry.count - 1)),
 								);
 								update({ time: newStart, interval: newInterval });
 							} else {
@@ -674,40 +640,35 @@ const TrainTrack = ({
 			if (group.trainStartTime != null) return;
 			onUpdateGroup({ ...group, trainStartTime: time });
 		},
-		[group, pxPerMs, width, onUpdateGroup],
+		[group, pxPerMs, onUpdateGroup],
 	);
 
 	const hasBlock = group.train && group.trainStartTime != null;
 
-	const trainDur = group.train
-		? trainSpeedToDuration(group.train.speed)
-		: 1500;
+	const trainDur = group.train ? trainSpeedToDuration(group.train.speed) : 1500;
 	const startTime = group.trainStartTime ?? 0;
 
 	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: タイムライントラックはポインター操作専用
 		<div
 			ref={trackRef}
 			className={cn(
 				"relative",
-				group.train && !hasBlock
-					? "cursor-crosshair"
-					: "cursor-default",
+				group.train && !hasBlock ? "cursor-crosshair" : "cursor-default",
 			)}
 			style={{ height: TRACK_HEIGHT, width }}
+			role="application"
 			onClick={handleTrackClick}
 		>
 			{hasBlock && (
 				<DraggableBar
 					x={timeToX(startTime, pxPerMs)}
 					width={
-						timeToX(startTime + trainDur, pxPerMs) -
-						timeToX(startTime, pxPerMs)
+						timeToX(startTime + trainDur, pxPerMs) - timeToX(startTime, pxPerMs)
 					}
 					color="bg-violet-500"
 					activeColor="bg-violet-700"
-					label={
-						group.train?.direction === 1 ? "右から" : "左から"
-					}
+					label={group.train?.direction === 1 ? "右から" : "左から"}
 					trackHeight={TRACK_HEIGHT}
 					onDragStart={() => {
 						dragInitialRef.current = {
@@ -731,21 +692,12 @@ const TrainTrack = ({
 							const oldEndTime =
 								dragInitialRef.current.startTime +
 								dragInitialRef.current.trainDur;
-							const newEndTime = calcDraggedTime(
-								oldEndTime,
-								totalDx,
-								pxPerMs,
-							);
-							const newDur = Math.max(
-								200,
-								newEndTime - startTime,
-							);
+							const newEndTime = calcDraggedTime(oldEndTime, totalDx, pxPerMs);
+							const newDur = Math.max(200, newEndTime - startTime);
 							const newSpeed = trainDurationToSpeed(newDur);
 							onUpdateGroup({
 								...group,
-								train: group.train
-									? { ...group.train, speed: newSpeed }
-									: null,
+								train: group.train ? { ...group.train, speed: newSpeed } : null,
 							});
 						} else if (mode === "resize-left") {
 							// 左端ドラッグ → endTime 固定で startTime + speed を変更
@@ -757,18 +709,13 @@ const TrainTrack = ({
 								totalDx,
 								pxPerMs,
 							);
-							const clampedStart = Math.min(
-								newStart,
-								endTime - 200,
-							);
+							const clampedStart = Math.min(newStart, endTime - 200);
 							const newDur = endTime - clampedStart;
 							const newSpeed = trainDurationToSpeed(newDur);
 							onUpdateGroup({
 								...group,
 								trainStartTime: clampedStart,
-								train: group.train
-									? { ...group.train, speed: newSpeed }
-									: null,
+								train: group.train ? { ...group.train, speed: newSpeed } : null,
 							});
 						}
 					}}
@@ -820,40 +767,55 @@ export const StageTimeline = ({
 	const timelineWidth = Math.max(minWidth, contentEnd + 100);
 
 	// ピンチズーム
-	const handleTouchStart = useCallback((e: React.TouchEvent) => {
-		if (e.touches.length === 2) {
-			setIsPinching(true);
-			const dx = e.touches[0].clientX - e.touches[1].clientX;
-			const dy = e.touches[0].clientY - e.touches[1].clientY;
-			pinchStartDistRef.current = Math.hypot(dx, dy);
-			pinchStartZoomRef.current = zoom;
-		}
-	}, [zoom]);
-
-	const handleTouchMove = useCallback((e: React.TouchEvent) => {
-		if (e.touches.length === 2) {
-			const dx = e.touches[0].clientX - e.touches[1].clientX;
-			const dy = e.touches[0].clientY - e.touches[1].clientY;
-			const dist = Math.hypot(dx, dy);
-			if (pinchStartDistRef.current > 0) {
-				const scale = dist / pinchStartDistRef.current;
-				const newZoom = Math.max(0.1, Math.min(5, pinchStartZoomRef.current * scale));
-				// ピンチ中心でアンカー: カーソル下の時間を保持
-				const container = scrollRef.current;
-				if (container) {
-					const rect = container.getBoundingClientRect();
-					const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-					const cursorX = centerX - rect.left + container.scrollLeft;
-					const cursorTime = xToTime(cursorX - LABEL_WIDTH, pxPerMs);
-					const newPxPerMs = calcPxPerMs(containerWidth - LABEL_WIDTH, newZoom);
-					requestAnimationFrame(() => {
-						container.scrollLeft = timeToX(cursorTime, newPxPerMs) + LABEL_WIDTH - (centerX - rect.left);
-					});
-				}
-				setZoom(newZoom);
+	const handleTouchStart = useCallback(
+		(e: React.TouchEvent) => {
+			if (e.touches.length === 2) {
+				setIsPinching(true);
+				const dx = e.touches[0].clientX - e.touches[1].clientX;
+				const dy = e.touches[0].clientY - e.touches[1].clientY;
+				pinchStartDistRef.current = Math.hypot(dx, dy);
+				pinchStartZoomRef.current = zoom;
 			}
-		}
-	}, [zoom, pxPerMs, containerWidth]);
+		},
+		[zoom],
+	);
+
+	const handleTouchMove = useCallback(
+		(e: React.TouchEvent) => {
+			if (e.touches.length === 2) {
+				const dx = e.touches[0].clientX - e.touches[1].clientX;
+				const dy = e.touches[0].clientY - e.touches[1].clientY;
+				const dist = Math.hypot(dx, dy);
+				if (pinchStartDistRef.current > 0) {
+					const scale = dist / pinchStartDistRef.current;
+					const newZoom = Math.max(
+						0.1,
+						Math.min(5, pinchStartZoomRef.current * scale),
+					);
+					// ピンチ中心でアンカー: カーソル下の時間を保持
+					const container = scrollRef.current;
+					if (container) {
+						const rect = container.getBoundingClientRect();
+						const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+						const cursorX = centerX - rect.left + container.scrollLeft;
+						const cursorTime = xToTime(cursorX - LABEL_WIDTH, pxPerMs);
+						const newPxPerMs = calcPxPerMs(
+							containerWidth - LABEL_WIDTH,
+							newZoom,
+						);
+						requestAnimationFrame(() => {
+							container.scrollLeft =
+								timeToX(cursorTime, newPxPerMs) +
+								LABEL_WIDTH -
+								(centerX - rect.left);
+						});
+					}
+					setZoom(newZoom);
+				}
+			}
+		},
+		[pxPerMs, containerWidth],
+	);
 
 	const handleTouchEnd = useCallback(() => {
 		setIsPinching(false);
@@ -876,7 +838,10 @@ export const StageTimeline = ({
 				const newPxPerMs = calcPxPerMs(containerWidth - LABEL_WIDTH, newZoom);
 				setZoom(newZoom);
 				requestAnimationFrame(() => {
-					el.scrollLeft = timeToX(cursorTime, newPxPerMs) + LABEL_WIDTH - (e.clientX - rect.left);
+					el.scrollLeft =
+						timeToX(cursorTime, newPxPerMs) +
+						LABEL_WIDTH -
+						(e.clientX - rect.left);
 				});
 			}
 		};
@@ -974,7 +939,7 @@ export const StageTimeline = ({
 		};
 		const id = requestAnimationFrame(tick);
 		return () => cancelAnimationFrame(id);
-	}, [isPlaying, pxPerMs, timelineWidth, elapsedMsRef]);
+	}, [isPlaying, pxPerMs, elapsedMsRef]);
 
 	return (
 		<div
@@ -1024,51 +989,58 @@ export const StageTimeline = ({
 				onTouchMove={handleTouchMove}
 				onTouchEnd={handleTouchEnd}
 			>
-			{isPinching && (
-				<div className="pointer-events-none absolute inset-0 z-50" />
-			)}
-			<div className="relative" style={{ width: timelineWidth + LABEL_WIDTH }}>
-
-			{/* ルーラー */}
-			<div className="flex border-b border-white/5 bg-[#1e2227]">
-				<div
-					className="shrink-0 border-r border-white/5"
-					style={{ width: LABEL_WIDTH }}
-				/>
-				<TimeRuler pxPerMs={pxPerMs} duration={duration} width={timelineWidth} />
-			</div>
-
-			{/* トラック */}
-			{tracks.map((track) => (
-				<div
-					key={track.label}
-					className="flex border-b border-white/5 last:border-b-0"
-				>
-					<div
-						className={cn(
-							"flex shrink-0 items-center justify-center border-r border-white/5 text-[10px] font-bold text-white/50 sm:text-xs",
-							track.color,
-						)}
-						style={{ width: LABEL_WIDTH }}
-					>
-						{track.label}
-					</div>
-					{track.content}
-				</div>
-			))}
-
-			{/* 再生ヘッド */}
-			<div
-				ref={playheadRef}
-				className={cn(
-					"pointer-events-none absolute top-0 bottom-0 w-0.5 bg-red-500",
-					isPlaying ? "opacity-100" : "opacity-0",
+				{isPinching && (
+					<div className="pointer-events-none absolute inset-0 z-50" />
 				)}
-				style={{ transform: `translateX(${LABEL_WIDTH}px)` }}
-			/>
+				<div
+					className="relative"
+					style={{ width: timelineWidth + LABEL_WIDTH }}
+				>
+					{/* ルーラー */}
+					<div className="flex border-b border-white/5 bg-[#1e2227]">
+						<div
+							className="shrink-0 border-r border-white/5"
+							style={{ width: LABEL_WIDTH }}
+						/>
+						<TimeRuler
+							pxPerMs={pxPerMs}
+							duration={duration}
+							width={timelineWidth}
+						/>
+					</div>
 
-			</div>{/* min-w */}
-			</div>{/* overflow-x-auto */}
+					{/* トラック */}
+					{tracks.map((track) => (
+						<div
+							key={track.label}
+							className="flex border-b border-white/5 last:border-b-0"
+						>
+							<div
+								className={cn(
+									"flex shrink-0 items-center justify-center border-r border-white/5 text-[10px] font-bold text-white/50 sm:text-xs",
+									track.color,
+								)}
+								style={{ width: LABEL_WIDTH }}
+							>
+								{track.label}
+							</div>
+							{track.content}
+						</div>
+					))}
+
+					{/* 再生ヘッド */}
+					<div
+						ref={playheadRef}
+						className={cn(
+							"pointer-events-none absolute top-0 bottom-0 w-0.5 bg-red-500",
+							isPlaying ? "opacity-100" : "opacity-0",
+						)}
+						style={{ transform: `translateX(${LABEL_WIDTH}px)` }}
+					/>
+				</div>
+				{/* min-w */}
+			</div>
+			{/* overflow-x-auto */}
 		</div>
 	);
 };

@@ -48,6 +48,7 @@ export const EditorScene = ({
 				const isDisabled = disabledTargetIds?.has(t.id) ?? false;
 				const label = targetLabels?.get(t.id);
 				return (
+					// biome-ignore lint/a11y/noStaticElementInteractions: R3F group element, not a DOM element
 					<group
 						key={t.id}
 						onClick={(e) => {
@@ -76,7 +77,10 @@ type CanvasWrapperProps = {
 	className?: string;
 };
 
-export const EditorCanvasWrapper = ({ children, className }: CanvasWrapperProps) => {
+export const EditorCanvasWrapper = ({
+	children,
+	className,
+}: CanvasWrapperProps) => {
 	return (
 		<div
 			className={cn(
