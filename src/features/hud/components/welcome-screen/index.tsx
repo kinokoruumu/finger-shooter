@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { router } from "@/main";
 import { STAGES } from "@/features/game/constants/stage-definitions";
 import type { RoundConfig } from "@/features/creator/types";
 import { RoundConfigDialog } from "../round-config-dialog";
@@ -136,7 +135,7 @@ export const WelcomeScreen = ({
 						type="button"
 						className="cursor-pointer text-amber-900/30 text-[clamp(0.75rem,2vw,0.85rem)] transition-colors hover:text-amber-900/60"
 						style={rf}
-						onClick={() => router.navigate({ to: "/creator" })}
+						onClick={() => { window.location.href = "/creator"; }}
 					>
 						ステージを作る
 					</button>
