@@ -85,7 +85,7 @@ export const DraggableBar = ({
 				? "ew-resize"
 				: "grab";
 
-	const actualWidth = Math.max(barWidth, 80);
+	const actualWidth = Math.max(barWidth, 24);
 	const hasResize = !!onDrag;
 
 	return (

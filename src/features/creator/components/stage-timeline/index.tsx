@@ -168,7 +168,7 @@ const TargetTrack = ({
 					yOffset += setHeight + 8; // セット間余白
 
 					// セットのステップ範囲（背景幅用）
-					const MIN_BAR_W = 80;
+					const MIN_BAR_W = 24;
 					let setMinX = Number.POSITIVE_INFINITY;
 					let setMaxX = 0;
 					for (const bar of stepBars) {
@@ -806,10 +806,45 @@ export const StageTimeline = ({
 	spawnCount,
 }: Props) => {
 	const [containerWidth, setContainerWidth] = useState(600);
+	const [zoom, setZoom] = useState(1);
 	const playheadRef = useRef<HTMLDivElement>(null);
+	const scrollRef = useRef<HTMLDivElement>(null);
+	const pinchStartDistRef = useRef(0);
+	const pinchStartZoomRef = useRef(1);
 
 	const duration = calcGroupDuration(group);
-	const timelineWidth = containerWidth - LABEL_WIDTH;
+	const baseWidth = containerWidth - LABEL_WIDTH;
+	const timelineWidth = baseWidth * zoom;
+
+	// ピンチズーム
+	const handleTouchStart = useCallback((e: React.TouchEvent) => {
+		if (e.touches.length === 2) {
+			const dx = e.touches[0].clientX - e.touches[1].clientX;
+			const dy = e.touches[0].clientY - e.touches[1].clientY;
+			pinchStartDistRef.current = Math.hypot(dx, dy);
+			pinchStartZoomRef.current = zoom;
+		}
+	}, [zoom]);
+
+	const handleTouchMove = useCallback((e: React.TouchEvent) => {
+		if (e.touches.length === 2) {
+			const dx = e.touches[0].clientX - e.touches[1].clientX;
+			const dy = e.touches[0].clientY - e.touches[1].clientY;
+			const dist = Math.hypot(dx, dy);
+			if (pinchStartDistRef.current > 0) {
+				const scale = dist / pinchStartDistRef.current;
+				setZoom(Math.max(0.5, Math.min(5, pinchStartZoomRef.current * scale)));
+			}
+		}
+	}, []);
+
+	// Ctrl+wheel ズーム（デスクトップ）
+	const handleWheel = useCallback((e: React.WheelEvent) => {
+		if (e.ctrlKey || e.metaKey) {
+			e.preventDefault();
+			setZoom((z) => Math.max(0.5, Math.min(5, z - e.deltaY * 0.005)));
+		}
+	}, []);
 
 	const measureRef = useCallback((node: HTMLDivElement | null) => {
 		if (!node) return;
@@ -912,8 +947,15 @@ export const StageTimeline = ({
 			</div>
 
 			{/* スクロール可能エリア */}
-			<div className="overflow-x-auto">
-			<div className="min-w-[500px]">
+			<div
+				ref={scrollRef}
+				className="overflow-x-auto"
+				style={{ touchAction: "pan-x" }}
+				onTouchStart={handleTouchStart}
+				onTouchMove={handleTouchMove}
+				onWheel={handleWheel}
+			>
+			<div style={{ minWidth: Math.max(500, timelineWidth + LABEL_WIDTH) }}>
 
 			{/* ルーラー */}
 			<div className="flex border-b border-white/5 bg-[#1e2227]">
