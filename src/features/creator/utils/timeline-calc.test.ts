@@ -4,6 +4,7 @@ import {
 	calcBalloonsDuration,
 	calcDraggedTime,
 	calcGroupDuration,
+	calcPxPerMs,
 	calcResizeLeftTime,
 	calcTargetStepBarsForSet,
 	calcTargetsDuration,
@@ -116,40 +117,43 @@ describe("calcGroupDuration", () => {
 });
 
 describe("timeToX / xToTime", () => {
-	const DURATION = 2000;
-	const WIDTH = 600;
+	const PX_PER_MS = 0.2;
 
 	it("xToTime は timeToX の逆変換", () => {
-		const x = timeToX(500, DURATION, WIDTH);
-		expect(xToTime(x, DURATION, WIDTH)).toBe(500);
+		const x = timeToX(500, PX_PER_MS);
+		expect(xToTime(x, PX_PER_MS)).toBe(500);
 	});
 
 	it("xToTime は 50ms 単位にスナップ", () => {
-		const x = timeToX(51, DURATION, WIDTH);
-		expect(xToTime(x, DURATION, WIDTH)).toBe(50);
+		const x = timeToX(51, PX_PER_MS);
+		expect(xToTime(x, PX_PER_MS)).toBe(50);
+	});
+
+	it("pxPerMs が変わっても time→x→time は一貫する", () => {
+		const scale = 0.5;
+		const x = timeToX(1000, scale);
+		expect(xToTime(x, scale)).toBe(1000);
 	});
 });
 
 describe("calcDraggedTime", () => {
-	const DURATION = 2000;
-	const WIDTH = 600;
+	const PX_PER_MS = 0.2;
 
 	it("deltaX=0 なら元の時間", () => {
-		expect(calcDraggedTime(500, 0, DURATION, WIDTH)).toBe(500);
+		expect(calcDraggedTime(500, 0, PX_PER_MS)).toBe(500);
 	});
 
 	it("往復で元に戻る", () => {
-		const after = calcDraggedTime(500, 150, DURATION, WIDTH);
-		expect(calcDraggedTime(after, -150, DURATION, WIDTH)).toBe(500);
+		const after = calcDraggedTime(500, 150, PX_PER_MS);
+		expect(calcDraggedTime(after, -150, PX_PER_MS)).toBe(500);
 	});
 });
 
 describe("calcResizeLeftTime", () => {
-	const DURATION = 2000;
-	const WIDTH = 600;
+	const PX_PER_MS = 0.2;
 
 	it("startTime は endTime - minDuration を超えない", () => {
-		const result = calcResizeLeftTime(100, 500, 100, 9999, DURATION, WIDTH);
+		const result = calcResizeLeftTime(100, 500, 100, 9999, PX_PER_MS);
 		expect(result).toBeLessThanOrEqual(400);
 	});
 });
@@ -171,5 +175,26 @@ describe("trainDurationToSpeed / trainSpeedToDuration", () => {
 describe("getBalloonVisibleDuration", () => {
 	it("固定値 5000ms", () => {
 		expect(getBalloonVisibleDuration()).toBe(5000);
+	});
+});
+
+describe("calcPxPerMs", () => {
+	it("zoomに比例する", () => {
+		const z1 = calcPxPerMs(500, 1);
+		const z2 = calcPxPerMs(500, 2);
+		expect(z2).toBeCloseTo(z1 * 2, 6);
+	});
+
+	it("コンテナ幅に比例する", () => {
+		const w1 = calcPxPerMs(500, 1);
+		const w2 = calcPxPerMs(1000, 1);
+		expect(w2).toBeCloseTo(w1 * 2, 6);
+	});
+
+	it("コンテンツのdurationに依存しない（引数にdurationがない）", () => {
+		// 同じcontainerWidthとzoomなら常に同じ値
+		const a = calcPxPerMs(500, 1);
+		const b = calcPxPerMs(500, 1);
+		expect(a).toBe(b);
 	});
 });

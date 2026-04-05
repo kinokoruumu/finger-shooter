@@ -6,20 +6,19 @@ const BALLOON_VISIBLE_MS = 5000;
 /** 的のスポーンから実際に見えるまでの遅延(ms) */
 export const TARGET_APPEAR_DELAY_MS = 350;
 
-/** 時間(ms) → ピクセル位置 */
-export const timeToX = (
-	time: number,
-	duration: number,
-	width: number,
-): number => PADDING + (time / duration) * (width - PADDING * 2);
+/** zoom=1 でコンテナ幅に 5秒 表示する固定スケール。コンテンツ長に依存しない */
+const BASE_VISIBLE_MS = 5000;
+
+export const calcPxPerMs = (containerWidth: number, zoom: number): number =>
+	(containerWidth / BASE_VISIBLE_MS) * zoom;
+
+/** 固定スケール: pxPerMs → ピクセル位置 */
+export const timeToX = (time: number, pxPerMs: number): number =>
+	PADDING + time * pxPerMs;
 
 /** ピクセル位置 → 時間(ms)、SNAP_MS 単位にスナップ */
-export const xToTime = (
-	x: number,
-	duration: number,
-	width: number,
-): number => {
-	const t = ((x - PADDING) / (width - PADDING * 2)) * duration;
+export const xToTime = (x: number, pxPerMs: number): number => {
+	const t = (x - PADDING) / pxPerMs;
 	return Math.max(0, Math.round(t / SNAP_MS) * SNAP_MS);
 };
 
@@ -27,11 +26,10 @@ export const xToTime = (
 export const calcDraggedTime = (
 	initialTime: number,
 	totalDeltaX: number,
-	duration: number,
-	width: number,
+	pxPerMs: number,
 ): number => {
-	const initialX = timeToX(initialTime, duration, width);
-	return xToTime(initialX + totalDeltaX, duration, width);
+	const initialX = timeToX(initialTime, pxPerMs);
+	return xToTime(initialX + totalDeltaX, pxPerMs);
 };
 
 /**
@@ -43,15 +41,9 @@ export const calcResizeLeftTime = (
 	endTime: number,
 	minDuration: number,
 	totalDeltaX: number,
-	duration: number,
-	width: number,
+	pxPerMs: number,
 ): number => {
-	const newStart = calcDraggedTime(
-		initialStartTime,
-		totalDeltaX,
-		duration,
-		width,
-	);
+	const newStart = calcDraggedTime(initialStartTime, totalDeltaX, pxPerMs);
 	return Math.min(newStart, endTime - minDuration);
 };
 

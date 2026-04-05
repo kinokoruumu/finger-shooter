@@ -9,6 +9,7 @@ import {
 	TARGET_APPEAR_DELAY_MS,
 	calcDraggedTime,
 	calcGroupDuration,
+	calcPxPerMs,
 	calcResizeLeftTime,
 	calcTargetStepBarsForSet,
 	getBalloonVisibleDuration,
@@ -43,11 +44,11 @@ const LABEL_WIDTH = 44;
 const LABEL_MIN_GAP_PX = 50;
 
 const TimeRuler = ({
+	pxPerMs,
 	duration,
 	width,
-}: { duration: number; width: number }) => {
+}: { pxPerMs: number; duration: number; width: number }) => {
 	// ラベルが重ならない最小ステップ(ms)を計算
-	const pxPerMs = (width - 24) / duration;
 	const candidates = [250, 500, 1000, 2000, 5000, 10000, 30000];
 	const labelStep =
 		candidates.find((s) => s * pxPerMs >= LABEL_MIN_GAP_PX) ??
@@ -57,7 +58,7 @@ const TimeRuler = ({
 	const ticks: { x: number; label: string; showLabel: boolean }[] = [];
 	for (let t = 0; t <= duration; t += tickStep) {
 		ticks.push({
-			x: timeToX(t, duration, width),
+			x: timeToX(t, pxPerMs),
 			label: `${(t / 1000).toFixed(t % 1000 === 0 ? 0 : 1)}s`,
 			showLabel: t % labelStep === 0,
 		});
@@ -100,7 +101,7 @@ const SET_STYLE = {
 /** 的トラック */
 const TargetTrack = ({
 	group,
-	duration,
+	pxPerMs,
 	width,
 	onEditSet,
 	onUpdateGroup,
@@ -108,7 +109,7 @@ const TargetTrack = ({
 	onUpdateGroupFn,
 }: {
 	group: CreatorGroup;
-	duration: number;
+	pxPerMs: number;
 	width: number;
 	onEditSet: (setId: string, stepIndex?: number) => void;
 	onUpdateGroup: (group: CreatorGroup) => void;
@@ -137,7 +138,7 @@ const TargetTrack = ({
 			if (!trackRef.current) return;
 			const rect = trackRef.current.getBoundingClientRect();
 			const x = e.clientX - rect.left;
-			const time = xToTime(x, duration, width);
+			const time = xToTime(x, pxPerMs);
 
 			const newSet = {
 				id: crypto.randomUUID(),
@@ -150,7 +151,7 @@ const TargetTrack = ({
 			});
 			onEditSet(newSet.id);
 		},
-		[group, sets, duration, width, onUpdateGroup, onEditSet],
+		[group, sets, pxPerMs, width, onUpdateGroup, onEditSet],
 	);
 
 	return (
@@ -175,8 +176,8 @@ const TargetTrack = ({
 					let setMinX = Number.POSITIVE_INFINITY;
 					let setMaxX = 0;
 					for (const bar of stepBars) {
-						const bx1 = timeToX(bar.startTime, duration, width);
-						const bx2 = timeToX(bar.endTime, duration, width);
+						const bx1 = timeToX(bar.startTime, pxPerMs);
+						const bx2 = timeToX(bar.endTime, pxPerMs);
 						const barW = Math.max(bx2 - bx1, MIN_BAR_W);
 						if (bx1 < setMinX) setMinX = bx1;
 						if (bx1 + barW > setMaxX) setMaxX = bx1 + barW;
@@ -224,8 +225,7 @@ const TargetTrack = ({
 											const minNewTime = calcDraggedTime(
 												minInitialTime,
 												totalDx,
-												duration,
-												width,
+												pxPerMs,
 											);
 											if (minNewTime <= 0 && totalDx < 0) {
 												// 左端到達: 全ステップを同じ offset で移動
@@ -242,8 +242,7 @@ const TargetTrack = ({
 												calcDraggedTime(
 													t,
 													totalDx,
-													duration,
-													width,
+													pxPerMs,
 												),
 											);
 										// updater パターンで最新の group を使う
@@ -294,8 +293,8 @@ const TargetTrack = ({
 
 							{/* ステップバー */}
 							{stepBars.map((bar, i) => {
-							const x = timeToX(bar.startTime, duration, width);
-							const x2 = timeToX(bar.endTime, duration, width);
+							const x = timeToX(bar.startTime, pxPerMs);
+							const x2 = timeToX(bar.endTime, pxPerMs);
 							const w = Math.max(x2 - x, 6);
 							const step = set.steps[i];
 							const count = (step?.targetIds ?? []).length;
@@ -342,8 +341,7 @@ const TargetTrack = ({
 											const newTime = calcDraggedTime(
 												dragInitialRef.current.startTime,
 												totalDx,
-												duration,
-												width,
+												pxPerMs,
 											);
 											updateSet((s) => ({
 												...s,
@@ -359,8 +357,7 @@ const TargetTrack = ({
 												dragInitialRef.current.endTime,
 												100,
 												totalDx,
-												duration,
-												width,
+												pxPerMs,
 											);
 											const newVisible =
 												(dragInitialRef.current.endTime -
@@ -393,8 +390,7 @@ const TargetTrack = ({
 											const newEndTime = calcDraggedTime(
 												dragInitialRef.current.endTime,
 												totalDx,
-												duration,
-												width,
+												pxPerMs,
 											);
 											const spawnEnd =
 												(step?.startTime ?? 0) +
@@ -428,8 +424,7 @@ const TargetTrack = ({
 											const newSpawnEnd = calcDraggedTime(
 												initialSpawnEnd,
 												totalDx,
-												duration,
-												width,
+												pxPerMs,
 											);
 											const newInterval = Math.max(
 												0,
@@ -472,14 +467,14 @@ const TargetTrack = ({
 /** 風船トラック */
 const BalloonTrack = ({
 	group,
-	duration,
+	pxPerMs,
 	width,
 	onUpdateGroup,
 	scrollContainerRef,
 	onEditEntry,
 }: {
 	group: CreatorGroup;
-	duration: number;
+	pxPerMs: number;
 	width: number;
 	onUpdateGroup: (group: CreatorGroup) => void;
 	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
@@ -494,7 +489,7 @@ const BalloonTrack = ({
 			if (!trackRef.current) return;
 			const rect = trackRef.current.getBoundingClientRect();
 			const x = e.clientX - rect.left;
-			const time = xToTime(x, duration, width);
+			const time = xToTime(x, pxPerMs);
 
 			const newEntry: CreatorBalloonEntry = {
 				id: crypto.randomUUID(),
@@ -508,7 +503,7 @@ const BalloonTrack = ({
 				balloonEntries: [...entries, newEntry],
 			});
 		},
-		[group, entries, duration, width, onUpdateGroup],
+		[group, entries, pxPerMs, width, onUpdateGroup],
 	);
 
 	const rowCount = Math.max(1, entries.length);
@@ -524,8 +519,8 @@ const BalloonTrack = ({
 				const balloonVisible = getBalloonVisibleDuration();
 				const spawnDur = Math.max(0, entry.count - 1) * (entry.interval ?? 0);
 				const totalDur = spawnDur + balloonVisible;
-				const x = timeToX(entry.time, duration, width);
-				const x2 = timeToX(entry.time + totalDur, duration, width);
+				const x = timeToX(entry.time, pxPerMs);
+				const x2 = timeToX(entry.time + totalDur, pxPerMs);
 				const barW = Math.max(x2 - x, 8);
 				const rowOffset = idx * TRACK_HEIGHT;
 				const spawnRatio = totalDur > 0 ? spawnDur / totalDur : 0;
@@ -566,8 +561,7 @@ const BalloonTrack = ({
 									time: calcDraggedTime(
 										dragInitialRef.current.time,
 										totalDx,
-										duration,
-										width,
+										pxPerMs,
 									),
 								});
 							} else if (mode === "resize-right" && entry.count > 1) {
@@ -578,8 +572,7 @@ const BalloonTrack = ({
 								const newEndTime = calcDraggedTime(
 									oldEndTime,
 									totalDx,
-									duration,
-									width,
+									pxPerMs,
 								);
 								const newInterval = Math.max(
 									0,
@@ -599,8 +592,7 @@ const BalloonTrack = ({
 									oldEndTime,
 									50,
 									totalDx,
-									duration,
-									width,
+									pxPerMs,
 								);
 								const newInterval = Math.max(
 									0,
@@ -616,8 +608,7 @@ const BalloonTrack = ({
 									time: calcDraggedTime(
 										dragInitialRef.current.time,
 										totalDx,
-										duration,
-										width,
+										pxPerMs,
 									),
 								});
 							}
@@ -640,14 +631,14 @@ const BalloonTrack = ({
 /** 列車トラック */
 const TrainTrack = ({
 	group,
-	duration,
+	pxPerMs,
 	width,
 	onUpdateGroup,
 	scrollContainerRef,
 	onEdit,
 }: {
 	group: CreatorGroup;
-	duration: number;
+	pxPerMs: number;
 	width: number;
 	onUpdateGroup: (group: CreatorGroup) => void;
 	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
@@ -661,7 +652,7 @@ const TrainTrack = ({
 			if (!trackRef.current) return;
 			const rect = trackRef.current.getBoundingClientRect();
 			const x = e.clientX - rect.left;
-			const time = xToTime(x, duration, width);
+			const time = xToTime(x, pxPerMs);
 
 			if (!group.train) {
 				// 列車がなければデフォルト設定で追加
@@ -683,7 +674,7 @@ const TrainTrack = ({
 			if (group.trainStartTime != null) return;
 			onUpdateGroup({ ...group, trainStartTime: time });
 		},
-		[group, duration, width, onUpdateGroup],
+		[group, pxPerMs, width, onUpdateGroup],
 	);
 
 	const hasBlock = group.train && group.trainStartTime != null;
@@ -707,10 +698,10 @@ const TrainTrack = ({
 		>
 			{hasBlock && (
 				<DraggableBar
-					x={timeToX(startTime, duration, width)}
+					x={timeToX(startTime, pxPerMs)}
 					width={
-						timeToX(startTime + trainDur, duration, width) -
-						timeToX(startTime, duration, width)
+						timeToX(startTime + trainDur, pxPerMs) -
+						timeToX(startTime, pxPerMs)
 					}
 					color="bg-violet-500"
 					activeColor="bg-violet-700"
@@ -729,8 +720,7 @@ const TrainTrack = ({
 							const newTime = calcDraggedTime(
 								dragInitialRef.current.startTime,
 								totalDx,
-								duration,
-								width,
+								pxPerMs,
 							);
 							onUpdateGroup({
 								...group,
@@ -744,8 +734,7 @@ const TrainTrack = ({
 							const newEndTime = calcDraggedTime(
 								oldEndTime,
 								totalDx,
-								duration,
-								width,
+								pxPerMs,
 							);
 							const newDur = Math.max(
 								200,
@@ -766,8 +755,7 @@ const TrainTrack = ({
 							const newStart = calcDraggedTime(
 								dragInitialRef.current.startTime,
 								totalDx,
-								duration,
-								width,
+								pxPerMs,
 							);
 							const clampedStart = Math.min(
 								newStart,
@@ -823,9 +811,13 @@ export const StageTimeline = ({
 	const pinchStartDistRef = useRef(0);
 	const pinchStartZoomRef = useRef(1);
 
+	// 固定スケール: pxPerMs はズームのみで決まり、コンテンツに依存しない
+	const pxPerMs = calcPxPerMs(containerWidth - LABEL_WIDTH, zoom);
 	const duration = calcGroupDuration(group);
-	const baseWidth = containerWidth - LABEL_WIDTH;
-	const timelineWidth = baseWidth * zoom;
+	// タイムライン幅 = コンテンツ末尾 + 余白（最低でもコンテナ幅分）
+	const contentEnd = timeToX(duration, pxPerMs);
+	const minWidth = containerWidth - LABEL_WIDTH;
+	const timelineWidth = Math.max(minWidth, contentEnd + 100);
 
 	// ピンチズーム
 	const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -845,22 +837,23 @@ export const StageTimeline = ({
 			const dist = Math.hypot(dx, dy);
 			if (pinchStartDistRef.current > 0) {
 				const scale = dist / pinchStartDistRef.current;
-				const newZoom = Math.max(0.5, Math.min(5, pinchStartZoomRef.current * scale));
-				// ピンチ中心でアンカー
+				const newZoom = Math.max(0.1, Math.min(5, pinchStartZoomRef.current * scale));
+				// ピンチ中心でアンカー: カーソル下の時間を保持
 				const container = scrollRef.current;
 				if (container) {
 					const rect = container.getBoundingClientRect();
 					const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
 					const cursorX = centerX - rect.left + container.scrollLeft;
-					const zoomScale = newZoom / zoom;
+					const cursorTime = xToTime(cursorX - LABEL_WIDTH, pxPerMs);
+					const newPxPerMs = calcPxPerMs(containerWidth - LABEL_WIDTH, newZoom);
 					requestAnimationFrame(() => {
-						container.scrollLeft = cursorX * zoomScale - (centerX - rect.left);
+						container.scrollLeft = timeToX(cursorTime, newPxPerMs) + LABEL_WIDTH - (centerX - rect.left);
 					});
 				}
 				setZoom(newZoom);
 			}
 		}
-	}, [zoom]);
+	}, [zoom, pxPerMs, containerWidth]);
 
 	const handleTouchEnd = useCallback(() => {
 		setIsPinching(false);
@@ -877,18 +870,19 @@ export const StageTimeline = ({
 				const rect = el.getBoundingClientRect();
 				const cursorX = e.clientX - rect.left + el.scrollLeft;
 				const oldZoom = zoom;
-				const newZoom = Math.max(0.5, Math.min(5, oldZoom - e.deltaY * 0.005));
-				const scale = newZoom / oldZoom;
+				const newZoom = Math.max(0.1, Math.min(5, oldZoom - e.deltaY * 0.005));
+				// カーソル下の時間を保持してスクロール調整
+				const cursorTime = xToTime(cursorX - LABEL_WIDTH, pxPerMs);
+				const newPxPerMs = calcPxPerMs(containerWidth - LABEL_WIDTH, newZoom);
 				setZoom(newZoom);
-				// カーソル位置を基準にスクロール調整
 				requestAnimationFrame(() => {
-					el.scrollLeft = cursorX * scale - (e.clientX - rect.left);
+					el.scrollLeft = timeToX(cursorTime, newPxPerMs) + LABEL_WIDTH - (e.clientX - rect.left);
 				});
 			}
 		};
 		el.addEventListener("wheel", handler, { passive: false });
 		return () => el.removeEventListener("wheel", handler);
-	}, [zoom]);
+	}, [zoom, pxPerMs, containerWidth]);
 
 	const measureRef = useCallback((node: HTMLDivElement | null) => {
 		if (!node) return;
@@ -908,7 +902,7 @@ export const StageTimeline = ({
 			content: (
 				<TargetTrack
 					group={group}
-					duration={duration}
+					pxPerMs={pxPerMs}
 					width={timelineWidth}
 					onEditSet={onEditTargetSet}
 					onUpdateGroup={onUpdateGroup}
@@ -923,7 +917,7 @@ export const StageTimeline = ({
 			content: (
 				<BalloonTrack
 					group={group}
-					duration={duration}
+					pxPerMs={pxPerMs}
 					width={timelineWidth}
 					onUpdateGroup={onUpdateGroup}
 					scrollContainerRef={scrollRef}
@@ -937,7 +931,7 @@ export const StageTimeline = ({
 			content: (
 				<TrainTrack
 					group={group}
-					duration={duration}
+					pxPerMs={pxPerMs}
 					width={timelineWidth}
 					onUpdateGroup={onUpdateGroup}
 					scrollContainerRef={scrollRef}
@@ -956,7 +950,7 @@ export const StageTimeline = ({
 		const tick = () => {
 			if (!playheadRef.current) return;
 			const ms = elapsedMsRef.current;
-			const x = timeToX(ms, duration, timelineWidth) + LABEL_WIDTH;
+			const x = timeToX(ms, pxPerMs) + LABEL_WIDTH;
 			playheadRef.current.style.transform = `translateX(${x}px)`;
 
 			// 自動追従スクロール（滑らかに追従）
@@ -982,7 +976,7 @@ export const StageTimeline = ({
 		};
 		const id = requestAnimationFrame(tick);
 		return () => cancelAnimationFrame(id);
-	}, [isPlaying, duration, timelineWidth, elapsedMsRef]);
+	}, [isPlaying, pxPerMs, timelineWidth, elapsedMsRef]);
 
 	return (
 		<div
@@ -1043,7 +1037,7 @@ export const StageTimeline = ({
 					className="shrink-0 border-r border-white/5"
 					style={{ width: LABEL_WIDTH }}
 				/>
-				<TimeRuler duration={duration} width={timelineWidth} />
+				<TimeRuler pxPerMs={pxPerMs} duration={duration} width={timelineWidth} />
 			</div>
 
 			{/* トラック */}
