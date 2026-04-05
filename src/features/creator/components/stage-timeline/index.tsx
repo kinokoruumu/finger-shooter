@@ -955,7 +955,7 @@ export const StageTimeline = ({
 				onTouchMove={handleTouchMove}
 				onWheel={handleWheel}
 			>
-			<div style={{ minWidth: Math.max(500, timelineWidth + LABEL_WIDTH) }}>
+			<div className="relative" style={{ minWidth: Math.max(500, timelineWidth + LABEL_WIDTH) }}>
 
 			{/* ルーラー */}
 			<div className="flex border-b border-white/5 bg-[#1e2227]">
