@@ -289,7 +289,7 @@ export const TargetStepDialog = ({
 				</div>
 
 				{/* Canvas */}
-				<div className="h-[25vh] shrink-0 sm:h-[35vh]">
+				<div className="h-[35vh] shrink-0 sm:h-[40vh]">
 				<EditorCanvasWrapper className="h-full">
 					<EditorScene
 						targets={targets}

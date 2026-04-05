@@ -859,9 +859,10 @@ export const StageTimeline = ({
 	return (
 		<div
 			ref={measureRef}
-			className="relative overflow-hidden rounded-xl bg-[#1a1d21]"
+			className="relative overflow-x-auto rounded-xl bg-[#1a1d21]"
 			style={rf}
 		>
+			<div className="min-w-[500px]">
 			{/* コントロールバー */}
 			<div className="flex items-center gap-2 border-b border-white/5 bg-white/[0.03] px-3 py-1.5">
 				{!isPlaying ? (
@@ -924,6 +925,7 @@ export const StageTimeline = ({
 				)}
 				style={{ transform: `translateX(${LABEL_WIDTH}px)` }}
 			/>
+			</div>
 		</div>
 	);
 };
