@@ -1,14 +1,15 @@
 import { motion } from "framer-motion";
-import { STAGES } from "@/features/game/constants/stage-definitions";
+import type { StageDefinition } from "@/features/game/constants/stage-definitions";
 
 type Props = {
 	stageScores: (number | null)[];
+	stages: StageDefinition[];
 	onRetry: () => void;
 };
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
-export const ResultScreen = ({ stageScores, onRetry }: Props) => {
+export const ResultScreen = ({ stageScores, stages, onRetry }: Props) => {
 	const total = stageScores.reduce<number>((sum, s) => sum + (s ?? 0), 0);
 
 	return (
@@ -35,7 +36,7 @@ export const ResultScreen = ({ stageScores, onRetry }: Props) => {
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.3, duration: 0.4 }}
 				>
-					{STAGES.map((s, i) => (
+					{stages.map((s, i) => (
 						<motion.div
 							key={s.name}
 							className="flex flex-1 flex-col items-center border-r border-stone-600 py-4 last:border-r-0"

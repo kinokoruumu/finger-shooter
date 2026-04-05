@@ -10,6 +10,7 @@ import {
 	consumeFireEvents,
 	resetGameUI,
 	resetSharedState,
+	setActiveStages,
 	setCurrentStage,
 	setPhase,
 } from "@/features/game/stores/game-store";
@@ -22,6 +23,9 @@ import { LoadingScreen } from "@/features/hud/components/loading-screen";
 import { ResultScreen } from "@/features/hud/components/result-screen";
 import { TrackingStatus } from "@/features/hud/components/tracking-status";
 import { WelcomeScreen } from "@/features/hud/components/welcome-screen";
+import { STAGES } from "@/features/game/constants/stage-definitions";
+import { getStage, getStages } from "@/features/creator/stores/creator-store";
+import { convertStageToSpawns } from "@/features/creator/utils/convert-to-spawns";
 import { cn } from "@/lib/utils";
 
 export const GamePage = () => {
@@ -41,6 +45,7 @@ export const GamePage = () => {
 
 	const handleWelcome = useCallback(
 		async (startRound?: number) => {
+			setActiveStages(STAGES);
 			setStarted(true);
 			startCamera();
 			await preloadSounds();
@@ -48,6 +53,27 @@ export const GamePage = () => {
 			if (startRound !== undefined && startRound > 0) {
 				setCurrentStage(startRound);
 			}
+		},
+		[startCamera],
+	);
+
+	const handlePlayCustom = useCallback(
+		async (stageId: string) => {
+			const stage = getStage(stageId);
+			if (!stage) return;
+			const spawns = convertStageToSpawns(stage);
+			setActiveStages([
+				{
+					name: stage.name,
+					duration: 30000,
+					maxScore: spawns.length,
+					spawns,
+				},
+			]);
+			setStarted(true);
+			startCamera();
+			await preloadSounds();
+			warmupSounds();
 		},
 		[startCamera],
 	);
@@ -135,8 +161,13 @@ export const GamePage = () => {
 		return (
 			<WelcomeScreen
 				onStart={() => handleWelcome()}
+				onPlayCustom={handlePlayCustom}
 				debugMode={debugMode}
 				onDebugStart={(round) => handleWelcome(round)}
+				customStages={getStages().map((s) => ({
+					id: s.id,
+					name: s.name,
+				}))}
 			/>
 		);
 	}
@@ -215,6 +246,7 @@ export const GamePage = () => {
 				<StageTransition
 					stageIndex={gameState.currentStage}
 					stageScores={gameState.stageScores}
+					stages={gameState.activeStages}
 					onComplete={handleStageTransitionComplete}
 				/>
 			)}
@@ -244,6 +276,7 @@ export const GamePage = () => {
 			{gameState.phase === "result" && (
 				<ResultScreen
 					stageScores={gameState.stageScores}
+					stages={gameState.activeStages}
 					onRetry={() => startGame()}
 				/>
 			)}

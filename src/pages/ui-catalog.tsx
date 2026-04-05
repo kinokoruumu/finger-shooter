@@ -154,6 +154,8 @@ export const UICatalog = () => {
 							onStart={() => {}}
 							debugMode={false}
 							onDebugStart={() => {}}
+							onPlayCustom={() => {}}
+							customStages={[]}
 						/>
 					</div>
 				</Section>
@@ -191,6 +193,7 @@ export const UICatalog = () => {
 											? [32, 45, null]
 											: [32, 45, 58]
 								}
+								stages={STAGES}
 								onComplete={() => setShowTransition(false)}
 							/>
 						)}
@@ -201,7 +204,7 @@ export const UICatalog = () => {
 				<Section title="リザルト画面">
 					<div className="relative h-[700px] overflow-hidden rounded-2xl border border-stone-600">
 						<BgImage />
-						<ResultScreen stageScores={[32, 45, 58]} onRetry={() => {}} />
+						<ResultScreen stageScores={[32, 45, 58]} stages={STAGES} onRetry={() => {}} />
 					</div>
 				</Section>
 			</div>

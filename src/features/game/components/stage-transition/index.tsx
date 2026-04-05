@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { STAGES } from "@/features/game/constants/stage-definitions";
+import type { StageDefinition } from "@/features/game/constants/stage-definitions";
 import { cn } from "@/lib/utils";
 
 type Props = {
 	stageIndex: number;
 	stageScores: (number | null)[];
+	stages: StageDefinition[];
 	onComplete: () => void;
 };
 
@@ -16,6 +17,7 @@ type Phase = "score-table" | "round-title" | "done";
 export const StageTransition = ({
 	stageIndex,
 	stageScores,
+	stages,
 	onComplete,
 }: Props) => {
 	const hasAnyScore = stageScores.some((s) => s !== null);
@@ -23,10 +25,10 @@ export const StageTransition = ({
 		hasAnyScore ? "score-table" : "round-title",
 	);
 	const [visible, setVisible] = useState(true);
-	const stage = STAGES[stageIndex];
+	const stage = stages[stageIndex];
 
 	const prevStageIndex = stageIndex - 1;
-	const prevStage = prevStageIndex >= 0 ? STAGES[prevStageIndex] : null;
+	const prevStage = prevStageIndex >= 0 ? stages[prevStageIndex] : null;
 
 	useEffect(() => {
 		if (phase === "score-table") {
@@ -65,7 +67,7 @@ export const StageTransition = ({
 							)}
 
 							<div className="flex w-full overflow-hidden rounded-xl border border-stone-600 bg-stone-800/60 shadow-inner">
-								{STAGES.map((s, i) => {
+								{stages.map((s, i) => {
 									const score = stageScores[i];
 									const hasScore = score !== null;
 									return (

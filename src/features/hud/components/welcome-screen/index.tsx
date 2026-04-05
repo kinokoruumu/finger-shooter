@@ -1,15 +1,24 @@
 import { motion } from "framer-motion";
+import { router } from "@/main";
 import { STAGES } from "@/features/game/constants/stage-definitions";
 
 type Props = {
 	onStart: () => void;
+	onPlayCustom: (stageId: string) => void;
 	debugMode: boolean;
 	onDebugStart: (round: number) => void;
+	customStages: { id: string; name: string }[];
 };
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
 
-export const WelcomeScreen = ({ onStart, debugMode, onDebugStart }: Props) => {
+export const WelcomeScreen = ({
+	onStart,
+	onPlayCustom,
+	debugMode,
+	onDebugStart,
+	customStages,
+}: Props) => {
 	return (
 		<div className="flex h-screen w-screen flex-col items-center justify-center bg-[#f5f0e8]">
 			<motion.div
@@ -94,6 +103,52 @@ export const WelcomeScreen = ({ onStart, debugMode, onDebugStart }: Props) => {
 					>
 						カメラの使用許可が必要です
 					</p>
+				</motion.div>
+
+				{/* オリジナルステージ */}
+				{customStages.length > 0 && (
+					<motion.div
+						className="w-[90vw] max-w-sm space-y-2"
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.5, duration: 0.4 }}
+					>
+						<p
+							className="text-center font-bold text-[clamp(0.65rem,1.8vw,0.75rem)] text-amber-900/40 uppercase tracking-[0.2em]"
+							style={rf}
+						>
+							オリジナルステージ
+						</p>
+						<div className="flex flex-wrap justify-center gap-2">
+							{customStages.map((s) => (
+								<button
+									key={s.id}
+									type="button"
+									className="cursor-pointer rounded-lg border-2 border-amber-900/10 bg-white px-3 py-1.5 font-bold text-amber-900/60 text-xs transition-colors hover:bg-amber-50 hover:border-amber-900/20"
+									style={rf}
+									onClick={() => onPlayCustom(s.id)}
+								>
+									{s.name}
+								</button>
+							))}
+						</div>
+					</motion.div>
+				)}
+
+				{/* ステージ作成リンク */}
+				<motion.div
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ delay: 0.55, duration: 0.3 }}
+				>
+					<button
+						type="button"
+						className="cursor-pointer text-amber-900/30 text-[clamp(0.75rem,2vw,0.85rem)] transition-colors hover:text-amber-900/60"
+						style={rf}
+						onClick={() => router.navigate({ to: "/creator" })}
+					>
+						ステージを作る
+					</button>
 				</motion.div>
 
 				{/* デバッグ */}

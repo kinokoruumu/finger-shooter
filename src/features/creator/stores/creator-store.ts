@@ -76,8 +76,11 @@ export const importStageJson = (json: string): CreatorStage => {
 
 export const getRoundConfig = (): RoundConfig => {
 	const raw = localStorage.getItem(ROUND_CONFIG_KEY);
-	if (!raw) return { round1: null, round2: null, round3: null };
-	return JSON.parse(raw) as RoundConfig;
+	if (!raw) return [null, null, null];
+	const parsed = JSON.parse(raw);
+	// 旧形式（オブジェクト）からの移行
+	if (!Array.isArray(parsed)) return [null, null, null];
+	return parsed as RoundConfig;
 };
 
 export const saveRoundConfig = (config: RoundConfig): void => {
