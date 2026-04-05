@@ -5,9 +5,7 @@ import { convertStageToSpawns } from "../../utils/convert-to-spawns";
 
 type PreviewState = "stopped" | "playing";
 
-export const usePreviewPlayer = (
-	source: CreatorGroup | CreatorStage,
-) => {
+export const usePreviewPlayer = (source: CreatorGroup | CreatorStage) => {
 	const [state, setState] = useState<PreviewState>("stopped");
 	/** 再生経過時間(ms)。ref で高頻度更新、React 再レンダリングを避ける */
 	const elapsedMsRef = useRef(0);

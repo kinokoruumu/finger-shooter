@@ -43,9 +43,7 @@ describe("NumberInput", () => {
 
 	it("カスタムdefaultValueでblur時に復元される", () => {
 		const onChange = vi.fn();
-		render(
-			<NumberInput value={100} onChange={onChange} defaultValue={50} />,
-		);
+		render(<NumberInput value={100} onChange={onChange} defaultValue={50} />);
 		const input = getInput();
 		fireEvent.focus(input);
 		fireEvent.change(input, { target: { value: "" } });

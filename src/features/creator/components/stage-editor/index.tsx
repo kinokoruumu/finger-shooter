@@ -5,10 +5,7 @@ import { useHistory } from "../../hooks/use-history";
 import { getStage, saveStage } from "../../stores/creator-store";
 import type { CreatorGroup, CreatorStage } from "../../types";
 import { BalloonEntryDialog } from "../balloon-entry-dialog";
-import {
-	EditorCanvasWrapper,
-	EditorScene,
-} from "../editor-canvas";
+import { EditorCanvasWrapper, EditorScene } from "../editor-canvas";
 import { usePreviewPlayer } from "../preview-player/hooks";
 import { PreviewScene } from "../preview-player/internal/preview-scene";
 import { StageTimeline } from "../stage-timeline";
@@ -54,8 +51,12 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			return loaded && loaded.groups.length > 0 ? 0 : null;
 		},
 	);
-	const [editingTargetSetId, setEditingTargetSetId] = useState<string | null>(null);
-	const [editingTargetStepIndex, setEditingTargetStepIndex] = useState<number | undefined>(undefined);
+	const [editingTargetSetId, setEditingTargetSetId] = useState<string | null>(
+		null,
+	);
+	const [editingTargetStepIndex, setEditingTargetStepIndex] = useState<
+		number | undefined
+	>(undefined);
 	const [editingBalloonId, setEditingBalloonId] = useState<string | null>(null);
 	const [trainDialogOpen, setTrainDialogOpen] = useState(false);
 
@@ -127,9 +128,7 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 		(idx: number, updater: (g: CreatorGroup) => CreatorGroup) => {
 			updateStage((s) => ({
 				...s,
-				groups: s.groups.map((g, i) =>
-					i === idx ? updater(g) : g,
-				),
+				groups: s.groups.map((g, i) => (i === idx ? updater(g) : g)),
 			}));
 		},
 		[updateStage],
@@ -148,17 +147,14 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			? (stage?.groups[selectedGroupIdx] ?? null)
 			: null;
 
-	const groupPreview = usePreviewPlayer(
-		selectedGroup ?? createEmptyGroup(),
-	);
+	const groupPreview = usePreviewPlayer(selectedGroup ?? createEmptyGroup());
 	const stagePreview = usePreviewPlayer(
 		stage ?? { id: "", name: "", groups: [], createdAt: 0, updatedAt: 0 },
 	);
 
 	const isGroupPreviewPlaying = groupPreview.state === "playing";
 	const isStagePreviewPlaying = stagePreview.state === "playing";
-	const isAnyPreviewPlaying =
-		isGroupPreviewPlaying || isStagePreviewPlaying;
+	const isAnyPreviewPlaying = isGroupPreviewPlaying || isStagePreviewPlaying;
 
 	const activePreviewSpawns = isStagePreviewPlaying
 		? stagePreview.spawns
@@ -212,11 +208,10 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 								className="bg-amber-900 font-bold text-white hover:bg-amber-800"
 								style={rf}
 								disabled={
-									stagePreview.spawns.length === 0 ||
-									isGroupPreviewPlaying
+									stagePreview.spawns.length === 0 || isGroupPreviewPlaying
 								}
 							>
-									▶ 全体
+								▶ 全体
 							</Button>
 						)}
 					</div>
@@ -246,7 +241,9 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 							</EditorScene>
 						) : (
 							<EditorScene
-								targets={(selectedGroup.targetSets ?? []).flatMap((s) => s.targets)}
+								targets={(selectedGroup.targetSets ?? []).flatMap(
+									(s) => s.targets,
+								)}
 								onCellClick={() => {}}
 								onCellRightClick={() => {}}
 								showGrid={false}
@@ -256,28 +253,26 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 				)}
 
 				{/* タイムライン（グループプレビュー中も表示） */}
-				{selectedGroup && selectedGroupIdx !== null && !isStagePreviewPlaying && (
-					<StageTimeline
-						group={selectedGroup}
-						onUpdateGroup={(g) =>
-							updateGroup(selectedGroupIdx, g)
-						}
-						onUpdateGroupFn={(fn) =>
-							updateGroupFn(selectedGroupIdx, fn)
-						}
-						onEditTargetSet={(setId, stepIndex) => {
-							setEditingTargetSetId(setId);
-							setEditingTargetStepIndex(stepIndex);
-						}}
-						onEditBalloon={(id) => setEditingBalloonId(id)}
-						onEditTrain={() => setTrainDialogOpen(true)}
-						isPlaying={isGroupPreviewPlaying}
-						onPlay={groupPreview.play}
-						onStop={groupPreview.stop}
-						elapsedMsRef={groupPreview.elapsedMsRef}
-						spawnCount={groupPreview.spawns.length}
-					/>
-				)}
+				{selectedGroup &&
+					selectedGroupIdx !== null &&
+					!isStagePreviewPlaying && (
+						<StageTimeline
+							group={selectedGroup}
+							onUpdateGroup={(g) => updateGroup(selectedGroupIdx, g)}
+							onUpdateGroupFn={(fn) => updateGroupFn(selectedGroupIdx, fn)}
+							onEditTargetSet={(setId, stepIndex) => {
+								setEditingTargetSetId(setId);
+								setEditingTargetStepIndex(stepIndex);
+							}}
+							onEditBalloon={(id) => setEditingBalloonId(id)}
+							onEditTrain={() => setTrainDialogOpen(true)}
+							isPlaying={isGroupPreviewPlaying}
+							onPlay={groupPreview.play}
+							onStop={groupPreview.stop}
+							elapsedMsRef={groupPreview.elapsedMsRef}
+							spawnCount={groupPreview.spawns.length}
+						/>
+					)}
 
 				{!selectedGroup && !isStagePreviewPlaying && (
 					<div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-amber-900/10">
@@ -302,7 +297,8 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			{/* 的編集ダイアログ */}
 			{selectedGroup &&
 				selectedGroupIdx !== null &&
-				editingTargetSetId && (() => {
+				editingTargetSetId &&
+				(() => {
 					const targetSet = (selectedGroup.targetSets ?? []).find(
 						(s) => s.id === editingTargetSetId,
 					);
@@ -325,7 +321,8 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 			{/* 風船編集ダイアログ */}
 			{selectedGroup &&
 				selectedGroupIdx !== null &&
-				editingBalloonId && (() => {
+				editingBalloonId &&
+				(() => {
 					const entry = (selectedGroup.balloonEntries ?? []).find(
 						(e) => e.id === editingBalloonId,
 					);
@@ -338,19 +335,15 @@ export const StageEditor = ({ stageId, onBack }: Props) => {
 							onUpdate={(updated) =>
 								updateGroup(selectedGroupIdx, {
 									...selectedGroup,
-									balloonEntries: (
-										selectedGroup.balloonEntries ?? []
-									).map((e) =>
-										e.id === updated.id ? updated : e,
+									balloonEntries: (selectedGroup.balloonEntries ?? []).map(
+										(e) => (e.id === updated.id ? updated : e),
 									),
 								})
 							}
 							onDelete={() => {
 								updateGroup(selectedGroupIdx, {
 									...selectedGroup,
-									balloonEntries: (
-										selectedGroup.balloonEntries ?? []
-									).filter(
+									balloonEntries: (selectedGroup.balloonEntries ?? []).filter(
 										(e) => e.id !== editingBalloonId,
 									),
 								});

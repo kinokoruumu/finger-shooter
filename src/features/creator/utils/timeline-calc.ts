@@ -78,9 +78,10 @@ type StepBar = {
 };
 
 /** 的セット内のステップバー情報を計算 */
-export const calcTargetStepBarsForSet = (
-	set: { targets: CreatorGroup["targetSets"][number]["targets"]; steps: CreatorGroup["targetSets"][number]["steps"] },
-): StepBar[] => {
+export const calcTargetStepBarsForSet = (set: {
+	targets: CreatorGroup["targetSets"][number]["targets"];
+	steps: CreatorGroup["targetSets"][number]["steps"];
+}): StepBar[] => {
 	const steps = set.steps ?? [];
 	const targets = set.targets ?? [];
 
@@ -103,9 +104,7 @@ export const calcTargetStepBarsForSet = (
 			startTime: start,
 			delayEndTime: start + appearDelay,
 			spawnEndTime: spawnEndTime + appearDelay,
-			endTime:
-				spawnEndTime +
-				(count > 0 ? appearDelay + maxVisible : 0),
+			endTime: spawnEndTime + (count > 0 ? appearDelay + maxVisible : 0),
 		};
 	});
 };

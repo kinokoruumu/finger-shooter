@@ -28,9 +28,7 @@ const makeSet = (
 	...partial,
 });
 
-const makeGroup = (
-	sets: CreatorTargetSet[] = [makeSet()],
-): CreatorGroup => ({
+const makeGroup = (sets: CreatorTargetSet[] = [makeSet()]): CreatorGroup => ({
 	id: "g1",
 	targetSets: sets,
 	balloonEntries: [],
@@ -78,9 +76,7 @@ describe("TargetStepDialog", () => {
 
 	it("initialStepIndex + 的ありならアニメーションタブで開く", () => {
 		const set = makeSet({
-			targets: [
-				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
-			],
+			targets: [{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 }],
 			steps: [
 				{ targetIds: ["t1"], interval: 100, startTime: 0 },
 				{ targetIds: [], interval: 100, startTime: 500 },
@@ -101,9 +97,7 @@ describe("TargetStepDialog", () => {
 
 	it("的が0個ならinitialStepIndex指定でも配置タブで開く", () => {
 		const set = makeSet({
-			steps: [
-				{ targetIds: [], interval: 100, startTime: 0 },
-			],
+			steps: [{ targetIds: [], interval: 100, startTime: 0 }],
 		});
 		render(
 			<TargetStepDialog
@@ -145,9 +139,7 @@ describe("TargetStepDialog", () => {
 	it("的ありのセット削除で確認ダイアログが出る", () => {
 		const onUpdateGroup = vi.fn();
 		const set = makeSet({
-			targets: [
-				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
-			],
+			targets: [{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 }],
 		});
 		render(
 			<TargetStepDialog
@@ -193,9 +185,7 @@ describe("TargetStepDialog", () => {
 
 	it("ステップカード全体がクリック可能（アクティブ切替）", () => {
 		const set = makeSet({
-			targets: [
-				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
-			],
+			targets: [{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 }],
 			steps: [
 				{ targetIds: ["t1"], interval: 100, startTime: 0 },
 				{ targetIds: [], interval: 100, startTime: 500 },
@@ -211,9 +201,9 @@ describe("TargetStepDialog", () => {
 		);
 
 		// ステップ2のカードをクリック
-		const step2Card = screen.getByText("ステップ 2").closest(
-			"[class*='cursor-pointer']",
-		);
+		const step2Card = screen
+			.getByText("ステップ 2")
+			.closest("[class*='cursor-pointer']");
 		expect(step2Card).toBeTruthy();
 		if (step2Card) fireEvent.click(step2Card);
 
@@ -223,9 +213,7 @@ describe("TargetStepDialog", () => {
 
 	it("アニメーションタブのステップリストがスクロール可能", () => {
 		const set = makeSet({
-			targets: [
-				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
-			],
+			targets: [{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 }],
 			steps: Array.from({ length: 10 }, (_, i) => ({
 				targetIds: i === 0 ? ["t1"] : [],
 				interval: 100,
@@ -242,9 +230,9 @@ describe("TargetStepDialog", () => {
 		);
 
 		// スクロール可能なコンテナが存在する
-		const scrollContainer = screen.getByText("ステップ 1").closest(
-			".overflow-y-auto",
-		);
+		const scrollContainer = screen
+			.getByText("ステップ 1")
+			.closest(".overflow-y-auto");
 		expect(scrollContainer).toBeTruthy();
 	});
 });

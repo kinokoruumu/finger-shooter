@@ -26,9 +26,7 @@ type Props = {
 export const PreviewScene = ({ spawns, isPlaying, onComplete }: Props) => {
 	const { camera } = useThree();
 	const [groundTargets, setGroundTargets] = useState<GroundTargetData[]>([]);
-	const [balloonTargets, setBalloonTargets] = useState<BalloonTargetData[]>(
-		[],
-	);
+	const [balloonTargets, setBalloonTargets] = useState<BalloonTargetData[]>([]);
 	const [trainTargets, setTrainTargets] = useState<TrainTargetData[]>([]);
 
 	const currentGroup = useRef(0);
@@ -98,15 +96,11 @@ export const PreviewScene = ({ spawns, isPlaying, onComplete }: Props) => {
 						lastAppearSoundTime = now;
 						playSound("target-appear", 0.85);
 					}
-					const hasGrid =
-						entry.gx !== undefined && entry.gy !== undefined;
+					const hasGrid = entry.gx !== undefined && entry.gy !== undefined;
 					let nx: number;
 					let ny: number;
 					if (hasGrid) {
-						[nx, ny] = gridToNormalized(
-							entry.gx as number,
-							entry.gy as number,
-						);
+						[nx, ny] = gridToNormalized(entry.gx as number, entry.gy as number);
 					} else {
 						nx = entry.nx;
 						ny = entry.ny ?? 0.5;
@@ -195,8 +189,7 @@ export const PreviewScene = ({ spawns, isPlaying, onComplete }: Props) => {
 			return;
 		}
 
-		const groupSpawns =
-			groupedSpawns.get(currentGroup.current) ?? [];
+		const groupSpawns = groupedSpawns.get(currentGroup.current) ?? [];
 
 		if (!groupInitialized.current) {
 			groupStartTime.current = now;
@@ -221,9 +214,7 @@ export const PreviewScene = ({ spawns, isPlaying, onComplete }: Props) => {
 			waitFrames.current--;
 		} else if (groupSpawnIndex.current >= groupSpawns.length) {
 			// グループ内の的種類に応じた完了判定
-			const hasGroundOrTrain = groupSpawns.some(
-				(s) => s.type !== "balloon",
-			);
+			const hasGroundOrTrain = groupSpawns.some((s) => s.type !== "balloon");
 			const hasRemaining = hasGroundOrTrain
 				? groundTargets.length > 0 || trainTargets.length > 0
 				: balloonTargets.length > 0;
