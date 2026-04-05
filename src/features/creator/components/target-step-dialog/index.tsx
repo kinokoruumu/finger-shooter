@@ -2,6 +2,12 @@ import { useCallback, useState } from "react";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import {
+	type PresetType,
+	PRESET_LABELS,
+	getPresetInterval,
+	sortTargetsByPreset,
+} from "../../utils/target-presets";
+import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
@@ -341,6 +347,46 @@ export const TargetStepDialog = ({
 				{/* アニメーションタブ */}
 				{tab === "animation" && (
 					<>
+					{/* プリセット */}
+					{targets.length > 0 && (
+						<div className="flex shrink-0 flex-wrap gap-1.5" style={rf}>
+							{(Object.keys(PRESET_LABELS) as PresetType[]).map(
+								(preset) => (
+									<button
+										key={preset}
+										type="button"
+										className="rounded-md border border-amber-900/15 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-900/60 transition-colors hover:bg-amber-100 hover:text-amber-900"
+										onClick={() => {
+											const sortedIds =
+												sortTargetsByPreset(
+													targets,
+													preset,
+												);
+											const interval =
+												getPresetInterval(preset);
+											updateSet((s) => ({
+												...s,
+												steps: [
+													{
+														targetIds: sortedIds,
+														interval,
+														startTime:
+															s.steps[0]
+																?.startTime ??
+															0,
+													},
+												],
+											}));
+											setActiveStepIndex(0);
+										}}
+									>
+										{PRESET_LABELS[preset]}
+									</button>
+								),
+							)}
+						</div>
+					)}
+
 					<p className="shrink-0 text-amber-900/40 text-xs" style={rf}>
 						各ステップの開始タイミングはタイムラインでドラッグ移動できます
 					</p>
