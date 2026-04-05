@@ -1,4 +1,14 @@
 import { useCallback, useState } from "react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -52,6 +62,7 @@ export const TargetStepDialog = ({
 	initialStepIndex,
 	onUpdateGroup,
 }: Props) => {
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [tab, setTab] = useState<Tab>(
 		initialStepIndex != null && (targetSet.targets ?? []).length > 0
 			? "animation"
@@ -89,11 +100,10 @@ export const TargetStepDialog = ({
 
 	const handleDeleteSet = useCallback(() => {
 		if (targets.length > 0) {
-			if (!window.confirm("この的セットを削除しますか？配置した的もすべて失われます。")) {
-				return;
-			}
+			setShowDeleteConfirm(true);
+		} else {
+			deleteSet();
 		}
-		deleteSet();
 	}, [targets.length, deleteSet]);
 
 	// --- 配置操作 ---
@@ -266,6 +276,7 @@ export const TargetStepDialog = ({
 	);
 
 	return (
+		<>
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
 			<DialogContent className="flex max-h-[90vh] max-w-[calc(100%-1rem)] flex-col gap-3 overflow-hidden sm:max-w-6xl">
 				<DialogHeader>
@@ -534,5 +545,26 @@ export const TargetStepDialog = ({
 				</div>
 			</DialogContent>
 		</Dialog>
+
+			<AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+				<AlertDialogContent className="sm:max-w-sm">
+					<AlertDialogHeader>
+						<AlertDialogTitle style={rf}>的セットの削除</AlertDialogTitle>
+						<AlertDialogDescription>
+							配置した{targets.length}個の的もすべて失われます。本当に削除しますか？
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>キャンセル</AlertDialogCancel>
+						<AlertDialogAction
+							className="bg-red-600 hover:bg-red-700"
+							onClick={deleteSet}
+						>
+							削除する
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	);
 };

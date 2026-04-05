@@ -144,8 +144,6 @@ describe("TargetStepDialog", () => {
 
 	it("的ありのセット削除で確認ダイアログが出る", () => {
 		const onUpdateGroup = vi.fn();
-		const confirmMock = vi.fn().mockReturnValue(false);
-		window.confirm = confirmMock;
 		const set = makeSet({
 			targets: [
 				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
@@ -162,7 +160,12 @@ describe("TargetStepDialog", () => {
 
 		fireEvent.click(screen.getByText("この的セットを削除"));
 
-		expect(confirmMock).toHaveBeenCalledOnce();
+		// AlertDialog が表示される
+		expect(screen.getByText("的セットの削除")).toBeTruthy();
+		expect(onUpdateGroup).not.toHaveBeenCalled();
+
+		// キャンセルで閉じる
+		fireEvent.click(screen.getByText("キャンセル"));
 		expect(onUpdateGroup).not.toHaveBeenCalled();
 	});
 
