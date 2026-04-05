@@ -845,29 +845,50 @@ export const StageTimeline = ({
 			const dist = Math.hypot(dx, dy);
 			if (pinchStartDistRef.current > 0) {
 				const scale = dist / pinchStartDistRef.current;
-				setZoom(Math.max(0.5, Math.min(5, pinchStartZoomRef.current * scale)));
+				const newZoom = Math.max(0.5, Math.min(5, pinchStartZoomRef.current * scale));
+				// ピンチ中心でアンカー
+				const container = scrollRef.current;
+				if (container) {
+					const rect = container.getBoundingClientRect();
+					const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+					const cursorX = centerX - rect.left + container.scrollLeft;
+					const zoomScale = newZoom / zoom;
+					requestAnimationFrame(() => {
+						container.scrollLeft = cursorX * zoomScale - (centerX - rect.left);
+					});
+				}
+				setZoom(newZoom);
 			}
 		}
-	}, []);
+	}, [zoom]);
 
 	const handleTouchEnd = useCallback(() => {
 		setIsPinching(false);
 		pinchStartDistRef.current = 0;
 	}, []);
 
-	// Ctrl+wheel ズーム（デスクトップ）— passive: false でネイティブ登録
+	// Ctrl+wheel ズーム（デスクトップ）— カーソルアンカー付き
 	useEffect(() => {
 		const el = scrollRef.current;
 		if (!el) return;
 		const handler = (e: WheelEvent) => {
 			if (e.ctrlKey || e.metaKey) {
 				e.preventDefault();
-				setZoom((z) => Math.max(0.5, Math.min(5, z - e.deltaY * 0.005)));
+				const rect = el.getBoundingClientRect();
+				const cursorX = e.clientX - rect.left + el.scrollLeft;
+				const oldZoom = zoom;
+				const newZoom = Math.max(0.5, Math.min(5, oldZoom - e.deltaY * 0.005));
+				const scale = newZoom / oldZoom;
+				setZoom(newZoom);
+				// カーソル位置を基準にスクロール調整
+				requestAnimationFrame(() => {
+					el.scrollLeft = cursorX * scale - (e.clientX - rect.left);
+				});
 			}
 		};
 		el.addEventListener("wheel", handler, { passive: false });
 		return () => el.removeEventListener("wheel", handler);
-	}, []);
+	}, [zoom]);
 
 	const measureRef = useCallback((node: HTMLDivElement | null) => {
 		if (!node) return;
@@ -926,7 +947,9 @@ export const StageTimeline = ({
 		},
 	];
 
-	// 再生ヘッドの位置更新（ref で直接 DOM 操作、React 再レンダリング不要）
+	const timeDisplayRef = useRef<HTMLSpanElement>(null);
+
+	// 再生ヘッドの位置更新 + 自動追従スクロール + 時刻表示
 	useEffect(() => {
 		if (!isPlaying || !playheadRef.current) return;
 
@@ -935,6 +958,22 @@ export const StageTimeline = ({
 			const ms = elapsedMsRef.current;
 			const x = timeToX(ms, duration, timelineWidth) + LABEL_WIDTH;
 			playheadRef.current.style.transform = `translateX(${x}px)`;
+
+			// 自動追従スクロール
+			const container = scrollRef.current;
+			if (container) {
+				const headInView = x - container.scrollLeft;
+				const viewWidth = container.clientWidth;
+				if (headInView > viewWidth - 40) {
+					container.scrollLeft = x - viewWidth + 80;
+				}
+			}
+
+			// 時刻表示
+			if (timeDisplayRef.current) {
+				timeDisplayRef.current.textContent = `${(ms / 1000).toFixed(1)}s`;
+			}
+
 			requestAnimationFrame(tick);
 		};
 		const id = requestAnimationFrame(tick);
@@ -970,6 +1009,14 @@ export const StageTimeline = ({
 				<span className="text-white/30 text-[10px]">
 					{spawnCount}個のスポーン
 				</span>
+				{isPlaying && (
+					<span
+						ref={timeDisplayRef}
+						className="ml-auto font-mono text-xs text-white/50"
+					>
+						0.0s
+					</span>
+				)}
 			</div>
 
 			{/* スクロール可能エリア */}
