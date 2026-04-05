@@ -855,12 +855,18 @@ export const StageTimeline = ({
 		pinchStartDistRef.current = 0;
 	}, []);
 
-	// Ctrl+wheel ズーム（デスクトップ）
-	const handleWheel = useCallback((e: React.WheelEvent) => {
-		if (e.ctrlKey || e.metaKey) {
-			e.preventDefault();
-			setZoom((z) => Math.max(0.5, Math.min(5, z - e.deltaY * 0.005)));
-		}
+	// Ctrl+wheel ズーム（デスクトップ）— passive: false でネイティブ登録
+	useEffect(() => {
+		const el = scrollRef.current;
+		if (!el) return;
+		const handler = (e: WheelEvent) => {
+			if (e.ctrlKey || e.metaKey) {
+				e.preventDefault();
+				setZoom((z) => Math.max(0.5, Math.min(5, z - e.deltaY * 0.005)));
+			}
+		};
+		el.addEventListener("wheel", handler, { passive: false });
+		return () => el.removeEventListener("wheel", handler);
 	}, []);
 
 	const measureRef = useCallback((node: HTMLDivElement | null) => {
@@ -974,7 +980,6 @@ export const StageTimeline = ({
 				onTouchStart={handleTouchStart}
 				onTouchMove={handleTouchMove}
 				onTouchEnd={handleTouchEnd}
-				onWheel={handleWheel}
 			>
 			{isPinching && (
 				<div className="pointer-events-none absolute inset-0 z-50" />
