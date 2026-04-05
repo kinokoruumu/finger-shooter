@@ -7,7 +7,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/forms/number-input";
 import { cn } from "@/lib/utils";
 import type { CreatorGroup, CreatorTrain, TrainSlotType } from "../../types";
 
@@ -151,24 +151,16 @@ export const TrainEditor = ({
 								<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 									速度
 								</span>
-								<Input
-									type="number"
+								<NumberInput
 									value={train.speed}
-									onChange={(e) =>
-										handleUpdate({
-											speed: Math.max(
-												0.5,
-												Math.min(
-													5,
-													Number(e.target.value),
-												),
-											),
-										})
+									onChange={(v) =>
+										handleUpdate({ speed: v })
 									}
 									className="h-9 w-20 border-amber-900/15 text-center"
 									min={0.5}
 									max={5}
 									step={0.5}
+									defaultValue={2}
 								/>
 								<span className="text-amber-900/30 text-xs">
 									1=ゆっくり / 2=普通 / 5=最速

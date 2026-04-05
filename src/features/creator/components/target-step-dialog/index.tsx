@@ -13,7 +13,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/forms/number-input";
 import { cn } from "@/lib/utils";
 import type {
 	CreatorGroup,
@@ -424,12 +424,11 @@ export const TargetStepDialog = ({
 												<span className="text-amber-900/30 text-[10px]">
 													出現間隔
 												</span>
-												<Input
-													type="number"
+												<NumberInput
 													value={
 														step.interval ?? 100
 													}
-													onChange={(e) => {
+													onChange={(v) => {
 														updateSet((s) => ({
 															...s,
 															steps: s.steps.map(
@@ -437,15 +436,7 @@ export const TargetStepDialog = ({
 																	si === i
 																		? {
 																				...st,
-																				interval:
-																					Math.max(
-																						0,
-																						Number(
-																							e
-																								.target
-																								.value,
-																						),
-																					),
+																				interval: v,
 																			}
 																		: st,
 															),

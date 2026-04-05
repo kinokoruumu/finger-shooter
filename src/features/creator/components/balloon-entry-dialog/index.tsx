@@ -6,7 +6,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/forms/number-input";
 import { cn } from "@/lib/utils";
 import type { CreatorBalloonEntry } from "../../types";
 
@@ -65,18 +65,15 @@ export const BalloonEntryDialog = ({
 						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							個数
 						</span>
-						<Input
-							type="number"
+						<NumberInput
 							value={entry.count}
-							onChange={(e) =>
-								onUpdate({
-									...entry,
-									count: Math.max(1, Number(e.target.value)),
-								})
+							onChange={(v) =>
+								onUpdate({ ...entry, count: v })
 							}
 							className="h-9 w-20 border-amber-900/15 text-center"
 							min={1}
 							max={20}
+							defaultValue={1}
 						/>
 					</div>
 
@@ -85,17 +82,10 @@ export const BalloonEntryDialog = ({
 						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							間隔
 						</span>
-						<Input
-							type="number"
+						<NumberInput
 							value={entry.interval ?? 0}
-							onChange={(e) =>
-								onUpdate({
-									...entry,
-									interval: Math.max(
-										0,
-										Number(e.target.value),
-									),
-								})
+							onChange={(v) =>
+								onUpdate({ ...entry, interval: v })
 							}
 							className="h-9 w-20 border-amber-900/15 text-center"
 							min={0}
@@ -138,17 +128,10 @@ export const BalloonEntryDialog = ({
 						<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 							タイミング
 						</span>
-						<Input
-							type="number"
+						<NumberInput
 							value={entry.time}
-							onChange={(e) =>
-								onUpdate({
-									...entry,
-									time: Math.max(
-										0,
-										Number(e.target.value),
-									),
-								})
+							onChange={(v) =>
+								onUpdate({ ...entry, time: v })
 							}
 							className="h-9 w-24 border-amber-900/15 text-center"
 							min={0}
