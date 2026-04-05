@@ -142,7 +142,31 @@ describe("TargetStepDialog", () => {
 		expect(updatedSet.steps).toHaveLength(2);
 	});
 
-	it("セット削除で onUpdateGroup が呼ばれダイアログが閉じる", () => {
+	it("的ありのセット削除で確認ダイアログが出る", () => {
+		const onUpdateGroup = vi.fn();
+		const confirmMock = vi.fn().mockReturnValue(false);
+		window.confirm = confirmMock;
+		const set = makeSet({
+			targets: [
+				{ id: "t1", gx: 0, gy: 0, type: "ground", visibleDuration: 4 },
+			],
+		});
+		render(
+			<TargetStepDialog
+				{...defaultProps}
+				group={makeGroup([set])}
+				targetSet={set}
+				onUpdateGroup={onUpdateGroup}
+			/>,
+		);
+
+		fireEvent.click(screen.getByText("この的セットを削除"));
+
+		expect(confirmMock).toHaveBeenCalledOnce();
+		expect(onUpdateGroup).not.toHaveBeenCalled();
+	});
+
+	it("的なしのセット削除は確認なしで削除される", () => {
 		const onUpdateGroup = vi.fn();
 		const onClose = vi.fn();
 		const set = makeSet();

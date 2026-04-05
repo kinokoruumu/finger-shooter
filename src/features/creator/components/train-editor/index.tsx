@@ -83,7 +83,7 @@ export const TrainEditor = ({
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="max-w-md">
+			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle style={rf}>列車の設定</DialogTitle>
 				</DialogHeader>

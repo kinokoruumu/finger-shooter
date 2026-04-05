@@ -87,6 +87,15 @@ export const TargetStepDialog = ({
 		onClose();
 	}, [group, targetSet.id, onUpdateGroup, onClose]);
 
+	const handleDeleteSet = useCallback(() => {
+		if (targets.length > 0) {
+			if (!window.confirm("この的セットを削除しますか？配置した的もすべて失われます。")) {
+				return;
+			}
+		}
+		deleteSet();
+	}, [targets.length, deleteSet]);
+
 	// --- 配置操作 ---
 	const handleCellClick = useCallback(
 		(gx: number, gy: number) => {
@@ -258,7 +267,7 @@ export const TargetStepDialog = ({
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="flex max-h-[90vh] max-w-[calc(100%-1rem)] flex-col overflow-hidden sm:max-w-6xl">
+			<DialogContent className="flex max-h-[90vh] max-w-[calc(100%-1rem)] flex-col gap-3 overflow-hidden sm:max-w-6xl">
 				<DialogHeader>
 					<DialogTitle style={rf}>的の編集</DialogTitle>
 				</DialogHeader>
@@ -334,7 +343,7 @@ export const TargetStepDialog = ({
 						各ステップの開始タイミングはタイムラインでドラッグ移動できます
 					</p>
 
-					<div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto" style={rf}>
+					<div className="min-h-[120px] flex-1 space-y-1.5 overflow-y-auto" style={rf}>
 							{steps.map((step, i) => {
 								const isActive = i === activeStepIndex;
 								return (
@@ -512,15 +521,16 @@ export const TargetStepDialog = ({
 					</>
 				)}
 
-				{/* 削除 */}
-				<div className="flex justify-end pt-2">
-					<Button
-						variant="destructive"
-						size="sm"
-						onClick={deleteSet}
+				{/* フッター */}
+				<div className="flex shrink-0 items-center justify-end">
+					<button
+						type="button"
+						className="text-xs text-red-400 transition-colors hover:text-red-600"
+						style={rf}
+						onClick={handleDeleteSet}
 					>
 						この的セットを削除
-					</Button>
+					</button>
 				</div>
 			</DialogContent>
 		</Dialog>

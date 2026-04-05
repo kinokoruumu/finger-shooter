@@ -38,7 +38,7 @@ export const BalloonEntryDialog = ({
 }: Props) => {
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="max-w-sm">
+			<DialogContent className="sm:max-w-sm">
 				<DialogHeader>
 					<DialogTitle style={rf}>風船の設定</DialogTitle>
 				</DialogHeader>
