@@ -71,8 +71,7 @@ export type CreatorStage = {
 	updatedAt: number;
 };
 
-export type RoundConfig = {
-	round1: string | null;
-	round2: string | null;
-	round3: string | null;
-};
+/**
+ * ラウンド構成: 3枠固定。null = 既存ビルトインステージを使用
+ */
+export type RoundConfig = [string | null, string | null, string | null];

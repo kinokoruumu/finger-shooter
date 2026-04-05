@@ -1,6 +1,9 @@
 import { startTransition } from "react";
 import { GAME_CONFIG } from "@/features/game/constants/game-config";
-import { STAGES } from "@/features/game/constants/stage-definitions";
+import {
+	STAGES,
+	type StageDefinition,
+} from "@/features/game/constants/stage-definitions";
 import type { FireEvent, SharedState } from "@/features/game/types/shared";
 
 /** MediaPipe↔Game 共有状態（ミュータブルオブジェクト） */
@@ -90,6 +93,8 @@ export type GameUIState = {
 	currentStage: number;
 	/** 各ステージ終了時のスコア（null=未プレイ） */
 	stageScores: (number | null)[];
+	/** 現在プレイ中のステージ定義。デフォルトは STAGES */
+	activeStages: StageDefinition[];
 	isLoading: boolean;
 	isHandDetected: boolean;
 	isGunPose: boolean;
@@ -101,6 +106,7 @@ let gameUISnapshot: GameUIState = {
 	phase: "title",
 	currentStage: 0,
 	stageScores: [null, null, null],
+	activeStages: STAGES,
 	isLoading: true,
 	isHandDetected: false,
 	isGunPose: false,
@@ -133,7 +139,7 @@ export const nextStage = () => {
 	newStageScores[current] = gameUISnapshot.score;
 
 	const next = current + 1;
-	if (next >= STAGES.length) {
+	if (next >= gameUISnapshot.activeStages.length) {
 		updateSnapshot({ stageScores: newStageScores, phase: "result" });
 	} else {
 		updateSnapshot({
@@ -143,6 +149,14 @@ export const nextStage = () => {
 			phase: "stage-transition",
 		});
 	}
+};
+
+/** プレイするステージを設定 */
+export const setActiveStages = (stages: StageDefinition[]) => {
+	updateSnapshot({
+		activeStages: stages,
+		stageScores: stages.map(() => null),
+	});
 };
 
 // --- スコアポップアップ ---
@@ -197,6 +211,6 @@ export const resetGameUI = () => {
 	updateSnapshot({
 		score: 0,
 		currentStage: 0,
-		stageScores: [null, null, null],
+		stageScores: gameUISnapshot.activeStages.map(() => null),
 	});
 };

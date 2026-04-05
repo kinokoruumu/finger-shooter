@@ -3,10 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type * as THREE from "three";
 import { playSound } from "@/features/audio";
 import type { SpawnEntry } from "@/features/game/constants/stage-definitions";
-import { STAGES } from "@/features/game/constants/stage-definitions";
 import {
 	addScoreWithPopup,
 	consumeFireEvents,
+	getGameUISnapshot,
 	nextStage,
 } from "@/features/game/stores/game-store";
 import type { BalloonTargetData } from "../components/balloon-target";
@@ -198,7 +198,7 @@ export const useGameScene = (
 	const maxGroupRef = useRef(-1);
 
 	useEffect(() => {
-		const stage = STAGES[currentStage];
+		const stage = getGameUISnapshot().activeStages[currentStage];
 		if (!stage) return;
 		const map = new Map<number, SpawnEntry[]>();
 		for (const s of stage.spawns) {
