@@ -23,10 +23,33 @@ import { LoadingScreen } from "@/features/hud/components/loading-screen";
 import { ResultScreen } from "@/features/hud/components/result-screen";
 import { TrackingStatus } from "@/features/hud/components/tracking-status";
 import { WelcomeScreen } from "@/features/hud/components/welcome-screen";
-import { STAGES } from "@/features/game/constants/stage-definitions";
-import { getStage, getStages } from "@/features/creator/stores/creator-store";
+import {
+	STAGES,
+	type StageDefinition,
+} from "@/features/game/constants/stage-definitions";
+import type { RoundConfig } from "@/features/creator/types";
+import {
+	getStage,
+	getStages,
+	getRoundConfig,
+	saveRoundConfig,
+} from "@/features/creator/stores/creator-store";
 import { convertStageToSpawns } from "@/features/creator/utils/convert-to-spawns";
 import { cn } from "@/lib/utils";
+
+const buildStagesFromConfig = (config: RoundConfig): StageDefinition[] =>
+	config.map((stageId, i) => {
+		if (!stageId) return STAGES[i];
+		const custom = getStage(stageId);
+		if (!custom) return STAGES[i];
+		const spawns = convertStageToSpawns(custom);
+		return {
+			name: custom.name,
+			duration: 30000,
+			maxScore: spawns.length,
+			spawns,
+		};
+	});
 
 export const GamePage = () => {
 	const {
@@ -43,9 +66,11 @@ export const GamePage = () => {
 	const landmarksRef = useRef<NormalizedLandmark[] | null>(null);
 	const gameState = useGameState();
 
+	const [roundConfig, setRoundConfig] = useState<RoundConfig>(getRoundConfig);
+
 	const handleWelcome = useCallback(
 		async (startRound?: number) => {
-			setActiveStages(STAGES);
+			setActiveStages(buildStagesFromConfig(roundConfig));
 			setStarted(true);
 			startCamera();
 			await preloadSounds();
@@ -54,8 +79,13 @@ export const GamePage = () => {
 				setCurrentStage(startRound);
 			}
 		},
-		[startCamera],
+		[startCamera, roundConfig],
 	);
+
+	const handleSaveRoundConfig = useCallback((config: RoundConfig) => {
+		setRoundConfig(config);
+		saveRoundConfig(config);
+	}, []);
 
 	const handlePlayCustom = useCallback(
 		async (stageId: string) => {
@@ -168,6 +198,8 @@ export const GamePage = () => {
 					id: s.id,
 					name: s.name,
 				}))}
+				roundConfig={roundConfig}
+				onSaveRoundConfig={handleSaveRoundConfig}
 			/>
 		);
 	}

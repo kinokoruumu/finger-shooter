@@ -156,6 +156,8 @@ export const UICatalog = () => {
 							onDebugStart={() => {}}
 							onPlayCustom={() => {}}
 							customStages={[]}
+							roundConfig={[null, null, null]}
+							onSaveRoundConfig={() => {}}
 						/>
 					</div>
 				</Section>

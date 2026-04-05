@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { router } from "@/main";
 import { STAGES } from "@/features/game/constants/stage-definitions";
+import type { RoundConfig } from "@/features/creator/types";
+import { RoundConfigDialog } from "../round-config-dialog";
 
 type Props = {
 	onStart: () => void;
@@ -8,6 +11,8 @@ type Props = {
 	debugMode: boolean;
 	onDebugStart: (round: number) => void;
 	customStages: { id: string; name: string }[];
+	roundConfig: RoundConfig;
+	onSaveRoundConfig: (config: RoundConfig) => void;
 };
 
 const rf = { fontFamily: '"Rounded Mplus 1c", sans-serif' };
@@ -18,8 +23,14 @@ export const WelcomeScreen = ({
 	debugMode,
 	onDebugStart,
 	customStages,
+	roundConfig,
+	onSaveRoundConfig,
 }: Props) => {
+	const [showRoundConfig, setShowRoundConfig] = useState(false);
+	const hasCustomRound = roundConfig.some((r) => r !== null);
+
 	return (
+		<>
 		<div className="flex h-screen w-screen flex-col items-center justify-center bg-[#f5f0e8]">
 			<motion.div
 				className="flex flex-col items-center gap-6"
@@ -105,42 +116,22 @@ export const WelcomeScreen = ({
 					</p>
 				</motion.div>
 
-				{/* オリジナルステージ */}
-				{customStages.length > 0 && (
-					<motion.div
-						className="w-[90vw] max-w-sm space-y-2"
-						initial={{ opacity: 0, y: 10 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.5, duration: 0.4 }}
-					>
-						<p
-							className="text-center font-bold text-[clamp(0.65rem,1.8vw,0.75rem)] text-amber-900/40 uppercase tracking-[0.2em]"
-							style={rf}
-						>
-							オリジナルステージ
-						</p>
-						<div className="flex flex-wrap justify-center gap-2">
-							{customStages.map((s) => (
-								<button
-									key={s.id}
-									type="button"
-									className="cursor-pointer rounded-lg border-2 border-amber-900/10 bg-white px-3 py-1.5 font-bold text-amber-900/60 text-xs transition-colors hover:bg-amber-50 hover:border-amber-900/20"
-									style={rf}
-									onClick={() => onPlayCustom(s.id)}
-								>
-									{s.name}
-								</button>
-							))}
-						</div>
-					</motion.div>
-				)}
-
-				{/* ステージ作成リンク */}
+				{/* ラウンド構成 + ステージ作成 */}
 				<motion.div
+					className="flex items-center gap-4"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
-					transition={{ delay: 0.55, duration: 0.3 }}
+					transition={{ delay: 0.5, duration: 0.3 }}
 				>
+					<button
+						type="button"
+						className="cursor-pointer text-amber-900/30 text-[clamp(0.75rem,2vw,0.85rem)] transition-colors hover:text-amber-900/60"
+						style={rf}
+						onClick={() => setShowRoundConfig(true)}
+					>
+						ラウンド構成{hasCustomRound && " *"}
+					</button>
+					<span className="text-amber-900/15">|</span>
 					<button
 						type="button"
 						className="cursor-pointer text-amber-900/30 text-[clamp(0.75rem,2vw,0.85rem)] transition-colors hover:text-amber-900/60"
@@ -150,6 +141,36 @@ export const WelcomeScreen = ({
 						ステージを作る
 					</button>
 				</motion.div>
+
+				{/* オリジナルステージ単体プレイ */}
+				{customStages.length > 0 && (
+					<motion.div
+						className="w-[90vw] max-w-sm space-y-2"
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.55, duration: 0.4 }}
+					>
+						<p
+							className="text-center font-bold text-[clamp(0.65rem,1.8vw,0.75rem)] text-amber-900/40 uppercase tracking-[0.2em]"
+							style={rf}
+						>
+							単体プレイ
+						</p>
+						<div className="flex flex-wrap justify-center gap-2">
+							{customStages.map((s) => (
+								<button
+									key={s.id}
+									type="button"
+									className="cursor-pointer rounded-lg border-2 border-amber-900/10 bg-white px-3 py-1.5 font-bold text-amber-900/60 text-xs transition-colors hover:border-amber-900/20 hover:bg-amber-50"
+									style={rf}
+									onClick={() => onPlayCustom(s.id)}
+								>
+									{s.name}
+								</button>
+							))}
+						</div>
+					</motion.div>
+				)}
 
 				{/* デバッグ */}
 				{debugMode && (
@@ -173,6 +194,15 @@ export const WelcomeScreen = ({
 				)}
 			</motion.div>
 		</div>
+
+		<RoundConfigDialog
+			open={showRoundConfig}
+			onClose={() => setShowRoundConfig(false)}
+			config={roundConfig}
+			onSave={onSaveRoundConfig}
+			customStages={customStages}
+		/>
+		</>
 	);
 };
 
