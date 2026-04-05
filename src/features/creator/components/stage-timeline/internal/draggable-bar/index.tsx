@@ -49,16 +49,27 @@ export const DraggableBar = ({
 			e.stopPropagation();
 			e.preventDefault();
 			setDragging(mode);
-			dragStartXRef.current = e.clientX;
 			didDragRef.current = false;
 			onDragStart?.();
+
+			const container = scrollContainerRef?.current;
+			const initialScroll = container?.scrollLeft ?? 0;
+			const initialClientX = e.clientX;
+			// スクロール補正付きの開始位置
+			dragStartXRef.current = initialClientX + initialScroll;
+			let lastClientX = initialClientX;
 
 			const EDGE_ZONE = 40;
 			const SCROLL_SPEED = 8;
 
+			// スクロール補正付きの delta を計算
+			const calcDelta = (clientX: number) => {
+				const currentScroll = container?.scrollLeft ?? 0;
+				return (clientX + currentScroll) - dragStartXRef.current;
+			};
+
 			const startAutoScroll = (clientX: number) => {
 				if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
-				const container = scrollContainerRef?.current;
 				if (!container) return;
 
 				const rect = container.getBoundingClientRect();
@@ -69,6 +80,9 @@ export const DraggableBar = ({
 					const speed = SCROLL_SPEED * (1 - rightDist / EDGE_ZONE);
 					const tick = () => {
 						container.scrollLeft += speed;
+						// スクロール中もバー位置を更新
+						const delta = calcDelta(lastClientX);
+						onDrag?.(delta, mode);
 						autoScrollRef.current = requestAnimationFrame(tick);
 					};
 					autoScrollRef.current = requestAnimationFrame(tick);
@@ -76,6 +90,8 @@ export const DraggableBar = ({
 					const speed = SCROLL_SPEED * (1 - leftDist / EDGE_ZONE);
 					const tick = () => {
 						container.scrollLeft -= speed;
+						const delta = calcDelta(lastClientX);
+						onDrag?.(delta, mode);
 						autoScrollRef.current = requestAnimationFrame(tick);
 					};
 					autoScrollRef.current = requestAnimationFrame(tick);
@@ -85,9 +101,10 @@ export const DraggableBar = ({
 			};
 
 			const onPointerMove = (ev: PointerEvent) => {
-				const totalDelta = ev.clientX - dragStartXRef.current;
-				if (Math.abs(totalDelta) > 2) didDragRef.current = true;
-				onDrag?.(totalDelta, mode);
+				lastClientX = ev.clientX;
+				const delta = calcDelta(ev.clientX);
+				if (Math.abs(delta) > 2) didDragRef.current = true;
+				onDrag?.(delta, mode);
 				startAutoScroll(ev.clientX);
 			};
 
