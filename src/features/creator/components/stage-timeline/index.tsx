@@ -22,6 +22,7 @@ import { DraggableBar } from "./internal/draggable-bar";
 type Props = {
 	group: CreatorGroup;
 	onUpdateGroup: (group: CreatorGroup) => void;
+	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 	onUpdateGroupFn: (updater: (g: CreatorGroup) => CreatorGroup) => void;
 	onEditTargetSet: (setId: string, stepIndex?: number) => void;
 	onEditBalloon: (entryId: string) => void;
@@ -103,6 +104,7 @@ const TargetTrack = ({
 	width,
 	onEditSet,
 	onUpdateGroup,
+	scrollContainerRef,
 	onUpdateGroupFn,
 }: {
 	group: CreatorGroup;
@@ -110,6 +112,7 @@ const TargetTrack = ({
 	width: number;
 	onEditSet: (setId: string, stepIndex?: number) => void;
 	onUpdateGroup: (group: CreatorGroup) => void;
+	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 	onUpdateGroupFn: (updater: (g: CreatorGroup) => CreatorGroup) => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
@@ -448,6 +451,7 @@ const TargetTrack = ({
 										}
 									}}
 									onClick={() => onEditSet(set.id, i)}
+									scrollContainerRef={scrollContainerRef}
 									style={{ top: setStartY + i * TRACK_HEIGHT + 4 }}
 								/>
 							);
@@ -471,12 +475,14 @@ const BalloonTrack = ({
 	duration,
 	width,
 	onUpdateGroup,
+	scrollContainerRef,
 	onEditEntry,
 }: {
 	group: CreatorGroup;
 	duration: number;
 	width: number;
 	onUpdateGroup: (group: CreatorGroup) => void;
+	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 	onEditEntry: (id: string) => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
@@ -617,6 +623,7 @@ const BalloonTrack = ({
 							}
 						}}
 						onClick={() => onEditEntry(entry.id)}
+						scrollContainerRef={scrollContainerRef}
 						style={{ top: rowOffset + 4 }}
 					/>
 				);
@@ -636,12 +643,14 @@ const TrainTrack = ({
 	duration,
 	width,
 	onUpdateGroup,
+	scrollContainerRef,
 	onEdit,
 }: {
 	group: CreatorGroup;
 	duration: number;
 	width: number;
 	onUpdateGroup: (group: CreatorGroup) => void;
+	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 	onEdit: () => void;
 }) => {
 	const trackRef = useRef<HTMLDivElement>(null);
@@ -776,6 +785,7 @@ const TrainTrack = ({
 						}
 					}}
 					onClick={onEdit}
+					scrollContainerRef={scrollContainerRef}
 				/>
 			)}
 			{!group.train && (
@@ -807,6 +817,7 @@ export const StageTimeline = ({
 }: Props) => {
 	const [containerWidth, setContainerWidth] = useState(600);
 	const [zoom, setZoom] = useState(1);
+	const [isPinching, setIsPinching] = useState(false);
 	const playheadRef = useRef<HTMLDivElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const pinchStartDistRef = useRef(0);
@@ -819,6 +830,7 @@ export const StageTimeline = ({
 	// ピンチズーム
 	const handleTouchStart = useCallback((e: React.TouchEvent) => {
 		if (e.touches.length === 2) {
+			setIsPinching(true);
 			const dx = e.touches[0].clientX - e.touches[1].clientX;
 			const dy = e.touches[0].clientY - e.touches[1].clientY;
 			pinchStartDistRef.current = Math.hypot(dx, dy);
@@ -836,6 +848,11 @@ export const StageTimeline = ({
 				setZoom(Math.max(0.5, Math.min(5, pinchStartZoomRef.current * scale)));
 			}
 		}
+	}, []);
+
+	const handleTouchEnd = useCallback(() => {
+		setIsPinching(false);
+		pinchStartDistRef.current = 0;
 	}, []);
 
 	// Ctrl+wheel ズーム（デスクトップ）
@@ -868,6 +885,7 @@ export const StageTimeline = ({
 					width={timelineWidth}
 					onEditSet={onEditTargetSet}
 					onUpdateGroup={onUpdateGroup}
+					scrollContainerRef={scrollRef}
 					onUpdateGroupFn={onUpdateGroupFn}
 				/>
 			),
@@ -881,6 +899,7 @@ export const StageTimeline = ({
 					duration={duration}
 					width={timelineWidth}
 					onUpdateGroup={onUpdateGroup}
+					scrollContainerRef={scrollRef}
 					onEditEntry={onEditBalloon}
 				/>
 			),
@@ -894,6 +913,7 @@ export const StageTimeline = ({
 					duration={duration}
 					width={timelineWidth}
 					onUpdateGroup={onUpdateGroup}
+					scrollContainerRef={scrollRef}
 					onEdit={onEditTrain}
 				/>
 			),
@@ -953,8 +973,12 @@ export const StageTimeline = ({
 				style={{ touchAction: "pan-x" }}
 				onTouchStart={handleTouchStart}
 				onTouchMove={handleTouchMove}
+				onTouchEnd={handleTouchEnd}
 				onWheel={handleWheel}
 			>
+			{isPinching && (
+				<div className="pointer-events-none absolute inset-0 z-50" />
+			)}
 			<div className="relative" style={{ minWidth: Math.max(500, timelineWidth + LABEL_WIDTH) }}>
 
 			{/* ルーラー */}

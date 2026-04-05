@@ -18,6 +18,7 @@ type Props = {
 	onDrag?: (totalDeltaX: number, mode: DragMode) => void;
 	onDragEnd?: () => void;
 	onClick?: () => void;
+	scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 	style?: React.CSSProperties;
 };
 
@@ -35,11 +36,13 @@ export const DraggableBar = ({
 	fadeLabel,
 	onDragEnd,
 	onClick,
+	scrollContainerRef,
 	style: extraStyle,
 }: Props) => {
 	const [dragging, setDragging] = useState<DragMode | null>(null);
 	const dragStartXRef = useRef(0);
 	const didDragRef = useRef(false);
+	const autoScrollRef = useRef<number>(0);
 
 	const handlePointerDown = useCallback(
 		(e: React.PointerEvent, mode: DragMode) => {
@@ -50,15 +53,49 @@ export const DraggableBar = ({
 			didDragRef.current = false;
 			onDragStart?.();
 
+			const EDGE_ZONE = 40;
+			const SCROLL_SPEED = 8;
+
+			const startAutoScroll = (clientX: number) => {
+				if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
+				const container = scrollContainerRef?.current;
+				if (!container) return;
+
+				const rect = container.getBoundingClientRect();
+				const leftDist = clientX - rect.left;
+				const rightDist = rect.right - clientX;
+
+				if (rightDist < EDGE_ZONE && rightDist > 0) {
+					const speed = SCROLL_SPEED * (1 - rightDist / EDGE_ZONE);
+					const tick = () => {
+						container.scrollLeft += speed;
+						autoScrollRef.current = requestAnimationFrame(tick);
+					};
+					autoScrollRef.current = requestAnimationFrame(tick);
+				} else if (leftDist < EDGE_ZONE && leftDist > 0) {
+					const speed = SCROLL_SPEED * (1 - leftDist / EDGE_ZONE);
+					const tick = () => {
+						container.scrollLeft -= speed;
+						autoScrollRef.current = requestAnimationFrame(tick);
+					};
+					autoScrollRef.current = requestAnimationFrame(tick);
+				} else {
+					autoScrollRef.current = 0;
+				}
+			};
+
 			const onPointerMove = (ev: PointerEvent) => {
 				const totalDelta = ev.clientX - dragStartXRef.current;
 				if (Math.abs(totalDelta) > 2) didDragRef.current = true;
 				onDrag?.(totalDelta, mode);
+				startAutoScroll(ev.clientX);
 			};
 
 			const onPointerUp = () => {
 				setDragging(null);
 				onDragEnd?.();
+				if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
+				autoScrollRef.current = 0;
 				window.removeEventListener("pointermove", onPointerMove);
 				window.removeEventListener("pointerup", onPointerUp);
 			};
@@ -66,7 +103,7 @@ export const DraggableBar = ({
 			window.addEventListener("pointermove", onPointerMove);
 			window.addEventListener("pointerup", onPointerUp);
 		},
-		[onDragStart, onDrag, onDragEnd],
+		[onDragStart, onDrag, onDragEnd, scrollContainerRef],
 	);
 
 	const handleClick = useCallback(
