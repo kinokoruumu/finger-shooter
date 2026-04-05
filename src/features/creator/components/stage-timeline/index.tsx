@@ -959,13 +959,17 @@ export const StageTimeline = ({
 			const x = timeToX(ms, duration, timelineWidth) + LABEL_WIDTH;
 			playheadRef.current.style.transform = `translateX(${x}px)`;
 
-			// 自動追従スクロール
+			// 自動追従スクロール（滑らかに追従）
 			const container = scrollRef.current;
 			if (container) {
 				const headInView = x - container.scrollLeft;
 				const viewWidth = container.clientWidth;
-				if (headInView > viewWidth - 40) {
-					container.scrollLeft = x - viewWidth + 80;
+				if (headInView > viewWidth * 0.8) {
+					const target = x - viewWidth * 0.5;
+					container.scrollLeft += (target - container.scrollLeft) * 0.1;
+				} else if (headInView < viewWidth * 0.1 && container.scrollLeft > 0) {
+					const target = x - viewWidth * 0.3;
+					container.scrollLeft += (target - container.scrollLeft) * 0.1;
 				}
 			}
 
