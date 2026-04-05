@@ -92,7 +92,7 @@ export const DraggableBar = ({
 		<div
 			data-testid="draggable-bar"
 			className={cn(
-				"group absolute flex items-center overflow-hidden rounded-md text-[10px] font-bold text-white transition-colors",
+				"group absolute flex touch-none select-none items-center overflow-hidden rounded-md text-[10px] font-bold text-white transition-colors",
 				spawnRatio == null && (dragging ? activeColor : color),
 			)}
 			style={{

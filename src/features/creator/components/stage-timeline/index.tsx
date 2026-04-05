@@ -180,7 +180,7 @@ const TargetTrack = ({
 							{/* セット括り（左ボーダー + 背景、ドラッグで一括移動） */}
 							<div
 								className={cn(
-									"absolute cursor-grab rounded-lg",
+									"absolute cursor-grab touch-none select-none rounded-lg",
 									colors.bg,
 								)}
 								style={{
@@ -641,13 +641,29 @@ const TrainTrack = ({
 
 	const handleTrackClick = useCallback(
 		(e: React.MouseEvent) => {
-			if (!group.train) return;
-			if (group.trainStartTime != null) return;
 			if (!trackRef.current) return;
-
 			const rect = trackRef.current.getBoundingClientRect();
 			const x = e.clientX - rect.left;
 			const time = xToTime(x, duration, width);
+
+			if (!group.train) {
+				// 列車がなければデフォルト設定で追加
+				onUpdateGroup({
+					...group,
+					train: {
+						direction: 1,
+						speed: 2.0,
+						slotsOscillate: false,
+						slots: Array.from({ length: 9 }, (_, i) => ({
+							index: i,
+							type: "normal" as const,
+						})),
+					},
+					trainStartTime: time,
+				});
+				return;
+			}
+			if (group.trainStartTime != null) return;
 			onUpdateGroup({ ...group, trainStartTime: time });
 		},
 		[group, duration, width, onUpdateGroup],
@@ -756,7 +772,7 @@ const TrainTrack = ({
 			)}
 			{!group.train && (
 				<span className="absolute inset-0 flex items-center justify-center text-[10px] text-white/20">
-					列車設定で列車を追加
+					クリックで列車を追加
 				</span>
 			)}
 			{group.train && !hasBlock && (
@@ -859,7 +875,7 @@ export const StageTimeline = ({
 	return (
 		<div
 			ref={measureRef}
-			className="relative overflow-x-auto rounded-xl bg-[#1a1d21]"
+			className="relative select-none overflow-x-auto rounded-xl bg-[#1a1d21]"
 			style={rf}
 		>
 			<div className="min-w-[500px]">

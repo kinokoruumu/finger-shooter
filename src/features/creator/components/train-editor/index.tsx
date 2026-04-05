@@ -83,7 +83,7 @@ export const TrainEditor = ({
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle style={rf}>列車の設定</DialogTitle>
 				</DialogHeader>
@@ -104,7 +104,7 @@ export const TrainEditor = ({
 					) : (
 						<>
 							{/* 方向 */}
-							<div className="flex items-center gap-4">
+							<div className="flex flex-wrap items-center gap-2 sm:gap-4">
 								<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 									方向
 								</span>
@@ -137,7 +137,7 @@ export const TrainEditor = ({
 							</div>
 
 							{/* 速度 */}
-							<div className="flex items-center gap-4">
+							<div className="flex flex-wrap items-center gap-2 sm:gap-4">
 								<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 									速度
 								</span>
@@ -166,7 +166,7 @@ export const TrainEditor = ({
 							</div>
 
 							{/* 的の上下移動 */}
-							<div className="flex items-center gap-4">
+							<div className="flex flex-wrap items-center gap-2 sm:gap-4">
 								<span className="w-16 shrink-0 text-amber-900/60 text-xs sm:w-20 sm:text-sm">
 									的の上下移動
 								</span>
@@ -197,7 +197,7 @@ export const TrainEditor = ({
 								<span className="text-amber-900/60 text-sm">
 									スロット（クリックで種類変更）
 								</span>
-								<div className="flex gap-3 sm:gap-6">
+								<div className="flex flex-wrap gap-3 sm:gap-6">
 									{[0, 1, 2].map((car) => (
 										<div
 											key={`car-${car}`}
@@ -225,7 +225,7 @@ export const TrainEditor = ({
 															key={`slot-${index}`}
 															type="button"
 															className={cn(
-																"flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold transition-all hover:scale-110",
+																"flex h-8 w-8 items-center justify-center rounded-lg text-[10px] font-bold transition-all hover:scale-110 sm:h-10 sm:w-10 sm:text-xs",
 																style.bg,
 																style.text,
 															)}
