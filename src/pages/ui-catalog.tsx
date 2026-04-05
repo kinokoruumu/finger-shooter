@@ -206,7 +206,11 @@ export const UICatalog = () => {
 				<Section title="リザルト画面">
 					<div className="relative h-[700px] overflow-hidden rounded-2xl border border-stone-600">
 						<BgImage />
-						<ResultScreen stageScores={[32, 45, 58]} stages={STAGES} onRetry={() => {}} />
+						<ResultScreen
+							stageScores={[32, 45, 58]}
+							stages={STAGES}
+							onRetry={() => {}}
+						/>
 					</div>
 				</Section>
 			</div>
