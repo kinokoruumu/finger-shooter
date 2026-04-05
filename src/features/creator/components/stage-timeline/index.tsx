@@ -39,18 +39,26 @@ const TRACK_HEIGHT = 40;
 const LABEL_WIDTH = 44;
 
 /** 時間ルーラー */
+const LABEL_MIN_GAP_PX = 50;
+
 const TimeRuler = ({
 	duration,
 	width,
 }: { duration: number; width: number }) => {
-	const ticks: { x: number; label: string; major: boolean }[] = [];
-	const step = duration > 5000 ? 1000 : duration > 2000 ? 500 : 250;
+	// ラベルが重ならない最小ステップ(ms)を計算
+	const pxPerMs = (width - 24) / duration;
+	const candidates = [250, 500, 1000, 2000, 5000, 10000, 30000];
+	const labelStep =
+		candidates.find((s) => s * pxPerMs >= LABEL_MIN_GAP_PX) ??
+		candidates[candidates.length - 1];
+	const tickStep = labelStep <= 1000 ? 250 : labelStep <= 5000 ? 500 : 1000;
 
-	for (let t = 0; t <= duration; t += step) {
+	const ticks: { x: number; label: string; showLabel: boolean }[] = [];
+	for (let t = 0; t <= duration; t += tickStep) {
 		ticks.push({
 			x: timeToX(t, duration, width),
-			label: `${(t / 1000).toFixed(1)}s`,
-			major: t % 1000 === 0,
+			label: `${(t / 1000).toFixed(t % 1000 === 0 ? 0 : 1)}s`,
+			showLabel: t % labelStep === 0,
 		});
 	}
 
@@ -65,12 +73,12 @@ const TimeRuler = ({
 					<div
 						className={cn(
 							"w-px",
-							tick.major
+							tick.showLabel
 								? "h-3 bg-white/20"
 								: "h-2 bg-white/10",
 						)}
 					/>
-					{tick.major && (
+					{tick.showLabel && (
 						<span className="absolute top-3 -translate-x-1/2 text-[9px] text-white/40">
 							{tick.label}
 						</span>
@@ -924,7 +932,7 @@ export const StageTimeline = ({
 				>
 					<div
 						className={cn(
-							"flex shrink-0 items-center justify-center border-r border-white/5 border-l-3 text-[10px] font-bold text-white/50 sm:text-xs",
+							"flex shrink-0 items-center justify-center border-r border-white/5 text-[10px] font-bold text-white/50 sm:text-xs",
 							track.color,
 						)}
 						style={{ width: LABEL_WIDTH }}
